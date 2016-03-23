@@ -12,7 +12,7 @@ namespace WifiSitter
     {
         
 
-        internal static readonly List<NetworkInterface> initialNicState = NetworkInterface.GetAllNetworkInterfaces().ToList();
+        internal static readonly List<NetworkInterface> initialNicState = NetworkInterface.GetAllNetworkInterfaces().Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel)).ToList();
 
         static void Main(string[] args) {
 
@@ -65,9 +65,7 @@ namespace WifiSitter
         }
 
         private static void CheckWifiNicsAndEnable(List<NetworkInterface> InitialState, List<NetworkInterface> CurrentState) {
-
             
-
             var initialIds = InitialState.Select(x => x.Id).ToArray();
             var currentIds = CurrentState.Select(x => x.Id).ToArray();
 
@@ -75,10 +73,11 @@ namespace WifiSitter
 
             foreach (var nic in InitialState) {
                 
-                if (  !initialIds.Contains(nic.Id)
+                if (   initialIds.Contains(nic.Id)
                    && !currentIds.Contains(nic.Id)) {
                     Console.WriteLine("Adapter existed initialy but doesn't now, assuming disabled: {0}", nic.Description);
-                    EnableAdapter(nic);
+                    if (nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet)
+                        EnableAdapter(nic);
                 }
             }
 
@@ -102,6 +101,7 @@ namespace WifiSitter
         private List<NetworkInterface> _nics;
         private bool _checkNet;
         private bool _netAvailable;
+        private System.Timers.Timer _checkTick;
         #endregion // fields
 
 
@@ -130,8 +130,13 @@ namespace WifiSitter
             _netAvailable = NetworkInterface.GetIsNetworkAvailable();
             NetworkChange.NetworkAddressChanged += NetworkChange_NetworkAddressChanged; ;
             NetworkChange.NetworkAvailabilityChanged += NetworkChange_NetworkAvailabilityChanged;
-        }
 
+            _checkTick = new System.Timers.Timer();
+            _checkTick.Interval = 5000;
+            _checkTick.AutoReset = true;
+            _checkTick.Elapsed += _checkTick_Elapsed;
+            _checkTick.Start();
+        }
 
         ~NetworkState() {
             NetworkChange.NetworkAddressChanged -= NetworkChange_NetworkAddressChanged; ;
@@ -139,6 +144,7 @@ namespace WifiSitter
         }
 
         #endregion // constructor
+
 
         #region methods
 
@@ -210,7 +216,29 @@ namespace WifiSitter
             _nics = QueryNetworkAdapters();
             _checkNet = true;
         }
+        
+        private void _checkTick_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            var _currNics = QueryNetworkAdapters();
+            var _checkNicsIds = _currNics.Select(x => x.Id).ToArray();
+            var _currNicIds = _nics.Select(x => x.Id).ToArray();
 
+            var diffCheck = from a in _checkNicsIds
+                       join b in _currNicIds on a equals b
+                       select a;
+            var diff = diffCheck.ToArray();
+
+            if (!(_checkNicsIds.Count() == _currNicIds.Count()
+                && diff.Count() == _checkNicsIds.Count()))
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Network adapter set changed.");
+                Console.ResetColor();
+                this.UpdateNics(_currNics);
+                this.CheckNet = true;
+            }
+        }
+        
         #endregion // eventhandlers
     }
 }
