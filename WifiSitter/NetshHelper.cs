@@ -9,9 +9,9 @@ namespace WifiSitter
 {
     class NetshHelper
     {
-        public static List<NetShInterface> GetInterfaces()
+        public static List<NetshInterface> GetInterfaces()
         {
-            List<NetShInterface> results = new List<NetShInterface>();
+            List<NetshInterface> results = new List<NetshInterface>();
             var proc = new Process();
             proc.StartInfo.FileName = "netsh.exe";
             proc.StartInfo.Arguments = "interface show interface";
@@ -40,7 +40,7 @@ namespace WifiSitter
 
                 if (startParse) {
                     string[] tokens = line.Split(null).Where(x => !String.IsNullOrEmpty(x)).ToArray();
-                    results.Add(new NetShInterface(tokens[0], tokens[1], tokens[2], tokens[3]));
+                    results.Add(new NetshInterface(tokens[0], tokens[1], tokens[2], tokens[3]));
                 }
                 else {
                     startParse = line.Trim().StartsWith("------------");
@@ -55,7 +55,7 @@ namespace WifiSitter
         {
             if (String.IsNullOrEmpty(InterfaceName)) { throw new ArgumentException("InterfaceName cannot be null or empty"); }
 
-            List<NetShInterface> results = new List<NetShInterface>();
+            List<NetshInterface> results = new List<NetshInterface>();
             var proc = new Process();
             proc.StartInfo.FileName = "netsh.exe";
             proc.StartInfo.Arguments = String.Format("interface set interface name=\"{0}\" admin=ENABLED", InterfaceName);
@@ -75,7 +75,7 @@ namespace WifiSitter
         {
             if (String.IsNullOrEmpty(InterfaceName)) { throw new ArgumentException("InterfaceName cannot be null or empty"); }
 
-            List<NetShInterface> results = new List<NetShInterface>();
+            List<NetshInterface> results = new List<NetshInterface>();
             var proc = new Process();
             proc.StartInfo.FileName = "netsh.exe";
             proc.StartInfo.Arguments = String.Format("interface set interface name=\"{0}\" admin=DISABLED", InterfaceName);
@@ -97,7 +97,7 @@ namespace WifiSitter
 
             if (String.IsNullOrEmpty(InterfaceName)) { throw new ArgumentException("InterfaceName cannot be null or empty"); }
 
-            List<NetShInterface> results = new List<NetShInterface>();
+            List<NetshInterface> results = new List<NetshInterface>();
             var proc = new Process();
             proc.StartInfo.FileName = "ipconfig.exe";
             proc.StartInfo.Arguments = String.Format("/release \"{0}\"", InterfaceName);
@@ -113,7 +113,7 @@ namespace WifiSitter
         }
     }
 
-    public sealed class NetShInterface
+    public sealed class NetshInterface
     {
         // Admin State    State          Type             Interface Name
 
@@ -129,7 +129,7 @@ namespace WifiSitter
         public string InterfaceName { get { return _interfaceName; } }
 
 
-        public NetShInterface(string AdminState, string State, string Type, string Name)
+        public NetshInterface(string AdminState, string State, string Type, string Name)
         {
             _adminState = AdminState;
             _state = State;
