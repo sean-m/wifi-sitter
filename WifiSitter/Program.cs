@@ -10,14 +10,13 @@ namespace WifiSitter
 {
     class Program
     {
-        
-
-        internal static readonly List<NetworkInterface> initialNicState = NetworkInterface.GetAllNetworkInterfaces().Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel)).ToList();
+        internal static List<NetworkInterface> initialNicState;
+        internal static NetworkState netstate;
 
         static void Main(string[] args) {
 
-            var netstate = new NetworkState();
-            
+            Intialize();
+
             Console.WriteLine("Initialized...");
 
             bool go = true;
@@ -37,7 +36,7 @@ namespace WifiSitter
 
                     foreach (var adapter in _nics) {
                         IPInterfaceProperties properties = adapter.GetIPProperties();
-                        Console.WriteLine("{0,48}  {1,16}  {2}", adapter.Description, adapter.NetworkInterfaceType, adapter.OperationalStatus);
+                        Console.WriteLine("{0,32} {1,48}  {2,16} {3}", adapter.Name, adapter.Description, adapter.NetworkInterfaceType, adapter.OperationalStatus);
                     }
 
 
@@ -47,7 +46,11 @@ namespace WifiSitter
                         if (netstate.EthernetUp) { // Ethernet is up
                             if (wifi != null) {
                                 foreach (var adapter in wifi) {
-                                    DisableAdapter(adapter);
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine("Disable adaptor {0}  {1}", adapter.Name, adapter.Description);
+                                    Console.ResetColor();
+                                    NetshHelper.DisableInterface(adapter.Name);
+                                    NetshHelper.DisableInterface(adapter.Name);
                                 }
                             }
                         }                        
@@ -64,34 +67,74 @@ namespace WifiSitter
 
         }
 
+
+        /// <summary>
+        /// Do initial nic discovery and netsh trickery
+        /// </summary>
+        private static void Intialize()
+        {
+            // Check if there are any interfaces not detected by GetAllNetworkInterfaces()
+            // That method will not show disabled interfaces
+
+            var nics = NetworkState.QueryNetworkAdapters();
+            
+            var netsh = NetshHelper.GetInterfaces();
+            var notInNetstate = netsh.Where(x => !(nics.Select(y => y.Name).Contains(x.InterfaceName))).ToList();
+
+            if (notInNetstate.Count > 0) {
+                var disabledInterfaces = notInNetstate.Where(x => x.AdminState == "Disabled").ToArray();
+
+                foreach (var nic in disabledInterfaces) {
+                    NetshHelper.EnableInterface(nic.InterfaceName);
+                }
+
+                if (disabledInterfaces.Count() > 0) {
+                    var tmpNics = NetworkState.QueryNetworkAdapters();
+
+                    if (tmpNics.Count() != nics.Count()) {
+                        initialNicState = tmpNics;
+                        netstate = new NetworkState(initialNicState);
+                    }
+                }
+
+                foreach (var nic in disabledInterfaces) {
+                    NetshHelper.DisableInterface(nic.InterfaceName);
+                }
+
+                return;
+            }
+            
+            initialNicState = nics;
+            netstate = new NetworkState(nics);
+        }
+
+
         private static void CheckWifiNicsAndEnable(List<NetworkInterface> InitialState, List<NetworkInterface> CurrentState) {
             
+            // If an adapter is disabled it wont show up in the current nic state of things
+            // So we compare the current interface IDs to those of the initial nic state
+            // And enable the ones that are now non-existant
             var initialIds = InitialState.Select(x => x.Id).ToArray();
             var currentIds = CurrentState.Select(x => x.Id).ToArray();
 
             Console.ForegroundColor = ConsoleColor.Yellow;
 
+            var netsh = NetshHelper.GetInterfaces();
+
             foreach (var nic in InitialState) {
-                
-                if (   initialIds.Contains(nic.Id)
+
+                if (initialIds.Contains(nic.Id)
                    && !currentIds.Contains(nic.Id)) {
-                    Console.WriteLine("Adapter existed initialy but doesn't now, assuming disabled: {0}", nic.Description);
-                    if (nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet)
-                        EnableAdapter(nic);
+                    if (netsh.Where(x => x.InterfaceName == nic.Name && x.AdminState == "Disabled").Any()) {
+                        if (nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet) {
+                            Console.WriteLine("Enable adaptor {0}  {1}", nic.Name, nic.Description);
+                            NetshHelper.EnableInterface(nic.Name);
+                        }
+                    }
                 }
             }
 
             Console.ResetColor();            
-        }
-
-        private static void EnableAdapter(NetworkInterface nic) {
-            Console.WriteLine("Enable adaptor {0}", nic.Description);
-        }
-
-        private static void DisableAdapter(NetworkInterface nic) {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Disable adaptor {0}", nic.Description);
-            Console.ResetColor();
         }
     }
     
@@ -102,6 +145,7 @@ namespace WifiSitter
         private bool _checkNet;
         private bool _netAvailable;
         private System.Timers.Timer _checkTick;
+        private uint _ticks;
         #endregion // fields
 
 
@@ -131,8 +175,9 @@ namespace WifiSitter
             NetworkChange.NetworkAddressChanged += NetworkChange_NetworkAddressChanged; ;
             NetworkChange.NetworkAvailabilityChanged += NetworkChange_NetworkAvailabilityChanged;
 
+            _ticks = 0;
             _checkTick = new System.Timers.Timer();
-            _checkTick.Interval = 5000;
+            _checkTick.Interval = 10 * 1000;
             _checkTick.AutoReset = true;
             _checkTick.Elapsed += _checkTick_Elapsed;
             _checkTick.Start();
@@ -237,6 +282,12 @@ namespace WifiSitter
                 this.UpdateNics(_currNics);
                 this.CheckNet = true;
             }
+            
+            if (_ticks > 1000) {
+                _ticks = 0;
+                System.GC.Collect();
+            }
+            _ticks++;
         }
         
         #endregion // eventhandlers
