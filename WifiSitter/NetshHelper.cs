@@ -40,7 +40,7 @@ namespace WifiSitter
 
                 if (startParse) {
                     string[] tokens = line.Split(null).Where(x => !String.IsNullOrEmpty(x)).ToArray();
-                    results.Add(new NetshInterface(tokens[0], tokens[1], tokens[2], tokens[3]));
+                    results.Add(new NetshInterface(tokens[0], tokens[1], tokens[2],  String.Join(" ",tokens.Skip(3))));
                 }
                 else {
                     startParse = line.Trim().StartsWith("------------");
