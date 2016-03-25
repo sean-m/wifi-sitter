@@ -1,5 +1,5 @@
 # WiFi Sitter
-It's a baby sitter for your WiFi NIC.  
+It's a baby itter for your WiFi NIC.  
 
 This is born out of the need to have the wifi adapter disabled when Ethernet is
 active, seems like this should be a solved problem but there are no good free
