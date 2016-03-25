@@ -24,6 +24,8 @@ namespace WifiSitter
 
                 if (netstate.CheckNet) {
 
+                    netstate.ProcessingState = true;
+
                     netstate.UpdateNics(DiscoverAllNetworkDevices());
 
                     var wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211).Where(x => x.Nic.OperationalStatus == OperationalStatus.Up);
@@ -170,7 +172,7 @@ namespace WifiSitter
         private bool _netAvailable;
         private System.Timers.Timer _checkTick;
         private uint _ticks;
-        private bool _eventsFired;
+        private bool _processingState;
         #endregion // fields
 
 
@@ -193,7 +195,7 @@ namespace WifiSitter
             NetworkChange.NetworkAddressChanged += NetworkChange_NetworkAddressChanged; ;
             NetworkChange.NetworkAvailabilityChanged += NetworkChange_NetworkAvailabilityChanged;
 
-            _eventsFired = false;
+            _processingState = true;
 
             _ticks = 0;
             _checkTick = new System.Timers.Timer();
@@ -216,7 +218,7 @@ namespace WifiSitter
 
         public void StateChecked () {
             this.CheckNet = false;
-            this.EventsFired = false;
+            this.ProcessingState = false;
         }
 
         public void UpdateNics (List<UberNic> Nics) {
@@ -229,7 +231,8 @@ namespace WifiSitter
             foreach (var n in NetworkInterface.GetAllNetworkInterfaces().Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback 
                                                                                   && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel
                                                                                   && !x.Description.ToLower().Contains("bluetooth")
-                                                                                  && !x.Description.StartsWith("Microsoft Wi-Fi Direct")))) {
+                                                                                  && !x.Description.StartsWith("Microsoft Wi-Fi Direct")
+                                                                                  && !x.Description.StartsWith("VirtualBox Host")))) {
                 result.Add(new UberNic(n));
             }
             return result;
@@ -254,37 +257,25 @@ namespace WifiSitter
                 if (_nics == null) return new List<UberNic>(); 
                 return _nics;
             }
-            private set {
-                _nics = value;
-            }
+            private set { _nics = value; }
         }
 
 
         public bool CheckNet {
-            get {
-                return _checkNet;
-            }
-            private set {
-                _checkNet = value;
-            }
+            get { return _checkNet; }
+            private set { _checkNet = value; }
         }
         
 
         public bool NetworkAvailable {
-            get {
-                return _netAvailable;
-            }
+            get { return _netAvailable; }
             private set { _netAvailable = value; }
         }
 
-
-        public bool EventsFired {
-            get {
-                return _eventsFired;
-            }
-            private set {
-                _eventsFired = value;
-            }
+        
+        public bool ProcessingState {
+            get { return _processingState; }
+            set { _processingState = value; }
         }
 
         #endregion // properties
@@ -297,7 +288,6 @@ namespace WifiSitter
             Console.WriteLine("{0}  Network availability changed.", DateTime.Now.ToString());
             Console.ResetColor();
             _netAvailable = NetworkInterface.GetIsNetworkAvailable();
-            _eventsFired = true;
             _checkNet = true;
         }
 
@@ -306,31 +296,31 @@ namespace WifiSitter
             Console.WriteLine("{0}  Network address changed.", DateTime.Now.ToString());
             Console.ResetColor();
             _netAvailable = NetworkInterface.GetIsNetworkAvailable();
-            _eventsFired = true;
             _checkNet = true;
         }
         
         private void _checkTick_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            var _currNics = Program.DiscoverAllNetworkDevices();
-            var _checkNicsIds = _currNics.Select(x => x.Id).ToArray();
-            var _currNicIds = _nics.Select(x => x.Id).ToArray();
+            if (!ProcessingState) {
+                var _currNics = Program.DiscoverAllNetworkDevices();
+                var _checkNicsIds = _currNics.Select(x => x.Id).ToArray();
+                var _currNicIds = _nics.Select(x => x.Id).ToArray();
 
-            var diffCheck = from a in _checkNicsIds
-                       join b in _currNicIds on a equals b
-                       select a;
-            var diff = diffCheck.ToArray();
+                var diffCheck = from a in _checkNicsIds
+                                join b in _currNicIds on a equals b
+                                select a;
+                var diff = diffCheck.ToArray();
 
-            if (!(_checkNicsIds.Count() == _currNicIds.Count()
-                && diff.Count() == _checkNicsIds.Count()))
-            {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("{0}  Network adapter set changed.", DateTime.Now.ToString());
-                Console.ResetColor();
-                this.UpdateNics(_currNics);
-                this.CheckNet = true;
+                if (!(_checkNicsIds.Count() == _currNicIds.Count()
+                    && diff.Count() == _checkNicsIds.Count())) {
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.WriteLine("{0}  Network adapter set changed.", DateTime.Now.ToString());
+                    Console.ResetColor();
+                    this.UpdateNics(_currNics);
+                    this.CheckNet = true;
+                }
             }
-            
+
             if (_ticks > 200) {
                 _ticks = 0;
                 System.GC.Collect();
