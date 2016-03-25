@@ -179,19 +179,12 @@ namespace WifiSitter
 
 
         #region constructor
-
-        /// <summary>
-        /// Constructor, initializes nics list and sets up event handlers.
-        /// </summary>
+        
         public NetworkState () {            
             this.Nics =  QueryNetworkAdapters();
             Initialize();
         }
-
-        /// <summary>
-        /// Constructor, initializes nics list and sets up event handlers.
-        /// </summary>
-        /// <param name="Nics"></param>
+        
         public NetworkState (List<UberNic> Nics) {
             this.Nics = Nics;
             Initialize();
@@ -235,7 +228,8 @@ namespace WifiSitter
             List<UberNic> result = new List<UberNic>();
             foreach (var n in NetworkInterface.GetAllNetworkInterfaces().Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback 
                                                                                   && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel
-                                                                                  && !x.Description.ToLower().Contains("bluetooth")))) {
+                                                                                  && !x.Description.ToLower().Contains("bluetooth")
+                                                                                  && !x.Description.StartsWith("Microsoft Wi-Fi Direct")))) {
                 result.Add(new UberNic(n));
             }
             return result;
