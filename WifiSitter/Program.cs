@@ -8,10 +8,9 @@ using System.Threading;
 
 namespace WifiSitter
 {
-    class Program
-    {
+    class Program {
         internal static NetworkState netstate;
-        
+
         static void Main(string[] args) {
 
             // Provision state
@@ -24,22 +23,21 @@ namespace WifiSitter
                 Thread.Sleep(1000);
 
                 if (netstate.CheckNet) {
-                    
+
                     netstate.UpdateNics(DiscoverAllNetworkDevices());
-                    
+
                     var wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211).Where(x => x.Nic.OperationalStatus == OperationalStatus.Up);
 
                     if (netstate.NetworkAvailable) { // Network available
                         if (netstate.EthernetUp) { // Ethernet is up
                             if (wifi != null) {
                                 foreach (var adapter in wifi) {
-                                    Console.ForegroundColor = ConsoleColor.Red;
-                                    Console.WriteLine("{0}  Disable adaptor: {1,18}  {2}", DateTime.Now.ToString(), adapter.Name, adapter.Description);  // TODO log this
-                                    Console.ResetColor();
+                                    LogLine (ConsoleColor.Red, "Disable adaptor: {0,18}  {1}", adapter.Name, adapter.Description);  // TODO log this
+                                    
                                     adapter.Disable();
                                 }
                             }
-                        }                      
+                        }
                     }
                     else { // Network unavailable, enable wifi adapters
                         Console.ForegroundColor = ConsoleColor.Yellow;
@@ -49,20 +47,15 @@ namespace WifiSitter
                                                                  && x.Nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet3Megabit
                                                                  && x.Nic.NetworkInterfaceType != NetworkInterfaceType.FastEthernetT)) {
 
-                            Console.WriteLine("{0}  Enable adaptor: {1,18}  {2}", DateTime.Now.ToString(), nic.Name, nic.Description);  //  TODO log this
-                            enablingWifi = nic.Enable();
+                            LogLine(ConsoleColor.Yellow, "Enable adaptor: {0,18}  {1}", nic.Name, nic.Description);  //  TODO log this
+
+                            bool enableResult = nic.Enable();
+                            if (!enableResult) LogLine (ConsoleColor.Red, "Failed to enable NIC {0}", nic.Name);
+                            if (enableResult && !enablingWifi) enablingWifi = true; // indicate that a wifi adapter has been successfully enabled
                         }
-
-                        Console.ResetColor();
-
+                        
                         if (enablingWifi) {
                             Thread.Sleep(2 * 1000);
-                            if (!netstate.NetworkAvailable) {
-                                Console.ForegroundColor = ConsoleColor.Magenta;
-                                Console.WriteLine("{0}  Connection not available after fipping nics around.", DateTime.Now.ToString());  // TODO log this
-                                Console.ResetColor();
-                                DiscoverAllNetworkDevices();
-                            }
                         }
                     }
 
@@ -70,10 +63,9 @@ namespace WifiSitter
                     // Show network availability
                     var color = netstate.NetworkAvailable ? ConsoleColor.Green : ConsoleColor.Red;
                     var stat = netstate.NetworkAvailable ? "is" : "not";
-                    Console.ForegroundColor = color;
-                    Console.WriteLine("{0}", String.Format("{0}  Connection {1} available", DateTime.Now.ToString(), stat));
-                    Console.ResetColor();
-
+                    
+                    LogLine(color, "Connection {0} available", stat);
+                    
                     // List adapters
                     Console.Write("\n");
                     Console.WriteLine("{0,32} {1,48}  {2,16}  {3}  {4}", "Name", "Description", "Type", "State", "Enabled");
@@ -81,9 +73,9 @@ namespace WifiSitter
                         Console.WriteLine("{0,32} {1,48}  {2,16}  {3,5}  {4,7}", adapter.Name, adapter.Description, adapter.Nic.NetworkInterfaceType, adapter.Nic.OperationalStatus, adapter.IsEnabled);
                     }
                     Console.WriteLine("\n");
-                    
 
-                    netstate.StateChecked();                    
+
+                    netstate.StateChecked();
                 }
             }
 
@@ -93,28 +85,27 @@ namespace WifiSitter
         /// <summary>
         /// Do initial nic discovery and netsh trickery
         /// </summary>
-        private static void Intialize()
-        {
+        private static void Intialize() {
             try {
                 Console.WindowWidth = 120;
             }
             catch {
                 // TODO log this
+                LogLine(ConsoleColor.Red, "Failed to resize console window.");
             }
 
             // Check if there are any interfaces not detected by GetAllNetworkInterfaces()
             // That method will not show disabled interfaces
             netstate = new NetworkState(DiscoverAllNetworkDevices(false));
 
-            Console.WriteLine("{0}  Initialized...", DateTime.Now.ToString());
+            LogLine("Initialized...");
             // TODO log this
         }
-        
+
 
         public static List<UberNic> DiscoverAllNetworkDevices(bool quiet = true) {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            if (!quiet) Console.WriteLine("{0}  Discovering all devices.", DateTime.Now.ToString());
-            
+            if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering all devices.");
+
             var nics = NetworkState.QueryNetworkAdapters();
             List<UberNic> nicsPost;
             var netsh = NetshHelper.GetInterfaces();
@@ -122,7 +113,7 @@ namespace WifiSitter
             var notInNetstate = netsh.Where(x => !(nics.Select(y => y.Nic.Name).Contains(x.InterfaceName))).ToList();
 
             if (notInNetstate.Count > 0) {
-                if (!quiet) Console.WriteLine("{0}  Discovering disabled devices.", DateTime.Now.ToString());
+                if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering disabled devices.");
                 var disabledInterfaces = notInNetstate.Where(x => x.AdminState == "Disabled").ToArray();
 
                 // Turn on disabled interfaces
@@ -132,30 +123,39 @@ namespace WifiSitter
 
                 // Query for network interfaces again
                 nicsPost = NetworkState.QueryNetworkAdapters();
-                
+
                 // Disable nics again
                 foreach (var nic in disabledInterfaces) {
                     NetshHelper.DisableInterface(nic.InterfaceName);
                 }
-                
+
                 // Update the state on UberNic objects
                 foreach (var n in nicsPost) {
                     n.UpdateState(netsh.Where(x => x.InterfaceName == n.Name).FirstOrDefault());
                 }
 
-                Console.ResetColor();
                 return nicsPost;
             }
             
-
             // Detected no disabled nics, so update accordingly.
             foreach (var nic in nics) {
                 nic.UpdateState(netsh.Where(x => x.InterfaceName == nic.Nic.Name).FirstOrDefault());
             }
 
-            Console.ResetColor();
             return nics;
-        }        
+        }
+        
+        public static void LogLine(params string[] msg) {
+            LogLine(ConsoleColor.White, msg);
+        }
+
+        public static void LogLine(ConsoleColor color, params string[] msg) {
+            if (msg.Length == 0) return;
+            Console.ForegroundColor = color;
+            string log = msg.Length > 0 ? String.Format(msg[0], msg.Skip(1).ToArray()) : msg[0];
+            Console.WriteLine("{0}  {1}", DateTime.Now.ToString(), log);
+            Console.ResetColor();
+        }
     }
     
 
