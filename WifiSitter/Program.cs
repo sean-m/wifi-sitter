@@ -312,7 +312,7 @@ namespace WifiSitter
         
         private void _checkTick_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            var _currNics = QueryNetworkAdapters();
+            var _currNics = Program.DiscoverAllNetworkDevices();
             var _checkNicsIds = _currNics.Select(x => x.Id).ToArray();
             var _currNicIds = _nics.Select(x => x.Id).ToArray();
 
