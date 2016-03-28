@@ -120,7 +120,8 @@ namespace WifiSitter
 
                 // Turn on disabled interfaces
                 foreach (var nic in disabledInterfaces) {
-                    NetshHelper.EnableInterface(nic.InterfaceName);
+                    if (!nic.InterfaceName.Contains("VirtualBox"))
+                        NetshHelper.EnableInterface(nic.InterfaceName);
                 }
 
                 // Query for network interfaces again
@@ -170,8 +171,6 @@ namespace WifiSitter
         private List<UberNic> _nics;
         private bool _checkNet;
         private bool _netAvailable;
-        private System.Timers.Timer _checkTick;
-        private uint _ticks;
         private bool _processingState;
         #endregion // fields
 
@@ -196,19 +195,11 @@ namespace WifiSitter
             NetworkChange.NetworkAvailabilityChanged += NetworkChange_NetworkAvailabilityChanged;
 
             _processingState = true;
-
-            _ticks = 0;
-            _checkTick = new System.Timers.Timer();
-            _checkTick.Interval = 20 * 1000;
-            _checkTick.AutoReset = true;
-            _checkTick.Elapsed += _checkTick_Elapsed;
-            _checkTick.Start();
         }
 
         ~NetworkState() {
             NetworkChange.NetworkAddressChanged -= NetworkChange_NetworkAddressChanged; ;
             NetworkChange.NetworkAvailabilityChanged -= NetworkChange_NetworkAvailabilityChanged;
-            _checkTick.Elapsed -= _checkTick_Elapsed;
         }
 
         #endregion // constructor
@@ -299,35 +290,6 @@ namespace WifiSitter
             _checkNet = true;
         }
         
-        private void _checkTick_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            if (!ProcessingState) {
-                var _currNics = Program.DiscoverAllNetworkDevices();
-                var _checkNicsIds = _currNics.Select(x => x.Id).ToArray();
-                var _currNicIds = _nics.Select(x => x.Id).ToArray();
-
-                var diffCheck = from a in _checkNicsIds
-                                join b in _currNicIds on a equals b
-                                select a;
-                var diff = diffCheck.ToArray();
-
-                if (!(_checkNicsIds.Count() == _currNicIds.Count()
-                    && diff.Count() == _checkNicsIds.Count())) {
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine("{0}  Network adapter set changed.", DateTime.Now.ToString());
-                    Console.ResetColor();
-                    this.UpdateNics(_currNics);
-                    this.CheckNet = true;
-                }
-            }
-
-            if (_ticks > 200) {
-                _ticks = 0;
-                System.GC.Collect();
-            }
-            _ticks++;
-        }
-        
         #endregion // eventhandlers
     }
 
@@ -398,7 +360,15 @@ namespace WifiSitter
 
         public bool Disable()
         {
-            int exitCode = EnableDisableInterface(false); // disable
+            // Release IP first and update NIC inforamtion so OperationalState reflects this
+            this.ReleaseIp();
+            var _iface = NetworkInterface.GetAllNetworkInterfaces().Where(x => x.Id == this.Id).FirstOrDefault();
+            if (_iface != null) {
+                this._nic = _iface;
+            }
+
+            // Disable interface
+            int exitCode = EnableDisableInterface(false);
 
             if (exitCode == 0) {
                 this._isEnabled = true;
@@ -441,8 +411,6 @@ namespace WifiSitter
         private int EnableDisableInterface (bool Enable)
         {
             string state = Enable ? "ENABLED" : "DISABLED";
-
-            if (!Enable) this.ReleaseIp();
 
             var proc = new System.Diagnostics.Process();
             proc.StartInfo.FileName = "netsh.exe";
