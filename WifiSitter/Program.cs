@@ -70,7 +70,7 @@ namespace WifiSitter
                     
                     // List adapters
                     Console.Write("\n");
-                    Console.WriteLine("{0,32} {1,48}  {2,16}  {3}  {4}", "Name", "Description", "Type", "Connected", "Enabled");
+                    Console.WriteLine("{0,32} {1,48}  {2,16}  {3}  {4}\n", "Name", "Description", "Type", "Connected", "Enabled");
                     foreach (var adapter in netstate.Nics) {
                         Console.WriteLine("{0,32} {1,48}  {2,16}  {3,7}  {4,7}", adapter.Name, adapter.Description, adapter.Nic.NetworkInterfaceType, adapter.IsConnected, adapter.IsEnabled);
                     }
