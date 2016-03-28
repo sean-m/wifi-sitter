@@ -94,6 +94,9 @@
     <Compile Include="NetshHelper.cs" />
     <Compile Include="NetworkState.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="WifiSitter.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SitterNic.cs" />
   </ItemGroup>
