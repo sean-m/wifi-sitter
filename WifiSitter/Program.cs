@@ -70,9 +70,9 @@ namespace WifiSitter
                     
                     // List adapters
                     Console.Write("\n");
-                    Console.WriteLine("{0,32} {1,48}  {2,16}  {3}  {4}", "Name", "Description", "Type", "State", "Enabled");
+                    Console.WriteLine("{0,32} {1,48}  {2,16}  {3}  {4}", "Name", "Description", "Type", "Connected", "Enabled");
                     foreach (var adapter in netstate.Nics) {
-                        Console.WriteLine("{0,32} {1,48}  {2,16}  {3,5}  {4,7}", adapter.Name, adapter.Description, adapter.Nic.NetworkInterfaceType, adapter.Nic.OperationalStatus, adapter.IsEnabled);
+                        Console.WriteLine("{0,32} {1,48}  {2,16}  {3,7}  {4,7}", adapter.Name, adapter.Description, adapter.Nic.NetworkInterfaceType, adapter.IsConnected, adapter.IsEnabled);
                     }
                     Console.WriteLine("\n");
 
@@ -301,6 +301,7 @@ namespace WifiSitter
     public class UberNic {
         private NetworkInterface _nic;
         private bool _isEnabled;
+        private bool _isConnected;
 
         #region constructor
         public UberNic(NetworkInterface Nic) {
@@ -341,6 +342,12 @@ namespace WifiSitter
             get { return Nic.Id; }
         }
 
+
+        public bool IsConnected {
+            get { return _isConnected; }
+            set { _isConnected = value; }
+        }
+
         #endregion // properties
 
 
@@ -354,7 +361,8 @@ namespace WifiSitter
             if (NetshIf == null) return;
 
             if (Nic.Name == NetshIf.InterfaceName) {
-                _isEnabled = (NetshIf.AdminState == "Enabled");                
+                this._isEnabled = NetshIf.AdminState == "Enabled";
+                this._isConnected = NetshIf.State == "Connected";
             }
         }
 
@@ -362,49 +370,37 @@ namespace WifiSitter
         {
             // Release IP first and update NIC inforamtion so OperationalState reflects this
             this.ReleaseIp();
-            var _iface = NetworkInterface.GetAllNetworkInterfaces().Where(x => x.Id == this.Id).FirstOrDefault();
-            if (_iface != null) {
-                this._nic = _iface;
-            }
-
+            
             // Disable interface
             int exitCode = EnableDisableInterface(false);
+            
+            var netsh = NetshHelper.GetInterfaces().Where(x => x.InterfaceName == this.Name).FirstOrDefault();
 
-            if (exitCode == 0) {
-                this._isEnabled = true;
+            if (netsh != null) {
+                this.UpdateState(netsh);
             }
             else {
-                var netsh = NetshHelper.GetInterfaces().Where(x => x.InterfaceName == this.Name).FirstOrDefault();
-
-                if (netsh != null) {
-                    this._isEnabled = netsh.AdminState == "Enabled";
-                }
-                else {
-                    this._isEnabled = false;
-                }
+                this._isEnabled = false;
+                this._isConnected = false;
             }
-
+            
             return !IsEnabled;
         }
 
         public bool Enable()
         {
             int exitCode = EnableDisableInterface(true);
+            
+            var netsh = NetshHelper.GetInterfaces().Where(x => x.InterfaceName == this.Name).FirstOrDefault();
 
-            if (exitCode == 0) {
-                this._isEnabled = true;
+            if (netsh != null) {
+                this.UpdateState(netsh);
             }
             else {
-                var netsh = NetshHelper.GetInterfaces().Where(x => x.InterfaceName == this.Name).FirstOrDefault();
-
-                if (netsh != null) {
-                    this._isEnabled = netsh.AdminState == "Enabled";
-                }
-                else {
-                    this._isEnabled = false;
-                }
+                this._isEnabled = false;
+                this._isConnected = false;
             }
-
+            
             return IsEnabled;
         }
         
