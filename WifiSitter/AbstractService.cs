@@ -173,7 +173,7 @@ USAGE
         private void InstallServiceCommandLine()
         {
             string keyParent = @"SYSTEM\CurrentControlSet\Services\" + ServiceName;
-            const string VALUE_NAME = "WifiSitter";
+            const string VALUE_NAME = "ImagePath";
 
             try
             {
