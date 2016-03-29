@@ -52,6 +52,12 @@ namespace WifiSitter
             }
         }
 
+        public override string ServiceDesc {
+            get {
+                return "Manages WiFi adapters based on wired ethernet connectivity.";
+            }
+        }
+
         #endregion // properties
 
 
@@ -262,7 +268,7 @@ namespace WifiSitter
         #endregion // methods
 
 
-        #region events
+        #region overrides
 
         protected override void OnStartImpl(string[] args) {
             _thread = new Thread(WorkerThreadFunc);
@@ -289,7 +295,15 @@ namespace WifiSitter
             this._paused = false;
         }
 
-        #endregion // events
+        internal override void CreateRegKeys() {
+            throw new NotImplementedException();
+        }
+
+        internal override void RemoveRegKeys() {
+            throw new NotImplementedException();
+        }
+
+        #endregion // overrides
     }
 
     public enum LogType
