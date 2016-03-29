@@ -13,19 +13,24 @@ namespace WifiSitter
     {
         #region fields
 
-        internal static NetworkState netstate;
+        internal volatile static NetworkState netstate;
         private const string _serviceName = "WifiSitter";
         private Guid _uninstGuid;
         private Thread _thread;
         private ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
-        
+        private volatile bool _paused;
+
         #endregion // fields
 
 
         #region constructor
 
         public WifiSitter () : base(_serviceName) {
-            
+            _paused = false;
+            if (this.ServiceExecutionMode != ServiceExecutionMode.Console) {
+                this.AutoLog = true;
+                this.CanPauseAndContinue = true;
+            }
         }
 
         #endregion // constructor
@@ -38,8 +43,7 @@ namespace WifiSitter
                 return _serviceName;
             }
         }
-
-
+        
         protected override Guid UninstallGuid {
             get {
                 System.Guid.TryParse("23a42c57-a16c-4b93-a5cb-60cff20c1f7a", out _uninstGuid);
@@ -162,8 +166,13 @@ namespace WifiSitter
 
             Intialize();
             
-            while (!_shutdownEvent.WaitOne(1000)) {
-                
+            while (!_shutdownEvent.WaitOne(0)) {
+
+                if (_paused) {
+                    Thread.Sleep(1000);
+                    continue;
+                }
+
                 if (netstate.CheckNet) {
 
                     netstate.ProcessingState = true;
@@ -217,9 +226,10 @@ namespace WifiSitter
                         Console.WriteLine("{0,32} {1,48}  {2,16}  {3,7}  {4,7}", adapter.Name, adapter.Description, adapter.Nic.NetworkInterfaceType, adapter.IsConnected, adapter.IsEnabled);
                     }
                     Console.WriteLine("\n");
-
-
+                    
                     netstate.StateChecked();
+
+                    Thread.Sleep(1000);
                 }
             }            
         }
@@ -238,9 +248,20 @@ namespace WifiSitter
 
         protected override void OnStopImpl() {
             _shutdownEvent.Set();
+            _thread.Interrupt();
             if (!_thread.Join(3000)) {
                 _thread.Abort();
             }
+        }
+
+        protected override void OnPause() {
+            base.OnPause();
+            this._paused = true;
+        }
+
+        protected override void OnContinue() {
+            base.OnContinue();
+            this._paused = false;
         }
 
         #endregion // events
