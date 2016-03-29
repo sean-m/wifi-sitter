@@ -41,6 +41,8 @@ USAGE
 
         public abstract string DisplayName { get; }
 
+        public abstract string ServiceDesc { get; }
+
         public ServiceExecutionMode ServiceExecutionMode { get; private set; }
 
         protected abstract Guid UninstallGuid { get; }
@@ -167,8 +169,11 @@ USAGE
         {
             GetInstaller(".InstallLog").Install(new Hashtable());
             InstallServiceCommandLine();
+            CreateRegKeys();
             CreateUninstaller();
         }
+
+        internal abstract void CreateRegKeys();
 
         private void InstallServiceCommandLine()
         {
@@ -273,8 +278,11 @@ USAGE
         private void UninstallService()
         {
             GetInstaller(".UninstallLog").Uninstall(null);
+            RemoveRegKeys();
             RemoveUninstaller();
         }
+
+        internal abstract void RemoveRegKeys();
 
         private TransactedInstaller GetInstaller(string logExtension)
         {
@@ -285,11 +293,11 @@ USAGE
                 Account = ServiceAccount.LocalSystem
             });
 
-            ti.Installers.Add(new ServiceInstaller
-            {
+            ti.Installers.Add(new ServiceInstaller {
                 DisplayName = DisplayName,
                 ServiceName = ServiceName,
-                StartType = ServiceStartMode.Automatic
+                StartType = ServiceStartMode.Automatic,
+                Description = ServiceDesc
             });
 
             string basePath = Assembly.GetEntryAssembly().Location;
