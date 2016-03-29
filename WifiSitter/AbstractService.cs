@@ -173,7 +173,7 @@ USAGE
         private void InstallServiceCommandLine()
         {
             string keyParent = @"SYSTEM\CurrentControlSet\Services\" + ServiceName;
-            const string VALUE_NAME = "ImagePath";
+            const string VALUE_NAME = "WifiSitter";
 
             try
             {
@@ -232,8 +232,8 @@ USAGE
                         key.SetValue("Publisher", "B-Line Medical");
                         key.SetValue("DisplayIcon", exe);
                         key.SetValue("DisplayVersion", v.ToString(2));
-                        key.SetValue("URLInfoAbout", "http://www.blinemedical.com");
-                        key.SetValue("Contact", "support@blinemedical.com");
+                        key.SetValue("URLInfoAbout", "");
+                        key.SetValue("Contact", "");
                         key.SetValue("InstallDate", DateTime.Now.ToString("yyyyMMdd"));
                         key.SetValue("UninstallString", exe + " /uninstallprompt");
                     }
