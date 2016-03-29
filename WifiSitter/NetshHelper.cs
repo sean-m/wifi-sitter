@@ -33,7 +33,7 @@ namespace WifiSitter
 
 
             bool threwError = String.IsNullOrEmpty(stderr);
-            if (threwError)
+            if (!threwError)
                 return null;
 
             bool startParse = false;
