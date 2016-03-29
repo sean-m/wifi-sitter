@@ -81,9 +81,11 @@ namespace WifiSitter
 
             var nics = NetworkState.QueryNetworkAdapters();
             List<SitterNic> nicsPost;
-            var netsh = NetshHelper.GetInterfaces();
+            var netsh = NetshHelper.GetInterfaces()?.Where(x => !(nics.Select(y => y.Nic.Name).Contains(x.InterfaceName))).ToList();
 
-            var notInNetstate = netsh.Where(x => !(nics.Select(y => y.Nic.Name).Contains(x.InterfaceName))).ToList();
+            List<NetshInterface> notInNetstate = new List<NetshInterface>();
+            if (netsh != null)
+                notInNetstate.AddRange(netsh);
 
             if (notInNetstate.Count > 0) {
                 if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering disabled devices.");
@@ -105,7 +107,7 @@ namespace WifiSitter
 
                 // Update the state on UberNic objects
                 foreach (var n in nicsPost) {
-                    n.UpdateState(netsh.Where(x => x.InterfaceName == n.Name).FirstOrDefault());
+                    n.UpdateState(netsh?.Where(x => x.InterfaceName == n.Name).FirstOrDefault());
                 }
 
                 return nicsPost;
@@ -113,7 +115,7 @@ namespace WifiSitter
             
             // Detected no disabled nics, so update accordingly.
             foreach (var nic in nics) {
-                nic.UpdateState(netsh.Where(x => x.InterfaceName == nic.Nic.Name).FirstOrDefault());
+                nic.UpdateState(netsh?.Where(x => x.InterfaceName == nic.Nic.Name).FirstOrDefault());
             }
 
             return nics;
