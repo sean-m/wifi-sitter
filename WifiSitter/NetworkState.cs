@@ -15,20 +15,24 @@ namespace WifiSitter
         private bool _checkNet;
         private bool _netAvailable;
         private bool _processingState;
+        private string[] _ignoreAdapters;  // List of Nic names to ignore during normal operation
         #endregion // fields
 
 
         #region constructor
 
-        public NetworkState() {
-            this.Nics = QueryNetworkAdapters();
+        public NetworkState(string[] NicWhitelist) {
+            if (NicWhitelist == null)
+                NicWhitelist = new string[] { };
+            this.Nics = QueryNetworkAdapters(NicWhitelist);
+            _ignoreAdapters = NicWhitelist;
             Initialize();
         }
 
-        public NetworkState(List<SitterNic> Nics) {
+        public NetworkState(List<SitterNic> Nics, string[] NicWhitelist) {
             this.Nics = Nics;
+            _ignoreAdapters = NicWhitelist;
             Initialize();
-
         }
 
         private void Initialize() {
@@ -58,15 +62,13 @@ namespace WifiSitter
         public void UpdateNics(List<SitterNic> Nics) {
             this.Nics = Nics;
         }
-
-
-        internal static List<SitterNic> QueryNetworkAdapters() {
+        
+        internal static List<SitterNic> QueryNetworkAdapters(string[] WhiteList) {
             List<SitterNic> result = new List<SitterNic>();
             foreach (var n in NetworkInterface.GetAllNetworkInterfaces().Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback
                                                                                   && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel
                                                                                   && !x.Description.ToLower().Contains("bluetooth")
-                                                                                  && !x.Description.StartsWith("Microsoft Wi-Fi Direct")  // TODO make this configurable via registry
-                                                                                  && !x.Description.StartsWith("VirtualBox Host")))) {
+                                                                                  && !WhiteList.Any(y => x.Description.StartsWith(y))))) {
                 result.Add(new SitterNic(n));
             }
             return result;

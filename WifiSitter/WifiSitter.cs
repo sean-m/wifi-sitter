@@ -7,6 +7,7 @@ using System.Net.NetworkInformation;
 using System.Threading;
 using System.ServiceProcess;
 using System.Diagnostics;
+using Microsoft.Win32;
 
 namespace WifiSitter
 {
@@ -19,6 +20,7 @@ namespace WifiSitter
         private Guid _uninstGuid;
         private Thread _thread;
         private ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
+        private static string[] _ignoreNics;
         private volatile bool _paused;
 
         #endregion // fields
@@ -28,6 +30,7 @@ namespace WifiSitter
 
         public WifiSitter () : base(_serviceName) {
             _paused = false;
+            _ignoreNics = new string[] { };
             if (this.ServiceExecutionMode != ServiceExecutionMode.Console) {
                 this.AutoLog = true;
                 this.CanPauseAndContinue = true;
@@ -66,7 +69,7 @@ namespace WifiSitter
         /// <summary>
         /// Do initial nic discovery and netsh trickery
         /// </summary>
-        private static void Intialize() {
+        private void Intialize() {
             try {
                 Console.WindowWidth = 120;
             }
@@ -76,16 +79,39 @@ namespace WifiSitter
 
             // Check if there are any interfaces not detected by GetAllNetworkInterfaces()
             // That method will not show disabled interfaces
-            netstate = new NetworkState(DiscoverAllNetworkDevices(false));
-
+            _ignoreNics = ReadNicWhitelist();
+            if (_ignoreNics.Count() < 1) {
+                WriteLog(LogType.info, "No network adapter whitelist configured.");
+            }
+            netstate = new NetworkState(DiscoverAllNetworkDevices(false), _ignoreNics);            
             LogLine("Initialized...");
         }
 
+        private string[] ReadNicWhitelist() {
+            List<string> results = new List<string>();
+
+            try {
+                RegistryKey key = Registry.LocalMachine.OpenSubKey(String.Format(@"SYSTEM\CurrentControlSet\services\{0}\NicWhiteList", ServiceName), 
+                                                                   RegistryKeyPermissionCheck.ReadSubTree, 
+                                                                   System.Security.AccessControl.RegistryRights.EnumerateSubKeys);
+                if (key != null) {
+                    var names = key.GetValueNames();
+                    foreach (var n in names) {
+                        results.Add(key.GetValue(n).ToString());
+                    }
+                }
+            }
+            catch (Exception e) {
+                WriteLog(LogType.error, String.Concat("Failed reading NIC whitelist from registry. \n", e.Message));
+            }
+
+            return results.ToArray();
+        }
 
         public static List<SitterNic> DiscoverAllNetworkDevices(bool quiet = true) {
             if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering all devices.");
 
-            var nics = NetworkState.QueryNetworkAdapters();
+            var nics = NetworkState.QueryNetworkAdapters(_ignoreNics);
             List<SitterNic> nicsPost;
             var netsh = NetshHelper.GetInterfaces()?.Where(x => !(nics.Select(y => y.Nic.Name).Contains(x.InterfaceName))).ToList();
 
@@ -99,12 +125,12 @@ namespace WifiSitter
 
                 // Turn on disabled interfaces
                 foreach (var nic in disabledInterfaces) {
-                    if (!nic.InterfaceName.Contains("VirtualBox")) // TODO make this configurable via registry
+                    if (!_ignoreNics.Any(x => nic.InterfaceName.StartsWith(x)))
                         NetshHelper.EnableInterface(nic.InterfaceName);
                 }
 
                 // Query for network interfaces again
-                nicsPost = NetworkState.QueryNetworkAdapters();
+                nicsPost = NetworkState.QueryNetworkAdapters(_ignoreNics);
 
                 // Disable nics again
                 foreach (var nic in disabledInterfaces) {
@@ -296,11 +322,29 @@ namespace WifiSitter
         }
 
         internal override void CreateRegKeys() {
-            throw new NotImplementedException();
+            // HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\services\WifiSitter
+
+            RegistryKey sitterConfigKey;
+            try {
+                sitterConfigKey = Registry.LocalMachine.CreateSubKey(String.Format(@"SYSTEM\CurrentControlSet\services\{0}\NicWhiteList", ServiceName));
+                if (sitterConfigKey != null) {
+                    sitterConfigKey.SetValue("0", "Microsoft Wi-Fi Direct", RegistryValueKind.String);
+                    sitterConfigKey.SetValue("1", "VirtualBox Host", RegistryValueKind.String);
+                }
+            }
+            catch {
+                WriteLog(LogType.error, "Could not create configuration registry values!");
+            }            
         }
 
         internal override void RemoveRegKeys() {
-            throw new NotImplementedException();
+            
+            try {
+                Registry.LocalMachine.DeleteSubKeyTree(String.Format(@"SYSTEM\CurrentControlSet\services\{0}\NicWhiteList", ServiceName));
+            }
+            catch {
+                WriteLog(LogType.error, "Could not remove configuration registry values!");
+            }
         }
 
         #endregion // overrides
