@@ -33,7 +33,8 @@ namespace WifiSitter
 
 
             bool threwError = String.IsNullOrEmpty(stderr);
-            //TODO handle error condition
+            if (threwError)
+                return null;
 
             bool startParse = false;
             foreach (var line in stdout.Split(new char[] { '\r', '\n' }).Where(x => !String.IsNullOrEmpty(x)).ToArray()) {

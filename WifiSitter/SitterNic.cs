@@ -85,7 +85,7 @@ namespace WifiSitter
             // Disable interface
             int exitCode = EnableDisableInterface(false);
 
-            var netsh = NetshHelper.GetInterfaces().Where(x => x.InterfaceName == this.Name).FirstOrDefault();
+            var netsh = GetNetshInterface();
 
             if (netsh != null) {
                 this.UpdateState(netsh);
@@ -101,7 +101,7 @@ namespace WifiSitter
         public bool Enable() {
             int exitCode = EnableDisableInterface(true);
 
-            var netsh = NetshHelper.GetInterfaces().Where(x => x.InterfaceName == this.Name).FirstOrDefault();
+            var netsh = GetNetshInterface();
 
             if (netsh != null) {
                 this.UpdateState(netsh);
@@ -113,6 +113,7 @@ namespace WifiSitter
 
             return IsEnabled;
         }
+
 
         private int EnableDisableInterface(bool Enable) {
             string state = Enable ? "ENABLED" : "DISABLED";
@@ -149,6 +150,14 @@ namespace WifiSitter
             while (!proc.HasExited) { System.Threading.Thread.Sleep(100); }
 
             return proc.ExitCode == 0;
+        }
+        
+        private NetshInterface GetNetshInterface() {
+            List<NetshInterface> _netsh;
+            NetshInterface netsh = null;
+            if ((_netsh = NetshHelper.GetInterfaces()) != null)
+                netsh = _netsh.Where(x => x.InterfaceName == this.Name).FirstOrDefault();
+            return netsh;
         }
 
         #endregion // methods
