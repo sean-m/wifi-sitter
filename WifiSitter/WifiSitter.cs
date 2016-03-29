@@ -15,7 +15,9 @@ namespace WifiSitter
 
         internal static NetworkState netstate;
         private const string _serviceName = "WifiSitter";
-        private Guid _uninstGuid;        
+        private Guid _uninstGuid;
+        private Thread _thread;
+        private ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
         
         #endregion // fields
 
@@ -23,11 +25,7 @@ namespace WifiSitter
         #region constructor
 
         public WifiSitter () : base(_serviceName) {
-
-            // Provision state
-            Intialize();
-
-            Run();
+            
         }
 
         #endregion // constructor
@@ -131,13 +129,12 @@ namespace WifiSitter
         }
 
 
-        private int Run() {
+        private void WorkerThreadFunc() {
 
-            // May use this to excape loop based on events
-            bool go = true;
-
-            while (go) {
-                Thread.Sleep(1000);
+            Intialize();
+            
+            while (!_shutdownEvent.WaitOne(1000)) {
+                
 
                 if (netstate.CheckNet) {
 
@@ -196,9 +193,7 @@ namespace WifiSitter
 
                     netstate.StateChecked();
                 }
-            }
-
-            return ExitCode;
+            }            
         }
 
         #endregion // methods
@@ -207,11 +202,17 @@ namespace WifiSitter
         #region events
 
         protected override void OnStartImpl(string[] args) {
-            throw new NotImplementedException();
+            _thread = new Thread(WorkerThreadFunc);
+            _thread.Name = "WifiSitter Main Loop";
+            _thread.IsBackground = true;
+            _thread.Start();
         }
 
         protected override void OnStopImpl() {
-            throw new NotImplementedException();
+            _shutdownEvent.Set();
+            if (!_thread.Join(3000)) {
+                _thread.Abort();
+            }
         }
 
         #endregion // events
