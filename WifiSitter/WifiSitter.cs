@@ -60,7 +60,6 @@ namespace WifiSitter
                 Console.WindowWidth = 120;
             }
             catch {
-                // TODO log this
                 LogLine(ConsoleColor.Red, "Failed to resize console window.");
             }
 
@@ -69,7 +68,6 @@ namespace WifiSitter
             netstate = new NetworkState(DiscoverAllNetworkDevices(false));
 
             LogLine("Initialized...");
-            // TODO log this
         }
 
 
@@ -129,13 +127,43 @@ namespace WifiSitter
         }
 
 
+        public void WriteLog(LogType type, params string[] msg) {
+
+            if (this.ServiceExecutionMode == ServiceExecutionMode.Console) {
+                // Log to console
+                ConsoleColor color = Console.ForegroundColor;
+                switch (type) {
+                    case LogType.error:
+                        color = ConsoleColor.Red;
+                        break;
+                    case LogType.warn:
+                        color = ConsoleColor.Yellow;
+                        break;
+                    case LogType.success:
+                        color = ConsoleColor.Green;
+                        break;
+                    default:
+                        // Do nothing
+                        break;
+                }
+
+                LogLine(color, msg);
+                return;
+            }
+            else {
+                // Running as service
+                // Log to Event Viewer
+                // TODO log to event viewer
+
+            }
+        }
+
         private void WorkerThreadFunc() {
 
             Intialize();
             
             while (!_shutdownEvent.WaitOne(1000)) {
                 
-
                 if (netstate.CheckNet) {
 
                     netstate.ProcessingState = true;
@@ -148,7 +176,7 @@ namespace WifiSitter
                         if (netstate.EthernetUp) { // Ethernet is up
                             if (wifi != null) {
                                 foreach (var adapter in wifi) {
-                                    LogLine(ConsoleColor.Red, "Disable adaptor: {0,18}  {1}", adapter.Name, adapter.Description);  // TODO log this
+                                    WriteLog (LogType.warn, "Disable adaptor: {0,18}  {1}", adapter.Name, adapter.Description);
 
                                     adapter.Disable();
                                 }
@@ -163,7 +191,7 @@ namespace WifiSitter
                                                                  && x.Nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet3Megabit
                                                                  && x.Nic.NetworkInterfaceType != NetworkInterfaceType.FastEthernetT)) {
 
-                            LogLine(ConsoleColor.Yellow, "Enable adaptor: {0,18}  {1}", nic.Name, nic.Description);  //  TODO log this
+                            WriteLog (LogType.warn, "Enable adaptor: {0,18}  {1}", nic.Name, nic.Description);
 
                             bool enableResult = nic.Enable();
                             if (!enableResult) LogLine(ConsoleColor.Red, "Failed to enable NIC {0}", nic.Name);
@@ -216,5 +244,13 @@ namespace WifiSitter
         }
 
         #endregion // events
+    }
+
+    public enum LogType
+    {
+        info,
+        warn,
+        error,
+        success,
     }
 }
