@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net.NetworkInformation;
 using System.Threading;
 using System.ServiceProcess;
+using System.Diagnostics;
 
 namespace WifiSitter
 {
@@ -156,9 +157,30 @@ namespace WifiSitter
             }
             else {
                 // Running as service
-                // Log to Event Viewer
-                // TODO log to event viewer
+                // Log to Event Viewer                
+                int eventId = 1142;
+                EventLogEntryType eventType = EventLogEntryType.Information;
+                switch (type) {
+                    case LogType.error:
+                        eventType = EventLogEntryType.Error;
+                        eventId = 1143;
+                        break;
+                    case LogType.warn:
+                        eventType = EventLogEntryType.Warning;
+                        eventId = 1144;
+                        break;
+                    case LogType.success:
+                        eventType = EventLogEntryType.SuccessAudit;
+                        eventId = 1145;
+                        break;
+                    default:
+                        // Do nothing
+                        break;
+                }
+                
+                string message = msg.Length > 0 ? String.Format(msg[0], msg.Skip(1).ToArray()) : msg[0];
 
+                EventLog.WriteEntry(message, eventType, eventId);
             }
         }
 
