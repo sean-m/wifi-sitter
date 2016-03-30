@@ -80,7 +80,7 @@ namespace WifiSitter
             if (_ignoreNics.Count() < 1) {
                 WriteLog(LogType.info, "No network adapter whitelist configured.");
             }
-            netstate = new NetworkState(DiscoverAllNetworkDevices(false), _ignoreNics);            
+            netstate = new NetworkState(DiscoverAllNetworkDevices(null,false), _ignoreNics);            
             LogLine("Initialized...");
         }
 
@@ -103,16 +103,23 @@ namespace WifiSitter
             return results.ToArray();
         }
 
-        public static List<SitterNic> DiscoverAllNetworkDevices(bool quiet = true) {
+        public static List<SitterNic> DiscoverAllNetworkDevices(List<SitterNic> CurrentAdapters=null, bool quiet=false) {
             if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering all devices.");
 
-            var nics = NetworkState.QueryNetworkAdapters(_ignoreNics);
+            var nics = (CurrentAdapters == null) ? NetworkState.QueryNetworkAdapters(_ignoreNics) : CurrentAdapters;
+
             List<SitterNic> nicsPost;
             var netsh = NetshHelper.GetInterfaces();
 
             List<NetshInterface> notInNetstate = new List<NetshInterface>();
-            if (netsh != null)
-                notInNetstate.AddRange(netsh);
+
+            // Skip checking for disabled adapters we already know about
+            foreach (var n in netsh) {
+                if (!nics.Select(x => x.Name).Contains(n.InterfaceName)) {
+                    notInNetstate.Add(n);
+                }
+            }
+
 
             if (notInNetstate.Count > 0) {
                 if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering disabled devices.");
@@ -229,7 +236,7 @@ namespace WifiSitter
 
                     netstate.ProcessingState = true;
 
-                    netstate.UpdateNics(DiscoverAllNetworkDevices());
+                    netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
 
                     var wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211).Where(x => x.Nic.OperationalStatus == OperationalStatus.Up);
 
