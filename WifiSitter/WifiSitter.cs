@@ -91,9 +91,7 @@ namespace WifiSitter
             List<string> results = new List<string>();
 
             try {
-                RegistryKey key = Registry.LocalMachine.OpenSubKey(String.Format(@"SYSTEM\CurrentControlSet\services\{0}\NicWhiteList", ServiceName), 
-                                                                   RegistryKeyPermissionCheck.ReadSubTree, 
-                                                                   System.Security.AccessControl.RegistryRights.EnumerateSubKeys);
+                RegistryKey key = Registry.LocalMachine.OpenSubKey(String.Format(@"SYSTEM\CurrentControlSet\services\{0}\NicWhiteList", ServiceName), false);
                 if (key != null) {
                     var names = key.GetValueNames();
                     foreach (var n in names) {
