@@ -83,8 +83,7 @@ namespace WifiSitter
             get {
                 if (Nics == null) return false;
 
-                return Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
-                           .Any(x => x.Nic.OperationalStatus == OperationalStatus.Up);
+                return Nics.Any(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Ethernet && x.IsConnected);
             }
         }
 

@@ -238,7 +238,9 @@ namespace WifiSitter
 
                     netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
 
-                    var wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211).Where(x => x.Nic.OperationalStatus == OperationalStatus.Up);
+                    var wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                                            .Where(x => x.IsConnected)
+                                            .ToArray();
 
                     if (netstate.NetworkAvailable) { // Network available
                         if (netstate.EthernetUp) { // Ethernet is up
