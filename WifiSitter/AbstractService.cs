@@ -234,11 +234,11 @@ USAGE
 
                         key.SetValue("DisplayName", DisplayName);
                         key.SetValue("ApplicationVersion", v.ToString());
-                        key.SetValue("Publisher", "B-Line Medical");
+                        key.SetValue("Publisher", "CSS Infrastructure Operations");
                         key.SetValue("DisplayIcon", exe);
                         key.SetValue("DisplayVersion", v.ToString(2));
-                        key.SetValue("URLInfoAbout", "");
-                        key.SetValue("Contact", "");
+                        key.SetValue("URLInfoAbout", "https://github.com/sean-m/wifi-sitter");
+                        key.SetValue("Contact", "DHS Service Desk");
                         key.SetValue("InstallDate", DateTime.Now.ToString("yyyyMMdd"));
                         key.SetValue("UninstallString", exe + " /uninstallprompt");
                     }
