@@ -111,7 +111,7 @@ namespace WifiSitter
 
             var nics = NetworkState.QueryNetworkAdapters(_ignoreNics);
             List<SitterNic> nicsPost;
-            var netsh = NetshHelper.GetInterfaces()?.Where(x => !(nics.Select(y => y.Nic.Name).Contains(x.InterfaceName))).ToList();
+            var netsh = NetshHelper.GetInterfaces();
 
             List<NetshInterface> notInNetstate = new List<NetshInterface>();
             if (netsh != null)
