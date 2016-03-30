@@ -289,9 +289,9 @@ namespace WifiSitter
                     Console.WriteLine("\n");
                     
                     netstate.StateChecked();
-
-                    Thread.Sleep(1000);
                 }
+
+                Thread.Sleep(1000);
             }            
         }
 
