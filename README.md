@@ -5,7 +5,7 @@ This is born out of the need to have the wifi adapter disabled when Ethernet is
 active, seems like this should be a solved problem but there are no good free
 tools for this. Some PC vendors produce their own which provide this behavior
 but they also try to be the one stop shop for all your WiFi management needs.
-Windows does a fine time managing which hotspots you're connected to, this just
+Windows does a fine job managing which hotspots you're connected to, this just
 fills in one gap.
 
 While running the application watches for IP changed and availability changed
@@ -19,7 +19,35 @@ use of .Net and a few commands present in all standard Windows installs (not
 tested on Windows embedded).
 
 Roadmap:
-* Install as Windows service
-* Log to Windows Event Log
-* Systray Icon w/status indicator
-* Configurable NIC whitelist/blacklist
+
+-  [x] Install as Windows service
+-  [x] Log to Windows Event Log
+-  [ ] Systray Icon w/status indicator
+-  [x] Configurable NIC whitelist/blacklist
+-  [ ] Prepackaged builds
+
+## Notes
+
+Wifi-Sitter can be installed from the command line. First place the exe where
+you'd like it to stay (if you move it, the service will break), then run like
+so from an admin shell:  
+  
+`WifiSitter.exe /install`  
+  
+The service is configured to start automatically but will not be started after
+if you're automating a deployment, you'll need to run `net start wifisitter`
+or use your service starting command of choice. 
+  
+Similarly, uninstall like so:  
+  
+`WifiSitter.exe /uninstall`  
+  
+It can be run as a console application for debugging purposes by running:  
+  
+`WifiSitter.exe /console` 
+
+
+*Many thanks to Matt Davis for  [this](http://stackoverflow.com/a/4865893/977627) answer
+and Samuael Neff for [this](http://stackoverflow.com/a/12282179/977627). They helped a lot with converting to a service.*
+
+
