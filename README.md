@@ -26,7 +26,7 @@ Roadmap:
 -  [x] Configurable NIC whitelist/blacklist
 -  [ ] Prepackaged builds
 
-## Notes
+## Usage
 
 Wifi-Sitter can be installed from the command line. First place the exe where
 you'd like it to stay (if you move it, the service will break), then run like
@@ -46,6 +46,21 @@ It can be run as a console application for debugging purposes by running:
   
 `WifiSitter.exe /console` 
 
+
+## Configuration
+
+There isn't much to configure in WifiSitter but there is one tunable to configure,
+there may be some network adapters you want ignored complete, Microsoft WiFi 
+Direct for example. Network adapters are named "Ethernet" or "WiFi", names are
+too generic so the whitelist is made up of the network adapter descriptions.
+They are string values located at:
+HKLM\SYSTEM\CurrentControlSet\services\WifiSitter\NicWhiteList  
+Keys are ignored entirely, they are only used to reference the values and can be
+anything, incrementing numbers are used by default. Regular expressions were
+overkill for my needs so matching is done by a case-insensitive .StartsWith().
+Note, these values are removed when uninstalling.
+
+## Notes
 
 *Many thanks to Matt Davis for  [this](http://stackoverflow.com/a/4865893/977627) answer
 and Samuael Neff for [this](http://stackoverflow.com/a/12282179/977627). They helped a lot with converting to a service.*
