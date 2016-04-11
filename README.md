@@ -24,7 +24,7 @@ Roadmap:
 -  [x] Log to Windows Event Log
 -  [ ] Systray Icon w/status indicator
 -  [x] Configurable NIC whitelist/blacklist
--  [ ] Prepackaged builds
+-  [x] Prepackaged builds
 
 ## Usage
 
