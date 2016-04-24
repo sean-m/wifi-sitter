@@ -25,6 +25,7 @@ Roadmap:
 -  [ ] Systray Icon w/status indicator
 -  [x] Configurable NIC whitelist/blacklist
 -  [x] Prepackaged builds
+-  [ ] Network status polled from iphlpsvc.dll
 
 ## Usage
 
