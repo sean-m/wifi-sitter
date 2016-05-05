@@ -44,7 +44,7 @@ namespace WifiSitter
                 return _serviceName;
             }
         }
-        
+
         protected override Guid UninstallGuid {
             get {
                 System.Guid.TryParse("23a42c57-a16c-4b93-a5cb-60cff20c1f7a", out _uninstGuid);
@@ -80,7 +80,7 @@ namespace WifiSitter
             if (_ignoreNics.Count() < 1) {
                 WriteLog(LogType.info, "No network adapter whitelist configured.");
             }
-            netstate = new NetworkState(DiscoverAllNetworkDevices(null,false), _ignoreNics);            
+            netstate = new NetworkState(DiscoverAllNetworkDevices(null,false), _ignoreNics);
             LogLine("Initialized...");
         }
 
@@ -158,7 +158,7 @@ namespace WifiSitter
 
             return nics;
         }
-        
+
         public static void LogLine(params string[] msg) {
             LogLine(ConsoleColor.White, msg);
         }
@@ -198,7 +198,7 @@ namespace WifiSitter
             }
             else {
                 // Running as service
-                // Log to Event Viewer                
+                // Log to Event Viewer
                 int eventId = 1142;
                 EventLogEntryType eventType = EventLogEntryType.Information;
                 switch (type) {
@@ -218,7 +218,7 @@ namespace WifiSitter
                         // Do nothing
                         break;
                 }
-                
+
                 string message = msg.Length > 0 ? String.Format(msg[0], msg.Skip(1).ToArray()) : msg[0];
 
                 EventLog.WriteEntry(message, eventType, eventId);
@@ -228,7 +228,7 @@ namespace WifiSitter
         private void WorkerThreadFunc() {
 
             Intialize();
-            
+
             while (!_shutdownEvent.WaitOne(0)) {
 
                 if (_paused) {
@@ -288,15 +288,19 @@ namespace WifiSitter
                     Console.Write("\n");
                     Console.WriteLine("{0,32} {1,48}  {2,16}  {3}  {4}\n", "Name", "Description", "Type", "Connected", "Enabled");
                     foreach (var adapter in netstate.Nics) {
-                        Console.WriteLine("{0,32} {1,48}  {2,16}  {3,7}  {4,7}", adapter.Name, adapter.Description, adapter.Nic.NetworkInterfaceType, adapter.IsConnected, adapter.IsEnabled);
+                        Console.WriteLine("{0,32} {1,48}  {2,16}  {3,7}  {4,7}", adapter.Name,
+                                                                                 adapter.Description,
+                                                                                 adapter.Nic.NetworkInterfaceType,
+                                                                                 adapter.IsConnected,
+                                                                                 adapter.IsEnabled);
                     }
                     Console.WriteLine("\n");
-                    
+
                     netstate.StateChecked();
                 }
 
                 Thread.Sleep(1000);
-            }            
+            }
         }
 
         #endregion // methods
@@ -342,11 +346,11 @@ namespace WifiSitter
             }
             catch {
                 WriteLog(LogType.error, "Could not create configuration registry values!");
-            }            
+            }
         }
 
         internal override void RemoveRegKeys() {
-            
+
             try {
                 Registry.LocalMachine.DeleteSubKeyTree(String.Format(@"SYSTEM\CurrentControlSet\services\{0}\NicWhiteList", ServiceName));
             }
