@@ -115,7 +115,7 @@ namespace WifiSitter
 
             // Skip checking for disabled adapters we already know about
             foreach (var n in netsh) {
-                if (!nics.Select(x => x.Name).Contains(n.InterfaceName)) {
+                if (!nics.Any(x => x.Name == n.InterfaceName)) {
                     notInNetstate.Add(n);
                 }
             }
@@ -123,8 +123,10 @@ namespace WifiSitter
 
             if (notInNetstate.Count > 0) {
                 if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering disabled devices.");
-                var disabledInterfaces = notInNetstate.Where(x => x.AdminState == "Disabled").ToArray();
-
+                var disabledInterfaces = notInNetstate.Where(x => x.AdminState == "Disabled")
+                                                      .Where(x => !nics.Any(y => y.Name == x.InterfaceName)) // Ignore nics we already know about
+                                                      .ToArray();
+                
                 // Turn on disabled interfaces
                 foreach (var nic in disabledInterfaces) {
                     if (!_ignoreNics.Any(x => nic.InterfaceName.StartsWith(x)))
@@ -138,15 +140,17 @@ namespace WifiSitter
                 foreach (var nic in disabledInterfaces) {
                     NetshHelper.DisableInterface(nic.InterfaceName);
                 }
+                
+                nics?.AddRange(nicsPost.Where(x => !nics.Any(y => y.Name == x.Name)));
 
-                // Update the state on UberNic objects
-                foreach (var n in nicsPost) {
+                // Update the state on SitterNic objects
+                foreach (var n in nics) {
                     n.UpdateState(netsh?.Where(x => x.InterfaceName == n.Name).FirstOrDefault());
                 }
 
-                return nicsPost;
+                return nics;
             }
-            
+
             // Detected no disabled nics, so update accordingly.
             foreach (var nic in nics) {
                 nic.UpdateState(netsh?.Where(x => x.InterfaceName == nic.Nic.Name).FirstOrDefault());
