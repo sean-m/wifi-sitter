@@ -323,7 +323,6 @@ namespace WifiSitter
 
         protected override void OnStopImpl() {
             _shutdownEvent.Set();
-            _thread.Interrupt();
             if (!_thread.Join(3000)) {
                 _thread.Abort();
             }
