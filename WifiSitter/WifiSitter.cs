@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
+using System.Reflection;
 
 namespace WifiSitter
 {
@@ -73,6 +74,11 @@ namespace WifiSitter
             catch {
                 LogLine(ConsoleColor.Red, "Failed to resize console window.");
             }
+
+            //Show Version
+            Assembly asm = GetType().Assembly;
+            Version v = asm.GetName().Version;
+            LogLine("Version: {0}", v.ToString());
 
             // Check if there are any interfaces not detected by GetAllNetworkInterfaces()
             // That method will not show disabled interfaces
