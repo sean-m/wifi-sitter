@@ -234,7 +234,7 @@ USAGE
 
                         key.SetValue("DisplayName", DisplayName);
                         key.SetValue("ApplicationVersion", v.ToString());
-                        key.SetValue("Publisher", "CSS Infrastructure Operations");
+                        key.SetValue("Publisher", "Sean McArdle");
                         key.SetValue("DisplayIcon", exe);
                         key.SetValue("DisplayVersion", v.ToString(2));
                         key.SetValue("URLInfoAbout", "https://github.com/sean-m/wifi-sitter");
