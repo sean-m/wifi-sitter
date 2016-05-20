@@ -1,0 +1,19 @@
+﻿- Class Regions -
+
+#region fields
+#endregion // fields
+
+#region constructor
+#endregion // constructor
+
+#region properties
+#endregion // properties
+
+#region methods
+#endregion // methods
+
+#region commands
+#endregion // commands
+
+#region events
+#endregion // events
