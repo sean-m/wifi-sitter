@@ -12,22 +12,16 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using WifiSitterConfig.ViewModel;
 
-namespace WifiSitterConfig
+namespace WifiSitterConfig.View
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for InterfaceStatus.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class InterfaceStatus : UserControl
     {
-        private MainWindowViewModel ctx;
-        public MainWindow() {
+        public InterfaceStatus() {
             InitializeComponent();
-
-            // This ViewModel binding is only done in code behind for the main window.
-            ctx = new MainWindowViewModel();
-            this.DataContext = ctx;
         }
     }
 }

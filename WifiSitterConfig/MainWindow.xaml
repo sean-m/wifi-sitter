@@ -5,7 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WifiSitterConfig"
         mc:Ignorable="d"
+        xmlns:viewmodel="clr-namespace:WifiSitterConfig.ViewModel"
+        xmlns:view="clr-namespace:WifiSitterConfig.View"
         Title="MainWindow" Height="350" Width="525">
+    
+    <Window.Resources>
+        <!-- View / ViewModel Bindings -->
+        <DataTemplate DataType="{x:Type viewmodel:InterfaceStatusViewModel}">
+            <view:InterfaceStatus />
+        </DataTemplate>
+        
+    </Window.Resources>
+    
     <Grid>
         
     </Grid>
