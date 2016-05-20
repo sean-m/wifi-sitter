@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using WifiSitterConfig.Helper;
 
 namespace WifiSitterConfig.ViewModel
 {
@@ -12,6 +14,8 @@ namespace WifiSitterConfig.ViewModel
 
         private InterfaceStatusViewModel _statusView;
         private ConfigViewModel _configView;
+        private RelayCommand _showAbout;
+        private static About _aboutWindow;
 
         #endregion // fields
 
@@ -50,6 +54,28 @@ namespace WifiSitterConfig.ViewModel
         #endregion // methods
 
         #region commands
+
+        public ICommand ShowAbout {
+            get {
+                if (_showAbout == null) {
+                    _showAbout = new WifiSitterConfig.Helper.RelayCommand(
+                        () => {
+                            if (_aboutWindow == null) {
+                                _aboutWindow = new About();
+                                _aboutWindow.Show();
+                                _aboutWindow.Closed += (o, e) => { _aboutWindow = null; };
+                            }
+                            else {
+                                try { _aboutWindow.Activate(); }
+                                catch { /* This can fail in strange edge cases and it doesn't really matter */}
+                            }
+                        });
+                }
+
+                return _showAbout;
+            }
+        }
+
         #endregion // commands
 
         #region events

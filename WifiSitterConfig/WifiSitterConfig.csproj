@@ -55,6 +55,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="About.xaml.cs">
+      <DependentUpon>About.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Helper\Interop.cs" />
     <Compile Include="Helper\NativeWifi.cs" />
     <Compile Include="ViewModel\ConfigViewModel.cs" />
@@ -67,6 +70,10 @@
     <Compile Include="View\InterfaceStatus.xaml.cs">
       <DependentUpon>InterfaceStatus.xaml</DependentUpon>
     </Compile>
+    <Page Include="About.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

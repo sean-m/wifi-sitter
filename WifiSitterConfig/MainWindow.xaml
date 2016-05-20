@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         xmlns:viewmodel="clr-namespace:WifiSitterConfig.ViewModel"
         xmlns:view="clr-namespace:WifiSitterConfig.View"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="600" Width="525">
     
     <Window.Resources>
         <!-- View / ViewModel Bindings -->
@@ -22,23 +22,26 @@
     </Window.Resources>
     
     <Grid>
+        
+        <!-- Toolbox Tabs -->
         <TabControl>
-            <TabItem Header="Status">
+            <TabItem Header="Status" FontSize="16">
                 <ContentControl Content="{Binding StatusViewModel}"
                                 HorizontalContentAlignment="Stretch"
                                 VerticalContentAlignment="Stretch"/>
             </TabItem>
             
-            <TabItem Header="Configuration">
+            <TabItem Header="Configuration" FontSize="16">
                 <ContentControl Content="{Binding ConfigViewModel}"
                                 HorizontalContentAlignment="Stretch"
                                 VerticalContentAlignment="Stretch"/>
             </TabItem>
         </TabControl>
         
-        
+        <!-- About Button -->
         <Button HorizontalAlignment="Right"
                 VerticalAlignment="Top"
+                Command="{Binding ShowAbout}"
                 Margin="2">
             About
         </Button>
