@@ -2,7 +2,7 @@
 
 namespace WifiSitterConfig.ViewModel
 {
-    public class MvvmObservable : INotifyPropertyChanged, INotifyPropertyChanging
+    public abstract class MvvmObservable : INotifyPropertyChanged, INotifyPropertyChanging
     {
         #region INotifyPropertyChanging Members
 
