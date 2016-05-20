@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="WifiSitterConfig.View.InterfaceStatus"
+﻿<UserControl x:Class="WifiSitterConfig.View.Configuration"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -7,6 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
-        <Label> Interface Status View </Label>
+        <Label>Configuration View</Label>
     </Grid>
 </UserControl>

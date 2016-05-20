@@ -57,8 +57,13 @@
     </ApplicationDefinition>
     <Compile Include="Helper\Interop.cs" />
     <Compile Include="Helper\NativeWifi.cs" />
+    <Compile Include="ViewModel\ConfigViewModel.cs" />
     <Compile Include="ViewModel\InterfaceStatusViewModel.cs" />
+    <Compile Include="ViewModel\MainWindowViewModel.cs" />
     <Compile Include="ViewModel\MvvmObservable.cs" />
+    <Compile Include="View\Configuration.xaml.cs">
+      <DependentUpon>Configuration.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\InterfaceStatus.xaml.cs">
       <DependentUpon>InterfaceStatus.xaml</DependentUpon>
     </Compile>
@@ -84,6 +89,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="View\Configuration.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\InterfaceStatus.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

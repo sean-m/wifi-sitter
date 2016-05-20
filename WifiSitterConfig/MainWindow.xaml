@@ -14,10 +14,33 @@
         <DataTemplate DataType="{x:Type viewmodel:InterfaceStatusViewModel}">
             <view:InterfaceStatus />
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type viewmodel:ConfigViewModel}">
+            <view:Configuration/>
+        </DataTemplate>
         
     </Window.Resources>
     
     <Grid>
+        <TabControl>
+            <TabItem Header="Status">
+                <ContentControl Content="{Binding StatusViewModel}"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Stretch"/>
+            </TabItem>
+            
+            <TabItem Header="Configuration">
+                <ContentControl Content="{Binding ConfigViewModel}"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Stretch"/>
+            </TabItem>
+        </TabControl>
         
+        
+        <Button HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="2">
+            About
+        </Button>
     </Grid>
 </Window>

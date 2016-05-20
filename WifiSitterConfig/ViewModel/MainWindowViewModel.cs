@@ -9,6 +9,10 @@ namespace WifiSitterConfig.ViewModel
     class MainWindowViewModel : MvvmObservable
     {
         #region fields
+
+        private InterfaceStatusViewModel _statusView;
+        private ConfigViewModel _configView;
+
         #endregion // fields
 
         #region constructor
@@ -20,6 +24,26 @@ namespace WifiSitterConfig.ViewModel
         #endregion // constructor
 
         #region properties
+
+        public InterfaceStatusViewModel StatusViewModel {
+            get {
+                if (_statusView == null) {
+                    _statusView = new InterfaceStatusViewModel();
+                }
+                return _statusView;
+            }
+        }
+
+
+        public ConfigViewModel ConfigViewModel {
+            get {
+                if (_configView == null) {
+                    _configView = new ConfigViewModel();
+                }
+                return _configView;
+            }
+        }
+
         #endregion // properties
 
         #region methods
