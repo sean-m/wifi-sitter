@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Windows.Input;
 
-namespace WifiSitterConfig.Helper
+namespace WifiSitterToolbox.Helper
 {
     /// <summary>
     /// A command whose sole purpose is to 

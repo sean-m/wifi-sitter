@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace WifiSitterConfig.View
+namespace WifiSitterToolbox.View
 {
     /// <summary>
     /// Interaction logic for InterfaceStatus.xaml

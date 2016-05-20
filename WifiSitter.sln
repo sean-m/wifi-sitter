@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiSitter", "WifiSitter\WifiSitter.csproj", "{B3A5D84A-C7A0-409D-881D-1D5FF36773D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiSitterConfig", "WifiSitterConfig\WifiSitterConfig.csproj", "{BF01E7C8-33A6-4D00-97F4-63EAA7D7CA0B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiSitterToolbox", "WifiSitterConfig\WifiSitterToolbox.csproj", "{BF01E7C8-33A6-4D00-97F4-63EAA7D7CA0B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,8 +36,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		BuildVersion_StartDate = 2000/1/1
-		BuildVersion_BuildVersioningStyle = None.None.Increment.Increment
 		BuildVersion_UpdateFileVersion = True
+		BuildVersion_BuildVersioningStyle = None.None.Increment.Increment
+		BuildVersion_StartDate = 2000/1/1
 	EndGlobalSection
 EndGlobal

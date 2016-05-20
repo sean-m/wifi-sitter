@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace WifiSitterConfig.Properties
+namespace WifiSitterToolbox.Properties
 {
 
 

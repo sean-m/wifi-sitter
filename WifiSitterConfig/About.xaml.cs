@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace WifiSitterConfig
+namespace WifiSitterToolbox
 {
     /// <summary>
     /// Interaction logic for About.xaml

@@ -12,9 +12,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using WifiSitterConfig.ViewModel;
+using WifiSitterToolbox.ViewModel;
 
-namespace WifiSitterConfig
+namespace WifiSitterToolbox
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

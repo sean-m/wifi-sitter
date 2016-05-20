@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace WifiSitterConfig.ViewModel
+namespace WifiSitterToolbox.ViewModel
 {
     public abstract class MvvmObservable : INotifyPropertyChanged, INotifyPropertyChanging
     {

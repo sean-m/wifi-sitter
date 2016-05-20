@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using WifiSitterConfig.Helper;
+using WifiSitterToolbox.Helper;
 
-namespace WifiSitterConfig.ViewModel
+namespace WifiSitterToolbox.ViewModel
 {
     class MainWindowViewModel : MvvmObservable
     {
@@ -58,7 +58,7 @@ namespace WifiSitterConfig.ViewModel
         public ICommand ShowAbout {
             get {
                 if (_showAbout == null) {
-                    _showAbout = new WifiSitterConfig.Helper.RelayCommand(
+                    _showAbout = new WifiSitterToolbox.Helper.RelayCommand(
                         () => {
                             if (_aboutWindow == null) {
                                 _aboutWindow = new About();

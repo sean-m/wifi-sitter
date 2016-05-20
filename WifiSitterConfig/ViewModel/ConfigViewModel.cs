@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WifiSitterConfig.ViewModel
+namespace WifiSitterToolbox.ViewModel
 {
     class ConfigViewModel : MvvmObservable
     {

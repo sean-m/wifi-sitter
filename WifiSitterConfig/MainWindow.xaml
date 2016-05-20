@@ -1,12 +1,12 @@
-﻿<Window x:Class="WifiSitterConfig.MainWindow"
+﻿<Window x:Class="WifiSitterToolbox.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WifiSitterConfig"
+        xmlns:local="clr-namespace:WifiSitterToolbox"
         mc:Ignorable="d"
-        xmlns:viewmodel="clr-namespace:WifiSitterConfig.ViewModel"
-        xmlns:view="clr-namespace:WifiSitterConfig.View"
+        xmlns:viewmodel="clr-namespace:WifiSitterToolbox.ViewModel"
+        xmlns:view="clr-namespace:WifiSitterToolbox.View"
         Title="MainWindow" Height="600" Width="525">
     
     <Window.Resources>
