@@ -65,10 +65,11 @@ namespace WifiSitter
         
         internal static List<SitterNic> QueryNetworkAdapters(string[] WhiteList) {
             List<SitterNic> result = new List<SitterNic>();
+            var _whitelist = WhiteList ?? new string[] { };
             foreach (var n in NetworkInterface.GetAllNetworkInterfaces().Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback
                                                                                   && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel
                                                                                   && !x.Description.ToLower().Contains("bluetooth")
-                                                                                  && !WhiteList.Any(y => x.Description.StartsWith(y))))) {
+                                                                                  && !_whitelist.Any(y => x.Description.StartsWith(y))))) {
                 result.Add(new SitterNic(n));
             }
             return result;

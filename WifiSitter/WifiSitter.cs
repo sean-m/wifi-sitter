@@ -190,7 +190,7 @@ namespace WifiSitter
 
                     netstate.ProcessingState = true;
 
-                    netstate.UpdateNics(NetshHelper.DiscoverAllNetworkDevices(netstate.Nics));
+                    netstate.UpdateNics(NetshHelper.DiscoverAllNetworkDevices(netstate.Nics, _ignoreNics));
 
                     var wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
                                             .Where(x => x.IsConnected)
