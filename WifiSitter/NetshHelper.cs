@@ -112,6 +112,72 @@ namespace WifiSitter
 
             return proc.ExitCode == 0;
         }
+
+
+        public static List<SitterNic> DiscoverAllNetworkDevices(List<SitterNic> CurrentAdapters = null, string[] IgnoreNics = null, bool quiet = false) {
+            if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering all devices.");
+
+            var nics = (CurrentAdapters == null) ? NetworkState.QueryNetworkAdapters(IgnoreNics) : CurrentAdapters;
+
+            List<SitterNic> nicsPost;
+            var netsh = NetshHelper.GetInterfaces();
+
+            List<NetshInterface> notInNetstate = new List<NetshInterface>();
+
+            // Skip checking for disabled adapters we already know about
+            foreach (var n in netsh) {
+                if (!nics.Any(x => x.Name == n.InterfaceName)) {
+                    notInNetstate.Add(n);
+                }
+            }
+
+
+            if (notInNetstate.Count > 0) {
+                if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering disabled devices.");
+                var disabledInterfaces = notInNetstate.Where(x => x.AdminState == "Disabled")
+                                                      .Where(x => !nics.Any(y => y.Name == x.InterfaceName)) // Ignore nics we already know about
+                                                      .ToArray();
+
+                // Turn on disabled interfaces
+                foreach (var nic in disabledInterfaces) {
+                    if (!IgnoreNics.Any(x => nic.InterfaceName.StartsWith(x)))
+                        NetshHelper.EnableInterface(nic.InterfaceName);
+                }
+
+                // Query for network interfaces again
+                nicsPost = NetworkState.QueryNetworkAdapters(IgnoreNics);
+
+                // Disable nics again
+                foreach (var nic in disabledInterfaces) {
+                    NetshHelper.DisableInterface(nic.InterfaceName);
+                }
+
+                nics?.AddRange(nicsPost.Where(x => !nics.Any(y => y.Name == x.Name)));
+
+                // Update the state on SitterNic objects
+                foreach (var n in nics) {
+                    n.UpdateState(netsh?.Where(x => x.InterfaceName == n.Name).FirstOrDefault());
+                }
+
+                return nics;
+            }
+
+            // Detected no disabled nics, so update accordingly.
+            foreach (var nic in nics) {
+                nic.UpdateState(netsh?.Where(x => x.InterfaceName == nic.Nic.Name).FirstOrDefault());
+            }
+
+            return nics;
+        }
+
+        public static void LogLine(ConsoleColor color, params string[] msg) {
+            if (msg.Length == 0) return;
+            string log = msg.Length > 0 ? String.Format(msg[0], msg.Skip(1).ToArray()) : msg[0];
+            Console.Write(DateTime.Now.ToString());
+            Console.ForegroundColor = color;
+            Console.WriteLine("  {0}", log);
+            Console.ResetColor();
+        }
     }
 
     public sealed class NetshInterface

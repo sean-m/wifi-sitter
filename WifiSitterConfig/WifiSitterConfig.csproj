@@ -37,6 +37,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -79,7 +80,7 @@
       <SubType>Designer</SubType>
     </Page>
     <Compile Include="..\WifiSitter\NetshHelper.cs">
-      <Link>Model\NetshHelper.cs</Link>
+      <Link>Helper\NetshHelper.cs</Link>
     </Compile>
     <Compile Include="..\WifiSitter\NetworkState.cs">
       <Link>Model\NetworkState.cs</Link>
@@ -136,6 +137,11 @@
     <Resource Include="Notes.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties BuildVersion_DetectChanges="False" BuildVersion_IncrementBeforeBuild="False" BuildVersion_StartDate="2000/1/1" />
+    </VisualStudio>
+  </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -86,7 +86,7 @@ namespace WifiSitter
             if (_ignoreNics.Count() < 1) {
                 WriteLog(LogType.info, "No network adapter whitelist configured.");
             }
-            netstate = new NetworkState(DiscoverAllNetworkDevices(null,false), _ignoreNics);
+            netstate = new NetworkState(NetshHelper.DiscoverAllNetworkDevices(null, _ignoreNics, false), _ignoreNics);
             LogLine("Initialized...");
         }
 
@@ -108,63 +108,7 @@ namespace WifiSitter
 
             return results.ToArray();
         }
-
-        public static List<SitterNic> DiscoverAllNetworkDevices(List<SitterNic> CurrentAdapters=null, bool quiet=false) {
-            if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering all devices.");
-
-            var nics = (CurrentAdapters == null) ? NetworkState.QueryNetworkAdapters(_ignoreNics) : CurrentAdapters;
-
-            List<SitterNic> nicsPost;
-            var netsh = NetshHelper.GetInterfaces();
-
-            List<NetshInterface> notInNetstate = new List<NetshInterface>();
-
-            // Skip checking for disabled adapters we already know about
-            foreach (var n in netsh) {
-                if (!nics.Any(x => x.Name == n.InterfaceName)) {
-                    notInNetstate.Add(n);
-                }
-            }
-
-
-            if (notInNetstate.Count > 0) {
-                if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering disabled devices.");
-                var disabledInterfaces = notInNetstate.Where(x => x.AdminState == "Disabled")
-                                                      .Where(x => !nics.Any(y => y.Name == x.InterfaceName)) // Ignore nics we already know about
-                                                      .ToArray();
-                
-                // Turn on disabled interfaces
-                foreach (var nic in disabledInterfaces) {
-                    if (!_ignoreNics.Any(x => nic.InterfaceName.StartsWith(x)))
-                        NetshHelper.EnableInterface(nic.InterfaceName);
-                }
-
-                // Query for network interfaces again
-                nicsPost = NetworkState.QueryNetworkAdapters(_ignoreNics);
-
-                // Disable nics again
-                foreach (var nic in disabledInterfaces) {
-                    NetshHelper.DisableInterface(nic.InterfaceName);
-                }
-                
-                nics?.AddRange(nicsPost.Where(x => !nics.Any(y => y.Name == x.Name)));
-
-                // Update the state on SitterNic objects
-                foreach (var n in nics) {
-                    n.UpdateState(netsh?.Where(x => x.InterfaceName == n.Name).FirstOrDefault());
-                }
-
-                return nics;
-            }
-
-            // Detected no disabled nics, so update accordingly.
-            foreach (var nic in nics) {
-                nic.UpdateState(netsh?.Where(x => x.InterfaceName == nic.Nic.Name).FirstOrDefault());
-            }
-
-            return nics;
-        }
-
+        
         public static void LogLine(params string[] msg) {
             LogLine(ConsoleColor.White, msg);
         }
@@ -246,7 +190,7 @@ namespace WifiSitter
 
                     netstate.ProcessingState = true;
 
-                    netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
+                    netstate.UpdateNics(NetshHelper.DiscoverAllNetworkDevices(netstate.Nics));
 
                     var wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
                                             .Where(x => x.IsConnected)
