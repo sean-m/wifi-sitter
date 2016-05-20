@@ -347,6 +347,7 @@ namespace WifiSitter
                 if (sitterConfigKey != null) {
                     sitterConfigKey.SetValue("0", "Microsoft Wi-Fi Direct", RegistryValueKind.String);
                     sitterConfigKey.SetValue("1", "VirtualBox Host", RegistryValueKind.String);
+                    sitterConfigKey.SetValue("2", "VMware Network Adapter", RegistryValueKind.String);
                 }
             }
             catch {
