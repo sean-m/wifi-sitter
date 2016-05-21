@@ -10,13 +10,15 @@ namespace WifiSitterToolbox.ViewModel
     class InterfaceStatusViewModel : MvvmObservable
     {
         #region fields
+        private static string[] _ignoreNics;
         private static WifiSitter.NetworkState _netState;
         #endregion // fields
 
         #region constructor
 
         public InterfaceStatusViewModel () {
-            _netState = new WifiSitter.NetworkState(WifiSitter.NetshHelper.DiscoverAllNetworkDevices(), ReadNicWhitelist());
+            _ignoreNics = ReadNicWhitelist();
+            _netState = new WifiSitter.NetworkState(WifiSitter.NetshHelper.DiscoverAllNetworkDevices(null, _ignoreNics, true), _ignoreNics);
         }
 
         #endregion // constructor
@@ -38,7 +40,7 @@ namespace WifiSitterToolbox.ViewModel
                     }
                 }
             }
-            catch (Exception e) {
+            catch {
                 //TODO reimplement this in the gui: WriteLog(LogType.error, String.Concat("Failed reading NIC whitelist from registry. \n", e.Message));
             }
 
