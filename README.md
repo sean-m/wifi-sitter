@@ -66,4 +66,4 @@ Note, these values are removed when uninstalling.
 *Many thanks to Matt Davis for  [this](http://stackoverflow.com/a/4865893/977627) answer
 and Samuael Neff for [this](http://stackoverflow.com/a/12282179/977627). They helped a lot with converting to a service.*
 
-
+This repository is mirrored on my site, [here](https://mcardletech.com/git/sean-m/wifi-sitter).
