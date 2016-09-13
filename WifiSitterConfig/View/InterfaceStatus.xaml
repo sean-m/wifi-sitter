@@ -8,5 +8,14 @@
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
         <Label> Interface Status View </Label>
+
+        <Expander ExpandDirection="Up" 
+                  Header="Status Log"
+                  >
+            
+            <ListView ItemsSource="{Binding Path=StatusLog}"
+                      FontFamily="Lucida Console"
+                      FontSize="11"/>
+        </Expander>
     </Grid>
 </UserControl>

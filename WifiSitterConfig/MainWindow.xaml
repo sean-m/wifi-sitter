@@ -41,7 +41,7 @@
         <!-- About Button -->
         <Button HorizontalAlignment="Right"
                 VerticalAlignment="Top"
-                Command="{Binding ShowAbout}"
+                Click="About_Button_Click"
                 Margin="2">
             About
         </Button>

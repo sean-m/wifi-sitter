@@ -60,15 +60,7 @@ namespace WifiSitterToolbox.ViewModel
                 if (_showAbout == null) {
                     _showAbout = new WifiSitterToolbox.Helper.RelayCommand(
                         () => {
-                            if (_aboutWindow == null) {
-                                _aboutWindow = new About();
-                                _aboutWindow.Show();
-                                _aboutWindow.Closed += (o, e) => { _aboutWindow = null; };
-                            }
-                            else {
-                                try { _aboutWindow.Activate(); }
-                                catch { /* This can fail in strange edge cases and it doesn't really matter */}
-                            }
+                            
                         });
                 }
 
