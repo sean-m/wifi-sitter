@@ -33,6 +33,8 @@ namespace WifiSitter
                 this.AutoLog = true;
                 this.CanPauseAndContinue = true;
             }
+            
+            Intialize();
         }
 
         #endregion // constructor
@@ -119,7 +121,7 @@ namespace WifiSitter
 
             List<NetshInterface> notInNetstate = new List<NetshInterface>();
 
-            // Skip checking for disabled adapters we already know about
+            // Only check disabled adapters we don't already know about
             foreach (var n in netsh) {
                 if (!nics.Any(x => x.Name == n.InterfaceName)) {
                     notInNetstate.Add(n);
@@ -177,8 +179,7 @@ namespace WifiSitter
             Console.WriteLine("  {0}", log);
             Console.ResetColor();
         }
-
-
+        
         public void WriteLog(LogType type, params string[] msg) {
 
             if (this.ServiceExecutionMode == ServiceExecutionMode.Console) {
@@ -232,9 +233,7 @@ namespace WifiSitter
         }
 
         private void WorkerThreadFunc() {
-
-            Intialize();
-
+            
             while (!_shutdownEvent.WaitOne(0)) {
 
                 if (_paused) {
@@ -309,6 +308,20 @@ namespace WifiSitter
             }
         }
 
+        private void ResetNicState (NetworkState netstate) {
+            foreach (var n in netstate.OriginalNicState) {
+                var id   = n[0];
+                var stat = n[1];
+                SitterNic now = netstate.Nics.Where(x => x.Id == id).FirstOrDefault();
+                if (now != null) {
+                    if (stat.ToLower() != now.IsEnabled.ToString().ToLower()) {
+                        if (stat == true.ToString()) now.Enable();
+                        else now.Disable();
+                    }
+                }
+            }
+        }
+
         #endregion // methods
 
 
@@ -322,6 +335,7 @@ namespace WifiSitter
         }
 
         protected override void OnStopImpl() {
+            ResetNicState(netstate);
             _shutdownEvent.Set();
             if (!_thread.Join(3000)) {
                 _thread.Abort();

@@ -8,14 +8,14 @@ namespace WifiSitter
     /// <summary>
     /// Class used to track state of detected network adapters
     /// </summary>
-    public class NetworkState
-    {
+    public class NetworkState {
         #region fields
         private List<SitterNic> _nics;
         private bool _checkNet;
         private bool _netAvailable;
         private bool _processingState;
         private string[] _ignoreAdapters;  // List of Nic names to ignore during normal operation
+        private List<string[]> _originalNicState = new List<string[]>();
         #endregion // fields
 
 
@@ -25,12 +25,20 @@ namespace WifiSitter
             if (NicWhitelist == null)
                 NicWhitelist = new string[] { };
             this.Nics = QueryNetworkAdapters(NicWhitelist);
+
+            // Loop through nics and add id:state to _originalNicState list
+            Nics.ForEach(x => _originalNicState.Add(new string[] { x.Id, x.IsEnabled.ToString() }));
+
             _ignoreAdapters = NicWhitelist;
             Initialize();
         }
 
         public NetworkState(List<SitterNic> Nics, string[] NicWhitelist) {
             this.Nics = Nics;
+
+            // Loop through nics and add id:state to _originalNicState list
+            Nics.ForEach(x => _originalNicState.Add(new string[] { x.Id, x.IsEnabled.ToString() }));
+
             _ignoreAdapters = NicWhitelist;
             Initialize();
         }
@@ -60,9 +68,13 @@ namespace WifiSitter
         }
 
         public void UpdateNics(List<SitterNic> Nics) {
+            foreach (var n in Nics) {
+                if (!_originalNicState.Any(x => x[0] == n.Id)) _originalNicState.Add(new string[] { n.Id, n.IsEnabled.ToString() });
+            }
+
             this.Nics = Nics;
         }
-        
+
         internal static List<SitterNic> QueryNetworkAdapters(string[] WhiteList) {
             List<SitterNic> result = new List<SitterNic>();
             foreach (var n in NetworkInterface.GetAllNetworkInterfaces().Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback
@@ -95,6 +107,9 @@ namespace WifiSitter
             private set { _nics = value; }
         }
 
+        public List<string[]> OriginalNicState {
+            get { return _originalNicState; }
+        }
 
         public bool CheckNet {
             get { return _checkNet; }
