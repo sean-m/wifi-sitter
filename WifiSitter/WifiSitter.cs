@@ -7,6 +7,8 @@ using System.Net.NetworkInformation;
 using System.Threading;
 using System.Reflection;
 
+using WifiSitter.Helpers;
+
 namespace WifiSitter
 {
     public class WifiSitter : AbstractService
@@ -111,12 +113,12 @@ namespace WifiSitter
             return results.ToArray();
         }
 
-        public static List<SitterNic> DiscoverAllNetworkDevices(List<SitterNic> CurrentAdapters=null, bool quiet=false) {
+        public static List<TrackedNic> DiscoverAllNetworkDevices(List<TrackedNic> CurrentAdapters=null, bool quiet=false) {
             if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering all devices.");
 
             var nics = (CurrentAdapters == null) ? NetworkState.QueryNetworkAdapters(_ignoreNics) : CurrentAdapters;
 
-            List<SitterNic> nicsPost;
+            List<TrackedNic> nicsPost;
             var netsh = NetshHelper.GetInterfaces();
 
             List<NetshInterface> notInNetstate = new List<NetshInterface>();
@@ -312,7 +314,7 @@ namespace WifiSitter
             foreach (var n in netstate.OriginalNicState) {
                 var id   = n[0];
                 var stat = n[1];
-                SitterNic now = netstate.Nics.Where(x => x.Id == id).FirstOrDefault();
+                TrackedNic now = netstate.Nics.Where(x => x.Id == id).FirstOrDefault();
                 if (now != null) {
                     if (stat.ToLower() != now.IsEnabled.ToString().ToLower()) {
                         if (stat == true.ToString()) now.Enable();

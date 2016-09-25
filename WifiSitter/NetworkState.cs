@@ -10,7 +10,7 @@ namespace WifiSitter
     /// </summary>
     public class NetworkState {
         #region fields
-        private List<SitterNic> _nics;
+        private List<TrackedNic> _nics;
         private bool _checkNet;
         private bool _netAvailable;
         private bool _processingState;
@@ -33,7 +33,7 @@ namespace WifiSitter
             Initialize();
         }
 
-        public NetworkState(List<SitterNic> Nics, string[] NicWhitelist) {
+        public NetworkState(List<TrackedNic> Nics, string[] NicWhitelist) {
             this.Nics = Nics;
 
             // Loop through nics and add id:state to _originalNicState list
@@ -67,7 +67,7 @@ namespace WifiSitter
             this.ProcessingState = false;
         }
 
-        public void UpdateNics(List<SitterNic> Nics) {
+        public void UpdateNics(List<TrackedNic> Nics) {
             foreach (var n in Nics) {
                 if (!_originalNicState.Any(x => x[0] == n.Id)) _originalNicState.Add(new string[] { n.Id, n.IsEnabled.ToString() });
             }
@@ -75,13 +75,13 @@ namespace WifiSitter
             this.Nics = Nics;
         }
 
-        internal static List<SitterNic> QueryNetworkAdapters(string[] WhiteList) {
-            List<SitterNic> result = new List<SitterNic>();
+        internal static List<TrackedNic> QueryNetworkAdapters(string[] WhiteList) {
+            List<TrackedNic> result = new List<TrackedNic>();
             foreach (var n in NetworkInterface.GetAllNetworkInterfaces().Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback
                                                                                   && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel
                                                                                   && !x.Description.ToLower().Contains("bluetooth")
                                                                                   && !WhiteList.Any(y => x.Description.StartsWith(y))))) {
-                result.Add(new SitterNic(n));
+                result.Add(new TrackedNic(n));
             }
             return result;
         }
@@ -99,9 +99,9 @@ namespace WifiSitter
             }
         }
 
-        public List<SitterNic> Nics {
+        public List<TrackedNic> Nics {
             get {
-                if (_nics == null) return new List<SitterNic>();
+                if (_nics == null) return new List<TrackedNic>();
                 return _nics;
             }
             private set { _nics = value; }

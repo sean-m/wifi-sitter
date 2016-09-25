@@ -8,7 +8,7 @@ using System.ServiceProcess;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-namespace WifiSitter
+namespace WifiSitter.Helpers
 {
     public abstract class AbstractService : ServiceBase
     {
@@ -238,7 +238,7 @@ USAGE
                         key.SetValue("DisplayIcon", exe);
                         key.SetValue("DisplayVersion", v.ToString(2));
                         key.SetValue("URLInfoAbout", "https://github.com/sean-m/wifi-sitter");
-                        key.SetValue("Contact", "DHS Service Desk");
+                        key.SetValue("Contact", "sean@mcardletech.com");
                         key.SetValue("InstallDate", DateTime.Now.ToString("yyyyMMdd"));
                         key.SetValue("UninstallString", exe + " /uninstallprompt");
                     }

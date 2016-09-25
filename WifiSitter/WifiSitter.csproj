@@ -91,10 +91,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AbstractService.cs">
+    <Compile Include="Helpers\AbstractService.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="NetshHelper.cs" />
+    <Compile Include="Helpers\Interop.cs" />
+    <Compile Include="Helpers\NativeWifi.cs" />
+    <Compile Include="Helpers\NetshHelper.cs" />
     <Compile Include="NetworkState.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="WifiSitter.cs">
@@ -131,7 +133,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_StartDate="2000/1/1" BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="False" />
+      <UserProperties BuildVersion_UpdateFileVersion="False" BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_StartDate="2000/1/1" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
