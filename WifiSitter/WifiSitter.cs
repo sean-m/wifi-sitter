@@ -8,6 +8,7 @@ using System.Threading;
 using System.Reflection;
 
 using WifiSitter.Helpers;
+using System.Threading.Tasks;
 
 namespace WifiSitter
 {
@@ -311,16 +312,30 @@ namespace WifiSitter
         }
 
         private void ResetNicState (NetworkState netstate) {
+            var taskList = new List<Task>();
             foreach (var n in netstate.OriginalNicState) {
                 var id   = n[0];
                 var stat = n[1];
                 TrackedNic now = netstate.Nics.Where(x => x.Id == id).FirstOrDefault();
                 if (now != null) {
                     if (stat.ToLower() != now.IsEnabled.ToString().ToLower()) {
-                        if (stat == true.ToString()) now.Enable();
-                        else now.Disable();
+                        if (stat == true.ToString()) {
+                            var enableTask = new Task(() => { now.Enable(); });
+                            enableTask.Start();
+                            taskList.Add(enableTask);
+                        }
+                        else {
+                            var disableTask = new Task(() => { now.Disable(); });
+                            disableTask.Start();
+                            taskList.Add(disableTask); }
                     }
                 }
+            }
+            try {
+                Task.WaitAll(taskList.ToArray());
+            }
+            catch {
+                // TODO log the failure as quick as possible, this only happens when process is closing
             }
         }
 
