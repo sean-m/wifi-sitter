@@ -7,6 +7,9 @@ using System.Net.NetworkInformation;
 using System.Threading;
 using System.Reflection;
 
+using WifiSitter.Helpers;
+using System.Threading.Tasks;
+
 namespace WifiSitter
 {
     public class WifiSitter : AbstractService
@@ -33,6 +36,8 @@ namespace WifiSitter
                 this.AutoLog = true;
                 this.CanPauseAndContinue = true;
             }
+            
+            Intialize();
         }
 
         #endregion // constructor
@@ -109,17 +114,17 @@ namespace WifiSitter
             return results.ToArray();
         }
 
-        public static List<SitterNic> DiscoverAllNetworkDevices(List<SitterNic> CurrentAdapters=null, bool quiet=false) {
+        public static List<TrackedNic> DiscoverAllNetworkDevices(List<TrackedNic> CurrentAdapters=null, bool quiet=false) {
             if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering all devices.");
 
             var nics = (CurrentAdapters == null) ? NetworkState.QueryNetworkAdapters(_ignoreNics) : CurrentAdapters;
 
-            List<SitterNic> nicsPost;
+            List<TrackedNic> nicsPost;
             var netsh = NetshHelper.GetInterfaces();
 
             List<NetshInterface> notInNetstate = new List<NetshInterface>();
 
-            // Skip checking for disabled adapters we already know about
+            // Only check disabled adapters we don't already know about
             foreach (var n in netsh) {
                 if (!nics.Any(x => x.Name == n.InterfaceName)) {
                     notInNetstate.Add(n);
@@ -177,8 +182,7 @@ namespace WifiSitter
             Console.WriteLine("  {0}", log);
             Console.ResetColor();
         }
-
-
+        
         public void WriteLog(LogType type, params string[] msg) {
 
             if (this.ServiceExecutionMode == ServiceExecutionMode.Console) {
@@ -232,9 +236,7 @@ namespace WifiSitter
         }
 
         private void WorkerThreadFunc() {
-
-            Intialize();
-
+            
             while (!_shutdownEvent.WaitOne(0)) {
 
                 if (_paused) {
@@ -309,6 +311,34 @@ namespace WifiSitter
             }
         }
 
+        private void ResetNicState (NetworkState netstate) {
+            var taskList = new List<Task>();
+            foreach (var n in netstate.OriginalNicState) {
+                var id   = n[0];
+                var stat = n[1];
+                TrackedNic now = netstate.Nics.Where(x => x.Id == id).FirstOrDefault();
+                if (now != null) {
+                    if (stat.ToLower() != now.IsEnabled.ToString().ToLower()) {
+                        if (stat == true.ToString()) {
+                            var enableTask = new Task(() => { now.Enable(); });
+                            enableTask.Start();
+                            taskList.Add(enableTask);
+                        }
+                        else {
+                            var disableTask = new Task(() => { now.Disable(); });
+                            disableTask.Start();
+                            taskList.Add(disableTask); }
+                    }
+                }
+            }
+            try {
+                Task.WaitAll(taskList.ToArray());
+            }
+            catch (Exception e) {
+                WriteLog(LogType.error, "Exception when resetting nic state\n", e.InnerException.Message);
+            }
+        }
+
         #endregion // methods
 
 
@@ -322,6 +352,7 @@ namespace WifiSitter
         }
 
         protected override void OnStopImpl() {
+            ResetNicState(netstate);
             _shutdownEvent.Set();
             if (!_thread.Join(3000)) {
                 _thread.Abort();
