@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiSitter", "WifiSitter\WifiSitter.csproj", "{B3A5D84A-C7A0-409D-881D-1D5FF36773D4}"
 EndProject
@@ -26,8 +26,10 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		BuildVersion_UpdateFileVersion = True
-		BuildVersion_BuildVersioningStyle = None.None.Increment.Increment
+		BuildVersion_DetectChanges = False
+		BuildVersion_IncrementBeforeBuild = False
 		BuildVersion_StartDate = 2000/1/1
+		BuildVersion_BuildVersioningStyle = None.None.Increment.Increment
+		BuildVersion_UpdateFileVersion = False
 	EndGlobalSection
 EndGlobal
