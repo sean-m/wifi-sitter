@@ -3,25 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
 
+using WifiSitter.Helpers;
+
 namespace WifiSitter
 {
     /// <summary>
     /// Object that contains information from NetworkInterface objects
     /// as well as netsh output (Admin State: Enabled/Disabled).
     /// </summary>
-    public class SitterNic
+    public class TrackedNic
     {
         private NetworkInterface _nic;
         private bool _isEnabled;
         private bool _isConnected;
 
         #region constructor
-        public SitterNic(NetworkInterface Nic) {
+        public TrackedNic(NetworkInterface Nic) {
             this._nic = Nic;
             _isEnabled = false;
         }
 
-        public SitterNic(NetworkInterface Nic, bool IsEnabled) {
+        public TrackedNic(NetworkInterface Nic, bool IsEnabled) {
             _nic = Nic;
             _isEnabled = IsEnabled;
         }
