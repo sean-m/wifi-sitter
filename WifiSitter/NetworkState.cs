@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Timers;
 
 namespace WifiSitter
 {
@@ -16,6 +17,7 @@ namespace WifiSitter
         private bool _processingState;
         private string[] _ignoreAdapters;  // List of Nic names to ignore during normal operation
         private List<string[]> _originalNicState = new List<string[]>();
+        private Timer _checkTimer;
         #endregion // fields
 
 
@@ -30,6 +32,7 @@ namespace WifiSitter
             Nics.ForEach(x => _originalNicState.Add(new string[] { x.Id, x.IsEnabled.ToString() }));
 
             _ignoreAdapters = NicWhitelist;
+
             Initialize();
         }
 
@@ -50,6 +53,15 @@ namespace WifiSitter
             NetworkChange.NetworkAvailabilityChanged += NetworkChange_NetworkAvailabilityChanged;
 
             _processingState = true;
+
+            // Check network state every 10 seconds, fixing issue where device is unplugged while laptop is asleep
+            _checkTimer = new Timer();
+            _checkTimer.AutoReset = true;
+            _checkTimer.Interval = 10 * 1000;
+            _checkTimer.Elapsed += (obj, snd) => {
+                this.CheckNet = true;
+            };
+            _checkTimer.Start();
         }
 
         ~NetworkState() {
