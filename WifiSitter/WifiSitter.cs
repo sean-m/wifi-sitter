@@ -354,17 +354,24 @@ namespace WifiSitter
         #region overrides
 
         protected override void OnStartImpl(string[] args) {
+            try {
+                if (args == null) return;
+                if (args.Length > 0) {
+                    if (args[0].ToLower() == "/install" ||
+                        args[0].ToLower() == "/uninstall") return;
+                }
 
-            if (args == null) return;
-            if (args[0].ToLower() == "/install" ||
-                args[0].ToLower() == "/uninstall") return;
+                Intialize();
 
-            Intialize();
-
-            _thread = new Thread(WorkerThreadFunc);
-            _thread.Name = "WifiSitter Main Loop";
-            _thread.IsBackground = true;
-            _thread.Start();
+                _thread = new Thread(WorkerThreadFunc);
+                _thread.Name = "WifiSitter Main Loop";
+                _thread.IsBackground = true;
+                _thread.Start();
+            }
+            catch (Exception e) {
+                WriteLog(LogType.error, e.Source, e.Message);
+            }
+            
         }
 
         protected override void OnStopImpl() {
