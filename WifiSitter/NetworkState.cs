@@ -59,7 +59,11 @@ namespace WifiSitter
             _checkTimer.AutoReset = true;
             _checkTimer.Interval = 10 * 1000;
             _checkTimer.Elapsed += (obj, snd) => {
-                this.CheckNet = true;
+                _netAvailable = NetworkInterface.GetIsNetworkAvailable();
+                if (!_netAvailable) {
+                    WifiSitter.LogLine(ConsoleColor.Red, "Intermittent check failed, network connection unavailable.");
+                    this.CheckNet = true;
+                }
             };
             _checkTimer.Start();
         }
@@ -146,17 +150,13 @@ namespace WifiSitter
         #region eventhandlers
 
         private void NetworkChange_NetworkAvailabilityChanged(object sender, NetworkAvailabilityEventArgs e) {
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("{0}  Network availability changed.", DateTime.Now.ToString());
-            Console.ResetColor();
+            WifiSitter.LogLine(ConsoleColor.Cyan, "Event: Network availability changed.");
             _netAvailable = NetworkInterface.GetIsNetworkAvailable();
             _checkNet = true;
         }
 
         private void NetworkChange_NetworkAddressChanged(object sender, EventArgs e) {
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("{0}  Network address changed.", DateTime.Now.ToString());
-            Console.ResetColor();
+            WifiSitter.LogLine(ConsoleColor.Cyan, "Event: Network address changed.");
             _netAvailable = NetworkInterface.GetIsNetworkAvailable();
             _checkNet = true;
         }

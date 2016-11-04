@@ -165,6 +165,17 @@ namespace WifiSitter
                 nic.UpdateState(netsh?.Where(x => x.InterfaceName == nic.Nic.Name).FirstOrDefault());
             }
 
+            // Detect nics that are no longer available
+            if (netsh != null) {
+                var missingNics = nics.Where(x => !netsh.Any(y => y.InterfaceName == x.Name));
+                foreach (var n in missingNics) {
+                    nics.Where(x => x.Name == n.Name).ToList().ForEach(x => {
+                        x.IsConnected = false;
+                        x.IsEnabled = false;
+                    });
+                }
+            }
+
             return nics;
         }
 
