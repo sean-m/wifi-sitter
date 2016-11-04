@@ -93,7 +93,7 @@ USAGE
                     case "/console":
                         ServiceExecutionMode = ServiceExecutionMode.Console;
                         Console.WriteLine("Starting Service...");
-                        OnStart(new string[0]);
+                        OnStart(args);
                         OnStartCommandLine();
                         OnStop();
                         break;
@@ -277,7 +277,17 @@ USAGE
 
         private void UninstallService()
         {
-            GetInstaller(".UninstallLog").Uninstall(null);
+            try {
+                GetInstaller(".UninstallLog").Uninstall(null);
+            }
+            catch (Exception e) {
+                if (e?.InnerException?.Message == "The specified service does not exist as an installed service") {
+                    /* Service not installed, we're uninstalling so that's what we want anyhow. */
+                }
+                else {
+                    throw e;
+                }
+            }
             RemoveRegKeys();
             RemoveUninstaller();
         }

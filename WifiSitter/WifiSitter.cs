@@ -36,8 +36,6 @@ namespace WifiSitter
                 this.AutoLog = true;
                 this.CanPauseAndContinue = true;
             }
-            
-            Intialize();
         }
 
         #endregion // constructor
@@ -345,6 +343,13 @@ namespace WifiSitter
         #region overrides
 
         protected override void OnStartImpl(string[] args) {
+
+            if (args == null) return;
+            if (args[0].ToLower() == "/install" ||
+                args[0].ToLower() == "/uninstall") return;
+
+            Intialize();
+
             _thread = new Thread(WorkerThreadFunc);
             _thread.Name = "WifiSitter Main Loop";
             _thread.IsBackground = true;
