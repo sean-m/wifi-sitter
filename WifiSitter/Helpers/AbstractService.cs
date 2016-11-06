@@ -90,6 +90,11 @@ USAGE
                         Run(new[] { this });
                         break;
 
+                    case "/setupservice":
+                        ServiceExecutionMode = ServiceExecutionMode.Install;
+                        SetupService();
+                        break;
+
                     case "/console":
                         ServiceExecutionMode = ServiceExecutionMode.Console;
                         Console.WriteLine("Starting Service...");
@@ -171,6 +176,12 @@ USAGE
             InstallServiceCommandLine();
             CreateRegKeys();
             CreateUninstaller();
+        }
+
+        private void SetupService() {
+            GetInstaller(".InstallLog").Install(new Hashtable());
+            InstallServiceCommandLine();
+            CreateRegKeys();
         }
 
         internal abstract void CreateRegKeys();

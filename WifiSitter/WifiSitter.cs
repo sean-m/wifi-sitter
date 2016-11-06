@@ -355,11 +355,8 @@ namespace WifiSitter
 
         protected override void OnStartImpl(string[] args) {
             try {
-                if (args == null) return;
-                if (args.Length > 0) {
-                    if (args[0].ToLower() == "/install" ||
-                        args[0].ToLower() == "/uninstall") return;
-                }
+                if (ServiceExecutionMode != ServiceExecutionMode.Console &&
+                    ServiceExecutionMode != ServiceExecutionMode.Service) return;
 
                 Intialize();
 
