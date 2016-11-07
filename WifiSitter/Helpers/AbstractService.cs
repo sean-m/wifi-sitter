@@ -90,10 +90,15 @@ USAGE
                         Run(new[] { this });
                         break;
 
+                    case "/setupservice":
+                        ServiceExecutionMode = ServiceExecutionMode.Install;
+                        SetupService();
+                        break;
+
                     case "/console":
                         ServiceExecutionMode = ServiceExecutionMode.Console;
                         Console.WriteLine("Starting Service...");
-                        OnStart(new string[0]);
+                        OnStart(args);
                         OnStartCommandLine();
                         OnStop();
                         break;
@@ -171,6 +176,12 @@ USAGE
             InstallServiceCommandLine();
             CreateRegKeys();
             CreateUninstaller();
+        }
+
+        private void SetupService() {
+            GetInstaller(".InstallLog").Install(new Hashtable());
+            InstallServiceCommandLine();
+            CreateRegKeys();
         }
 
         internal abstract void CreateRegKeys();
@@ -277,7 +288,17 @@ USAGE
 
         private void UninstallService()
         {
-            GetInstaller(".UninstallLog").Uninstall(null);
+            try {
+                GetInstaller(".UninstallLog").Uninstall(null);
+            }
+            catch (Exception e) {
+                if (e?.InnerException?.Message == "The specified service does not exist as an installed service") {
+                    /* Service not installed, we're uninstalling so that's what we want anyhow. */
+                }
+                else {
+                    throw e;
+                }
+            }
             RemoveRegKeys();
             RemoveUninstaller();
         }
