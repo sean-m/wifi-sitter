@@ -6,6 +6,8 @@
 *.user
 *.sln.docstates
 
+"Setup/Setup Files/"
+
 # Build results
 
 [Dd]ebug/
