@@ -6,13 +6,8 @@
         xmlns:local="clr-namespace:WifiSitterGui"
         xmlns:tb="http://www.hardcodet.net/taskbar"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="WifiSitter Config" Height="350" Width="525">
     <Grid>
-        <tb:TaskbarIcon
-          IconSource="pack://application:,,,/wifisitter-icon.ico"
-          ToolTipText="hello world" />
-        
-        
         
     </Grid>
 </Window>
