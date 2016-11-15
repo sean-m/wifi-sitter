@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiSitter", "WifiSitter\WifiSitter.csproj", "{B3A5D84A-C7A0-409D-881D-1D5FF36773D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiSitterGui", "WifiSitterGui\WifiSitterGui.csproj", "{20552785-B57D-4A59-B891-EF4FB170CE1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,15 +23,23 @@ Global
 		{B3A5D84A-C7A0-409D-881D-1D5FF36773D4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B3A5D84A-C7A0-409D-881D-1D5FF36773D4}.Release|x86.ActiveCfg = Release|x86
 		{B3A5D84A-C7A0-409D-881D-1D5FF36773D4}.Release|x86.Build.0 = Release|x86
+		{20552785-B57D-4A59-B891-EF4FB170CE1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20552785-B57D-4A59-B891-EF4FB170CE1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20552785-B57D-4A59-B891-EF4FB170CE1A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{20552785-B57D-4A59-B891-EF4FB170CE1A}.Debug|x86.Build.0 = Debug|Any CPU
+		{20552785-B57D-4A59-B891-EF4FB170CE1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20552785-B57D-4A59-B891-EF4FB170CE1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20552785-B57D-4A59-B891-EF4FB170CE1A}.Release|x86.ActiveCfg = Release|Any CPU
+		{20552785-B57D-4A59-B891-EF4FB170CE1A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		BuildVersion_DetectChanges = False
-		BuildVersion_IncrementBeforeBuild = False
-		BuildVersion_StartDate = 2000/1/1
-		BuildVersion_BuildVersioningStyle = None.None.Increment.Increment
 		BuildVersion_UpdateFileVersion = False
+		BuildVersion_BuildVersioningStyle = None.None.Increment.Increment
+		BuildVersion_StartDate = 2000/1/1
+		BuildVersion_IncrementBeforeBuild = False
+		BuildVersion_DetectChanges = False
 	EndGlobalSection
 EndGlobal
