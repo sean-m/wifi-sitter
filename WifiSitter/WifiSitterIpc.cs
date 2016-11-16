@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using SimpleIPC;
+
 using System.Diagnostics;
 
 namespace WifiSitter
