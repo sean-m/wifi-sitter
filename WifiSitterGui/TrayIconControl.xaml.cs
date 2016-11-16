@@ -18,16 +18,48 @@ namespace WifiSitterGui
     /// </summary>
     public partial class TrayIconControl : Window
     {
-        private MainWindowViewModel _windowVm;
+        #region fields
+
+        private static MainWindowViewModel _windowVm;
+        private static MainWindow _statusGui;
+
+        #endregion  // fields
+
+
+        #region constructor
 
         public TrayIconControl() {
             InitializeComponent();
 
             _windowVm = new MainWindowViewModel();
 
-            var statusGui = new MainWindow();
-            statusGui.DataContext = _windowVm;
-            statusGui.Show();
+            _statusGui = new MainWindow();
+            _statusGui.DataContext = _windowVm;
+            _statusGui.Show();
         }
+
+
+        ~TrayIconControl() {
+            this.TaskBarIcon.Visibility = Visibility.Hidden;
+            this.TaskBarIcon.Dispose();
+        }
+
+        #endregion  // constructor
+
+        #region properties
+        #endregion  // properties
+
+        #region methods
+        #endregion  // methods
+
+        #region eventhandlers
+
+        private void ContextMenu_Quit(object sender, RoutedEventArgs e) {
+            _statusGui?.Close();
+            
+            Environment.Exit(0);
+        }
+
+        #endregion  // eventhandlers
     }
 }

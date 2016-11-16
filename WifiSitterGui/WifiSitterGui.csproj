@@ -103,7 +103,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="..\WifiSitter\wifisitter-icon.ico">
-      <Link>wifisitter-icon.ico</Link>
+      <Link>Resources\wifisitter-icon.ico</Link>
     </Resource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -4,6 +4,23 @@
              xmlns:local="clr-namespace:WifiSitterGui"
              StartupUri="TrayIconControl.xaml">
     <Application.Resources>
-         
+        <Viewbox x:Key="CloseIcon" x:Shared="false" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+            <Grid>
+                <Grid Name="backgroundGrid" Width="24" Height="24" Visibility="Visible">
+                    <Rectangle Fill="#FF000000" Name="Rect" Visibility="Visible" />
+                </Grid>
+                <Path Data="M2.999979,0C3.8000264,0,4.4999763,0.30000305,5.1000115,0.90000927L15.999954,11.700012 26.899959,0.90000927C28.099967,-0.29998779 29.999927,-0.29998779 31.099961,0.90000927 32.299972,2.1000061 32.299972,4 31.099961,5.1000061L20.199958,16 31.099961,26.900009C32.299972,28.100006 32.299972,30 31.099961,31.100006 29.899951,32.300003 27.999931,32.300003 26.899959,31.100006L15.999954,20.200012 5.1000115,31.100006C3.9000017,32.300003 1.9999809,32.300003 0.90000743,31.100006 -0.30000248,29.900009 -0.30000248,28 0.90000743,26.900009L11.800011,16 0.90000743,5.1000061C-0.30000248,3.9000092 -0.30000248,2 0.90000743,0.90000927 1.4999818,0.30000305 2.1999928,0 2.999979,0z" Stretch="Uniform" Fill="#FFFFFFFF" Width="26" Height="26" Margin="0,0,0,0" RenderTransformOrigin="0.5,0.5">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <TransformGroup.Children>
+                                <RotateTransform Angle="0" />
+                                <ScaleTransform ScaleX=".5" ScaleY=".5" />
+                            </TransformGroup.Children>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                </Path>
+            </Grid>
+        </Viewbox>
+
     </Application.Resources>
 </Application>

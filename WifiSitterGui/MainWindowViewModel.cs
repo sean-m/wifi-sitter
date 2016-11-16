@@ -10,6 +10,7 @@ namespace WifiSitterGui
         #region fields
         #endregion  // fields
 
+
         #region constructor
 
         public MainWindowViewModel () {
@@ -18,11 +19,14 @@ namespace WifiSitterGui
 
         #endregion  // constructor
 
+
         #region properties
         #endregion  // properties
 
+
         #region methods
         #endregion  // methods
+
 
         #region eventhandlers
         #endregion  // methods

@@ -8,15 +8,24 @@
         Visibility="Hidden"
         mc:Ignorable="d"
         Title="TrayIconControl" Height="300" Width="300">
+
+    <Window.Resources>
+
+    </Window.Resources>
     <Grid>
         
         <tb:TaskbarIcon
-          IconSource="pack://application:,,,/wifisitter-icon.ico"
+          x:Name="TaskBarIcon"
+          IconSource="pack://application:,,,/Resources/wifisitter-icon.ico"
           ToolTipText="hello world" >
             <tb:TaskbarIcon.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Pause for 5 minutes" 
                               ToolTip="Restores interfaces to original status."/>
+                    <MenuItem Header="Quit"
+                              Click="ContextMenu_Quit"
+                              Icon="{StaticResource CloseIcon}" 
+                              />
                 </ContextMenu>
             </tb:TaskbarIcon.ContextMenu>
         </tb:TaskbarIcon>
