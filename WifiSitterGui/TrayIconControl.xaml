@@ -17,7 +17,8 @@
         <tb:TaskbarIcon
           x:Name="TaskBarIcon"
           IconSource="pack://application:,,,/Resources/wifisitter-icon.ico"
-          ToolTipText="hello world" >
+          ToolTipText="hello world" 
+          MenuActivation="LeftOrRightClick">
             <tb:TaskbarIcon.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Pause for 5 minutes" 

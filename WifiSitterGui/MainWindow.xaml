@@ -6,7 +6,10 @@
         xmlns:local="clr-namespace:WifiSitterGui"
         xmlns:tb="http://www.hardcodet.net/taskbar"
         mc:Ignorable="d"
-        Title="WifiSitter Config" Height="350" Width="525">
+        Icon="pack://application:,,,/Resources/wifisitter-icon.ico"
+        Title="WifiSitter Config" 
+        Height="600" 
+        Width="525">
     <Grid>
         
     </Grid>
