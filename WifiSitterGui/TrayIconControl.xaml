@@ -23,6 +23,9 @@
                 <ContextMenu>
                     <MenuItem Header="Pause for 5 minutes" 
                               ToolTip="Restores interfaces to original status."/>
+                    <MenuItem Header="Status and Settings" 
+                              ToolTip=""
+                              Click="ContextMenu_StatusSettings"/>
                     <MenuItem Header="Quit"
                               Click="ContextMenu_Quit"
                               Icon="{StaticResource CloseIcon}" 

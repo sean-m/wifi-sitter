@@ -33,10 +33,7 @@ namespace WifiSitterGui
             InitializeComponent();
 
             _windowVm = new MainWindowViewModel();
-
-            _statusGui = new MainWindow();
-            _statusGui.DataContext = _windowVm;
-            _statusGui.Show();
+            ShowStatusSettingsWindow();
         }
 
 
@@ -50,9 +47,30 @@ namespace WifiSitterGui
         #endregion  // properties
 
         #region methods
+
+        void ShowStatusSettingsWindow() {
+            _statusGui = new MainWindow();
+            _statusGui.DataContext = _windowVm;
+            _statusGui.Closed += (s, e) => {
+                this.Dispatcher.Invoke(new Action(() => { _statusGui = null; }));
+            };
+            _statusGui.Show();
+        }
+
         #endregion  // methods
 
         #region eventhandlers
+        
+        private void ContextMenu_StatusSettings(object sender, RoutedEventArgs e) {
+            if (_statusGui == null) {
+                ShowStatusSettingsWindow();
+            }
+            else {
+                _statusGui.WindowState = WindowState.Normal;
+                _statusGui.Activate();
+            }
+        }
+
 
         private void ContextMenu_Quit(object sender, RoutedEventArgs e) {
             _statusGui?.Close();
