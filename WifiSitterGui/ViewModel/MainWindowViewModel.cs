@@ -3,24 +3,35 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace WifiSitterGui
+using WifiSitter;
+
+namespace WifiSitterGui.ViewModel
 {
     class MainWindowViewModel : MvvmObservable
     {
         #region fields
+
+        WifiSitter.NetworkState _netState;
+
         #endregion  // fields
 
 
         #region constructor
 
         public MainWindowViewModel () {
-
+            _netState = new NetworkState(new string[] { });
         }
 
         #endregion  // constructor
 
 
         #region properties
+        
+        public NetworkState NetState {
+            get { return _netState; }
+            set { _netState = value; }
+        }
+        
         #endregion  // properties
 
 

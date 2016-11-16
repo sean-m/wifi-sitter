@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
 using System.Reflection;
+using SimpleIPC;
 
 using WifiSitter.Helpers;
 using System.Threading.Tasks;
@@ -23,7 +24,8 @@ namespace WifiSitter
         private ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
         private static string[] _ignoreNics;
         private volatile bool _paused;
-
+        private static WifiSitterIpc _wsIpc;
+        private Action<object, MessageEventArgs> _handleMsgRecv;
         #endregion // fields
 
 
@@ -82,6 +84,11 @@ namespace WifiSitter
             Assembly asm = GetType().Assembly;
             Version v = asm.GetName().Version;
             LogLine("Version: {0}", v.ToString());
+
+            // Setup IPC
+            LogLine("Initializing IPC...");
+            _handleMsgRecv = new Action<object, MessageEventArgs>(HandleMsgReceived);
+            _wsIpc = new WifiSitterIpc(_handleMsgRecv);
 
             // Check if there are any interfaces not detected by GetAllNetworkInterfaces()
             // That method will not show disabled interfaces
@@ -345,6 +352,30 @@ namespace WifiSitter
             }
             catch (Exception e) {
                 WriteLog(LogType.error, "Exception when resetting nic state\n", e.InnerException.Message);
+            }
+        }
+
+
+        private void HandleMsgReceived(object sender, MessageEventArgs e) {
+            LogLine("Message received");
+            if (!e.DataGram.IsValid) {
+                Trace.WriteLine("Invalid datagram received.");
+                return;
+            }
+
+            WifiSitterIpcMessage _msg = null;
+            try { _msg = Newtonsoft.Json.JsonConvert.DeserializeObject<WifiSitterIpcMessage>(e.DataGram.Message); }
+            catch { Trace.WriteLine("Deserialize to ServiceRequest failed."); }
+
+            if (_msg != null) {
+                if (_msg.Request == "get_netstate") {
+                    LogLine("Sending netstate to: {0}", _msg.Requestor);
+                    var response = new WifiSitterIpcMessage("give_netstate", _wsIpc.MyChannelName, "", Newtonsoft.Json.JsonConvert.SerializeObject(netstate));
+                    _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response);
+                }
+            }
+            else {
+                Trace.WriteLine(e.DataGram.Message);
             }
         }
 

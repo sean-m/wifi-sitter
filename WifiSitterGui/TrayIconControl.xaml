@@ -13,12 +13,13 @@
 
     </Window.Resources>
     <Grid>
-        
+
         <tb:TaskbarIcon
-          x:Name="TaskBarIcon"
-          IconSource="pack://application:,,,/Resources/wifisitter-icon.ico"
-          ToolTipText="hello world" 
-          MenuActivation="LeftOrRightClick">
+              x:Name="TaskBarIcon"
+              IconSource="pack://application:,,,/Resources/wifisitter-icon.ico"
+              ToolTipText="hello world" 
+              MenuActivation="LeftOrRightClick"
+              NoLeftClickDelay="True">
             <tb:TaskbarIcon.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Pause for 5 minutes" 

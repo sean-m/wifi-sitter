@@ -53,6 +53,7 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
@@ -67,6 +68,22 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="..\WifiSitter\Helpers\NetshHelper.cs">
+      <Link>Model\NetshHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\WifiSitter\NetworkState.cs">
+      <Link>Model\NetworkState.cs</Link>
+    </Compile>
+    <Compile Include="..\WifiSitter\SitterNic.cs">
+      <Link>Model\SitterNic.cs</Link>
+    </Compile>
+    <Compile Include="..\WifiSitter\WifiSitterIpc.cs">
+      <Link>WifiSitterIpc.cs</Link>
+    </Compile>
+    <Compile Include="..\WifiSitter\WifiSitterIpcMessage.cs">
+      <Link>WifiSitterIpcMessage.cs</Link>
+    </Compile>
+    <Compile Include="Model\WifiSitterStub.cs" />
     <Compile Include="TrayIconControl.xaml.cs">
       <DependentUpon>TrayIconControl.xaml</DependentUpon>
     </Compile>
@@ -88,7 +105,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MainWindowViewModel.cs" />
+    <Compile Include="ViewModel\MainWindowViewModel.cs" />
     <Compile Include="MvvmObservable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -122,6 +139,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="wifisitter-icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="View\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
