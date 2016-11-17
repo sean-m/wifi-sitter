@@ -16,6 +16,8 @@
         <vm:MainWindowViewModel/>
     </Window.DataContext>
     <Grid>
-        
+        <DataGrid x:Name="DataGridNics"
+            ItemsSource="{Binding Nics, Mode=OneWay}" 
+            />
     </Grid>
 </Window>

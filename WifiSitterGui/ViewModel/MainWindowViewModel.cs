@@ -30,9 +30,11 @@ namespace WifiSitterGui.ViewModel
         
         public SimpleNetworkState NetState {
             get { return _netState; }
-            set { _netState = value; OnPropertyChanged("NetState"); }
+            set { _netState = value; OnPropertyChanged(null); }
         }
         
+        public List<SimpleNic> Nics { get { return NetState.Nics; } }
+
         #endregion  // properties
 
 

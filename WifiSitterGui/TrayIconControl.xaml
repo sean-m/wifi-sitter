@@ -23,11 +23,10 @@
             <tb:TaskbarIcon.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Pause for 5 minutes" 
-                              ToolTip="Restores interfaces to original status."/>
+                              ToolTip="Restores interfaces to original status." />
                     <MenuItem Header="Status and Settings" 
                               ToolTip=""
-                              Command="{Binding LaunchSettingsWindow}"
-                              Click="ContextMenu_StatusSettings"/>
+                              Command="{Binding LaunchSettingsWindow}" />
                     <MenuItem Header="Quit"
                               Click="ContextMenu_Quit"
                               Icon="{StaticResource CloseIcon}"
