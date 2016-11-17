@@ -369,13 +369,13 @@ namespace WifiSitter
 
             WifiSitterIpcMessage _msg = null;
             try { _msg = Newtonsoft.Json.JsonConvert.DeserializeObject<WifiSitterIpcMessage>(e.DataGram.Message); }
-            catch { Trace.WriteLine("Deserialize to ServiceRequest failed."); }
+            catch { LogLine("Deserialize to WifiSitterIpcMessage failed."); }
 
             if (_msg != null) {
                 if (_msg.Request == "get_netstate") {
                     LogLine("Sending netstate to: {0}", _msg.Requestor);
-                    var response = new WifiSitterIpcMessage("give_netstate", _wsIpc.MyChannelName, "", Newtonsoft.Json.JsonConvert.SerializeObject(netstate));
-                    _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response);
+                    var response = new WifiSitterIpcMessage("give_netstate", _wsIpc.MyChannelName, "", Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate)));
+                    _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
                 }
             }
             else {

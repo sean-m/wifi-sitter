@@ -109,15 +109,16 @@
     <Compile Include="Helpers\Interop.cs" />
     <Compile Include="Helpers\NativeWifi.cs" />
     <Compile Include="Helpers\NetshHelper.cs" />
-    <Compile Include="NetworkState.cs" />
+    <Compile Include="Model\NetworkState.cs" />
+    <Compile Include="Model\SimpleNetworkState.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="WifiSitter.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SitterNic.cs" />
+    <Compile Include="Model\SitterNic.cs" />
     <Compile Include="WifiSitterIpc.cs" />
-    <Compile Include="WifiSitterIpcMessage.cs" />
+    <Compile Include="Model\WifiSitterIpcMessage.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -148,7 +149,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_UpdateFileVersion="False" BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_StartDate="2000/1/1" />
+      <UserProperties BuildVersion_StartDate="2000/1/1" BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="False" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

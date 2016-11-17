@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 
 using WifiSitter;
+using WifiSitter.Model;
 
 namespace WifiSitterGui.ViewModel
 {
@@ -11,7 +12,7 @@ namespace WifiSitterGui.ViewModel
     {
         #region fields
 
-        WifiSitter.NetworkState _netState;
+        SimpleNetworkState _netState;
 
         #endregion  // fields
 
@@ -19,7 +20,7 @@ namespace WifiSitterGui.ViewModel
         #region constructor
 
         public MainWindowViewModel () {
-            _netState = new NetworkState(new string[] { });
+            _netState = new SimpleNetworkState();
         }
 
         #endregion  // constructor
@@ -27,9 +28,9 @@ namespace WifiSitterGui.ViewModel
 
         #region properties
         
-        public NetworkState NetState {
+        public SimpleNetworkState NetState {
             get { return _netState; }
-            set { _netState = value; }
+            set { _netState = value; OnPropertyChanged("NetState"); }
         }
         
         #endregion  // properties

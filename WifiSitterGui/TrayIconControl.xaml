@@ -17,7 +17,7 @@
         <tb:TaskbarIcon
               x:Name="TaskBarIcon"
               IconSource="pack://application:,,,/Resources/wifisitter-icon.ico"
-              ToolTipText="hello world" 
+              ToolTipText="WifiSitter Agent" 
               MenuActivation="LeftOrRightClick"
               NoLeftClickDelay="True">
             <tb:TaskbarIcon.ContextMenu>
@@ -29,8 +29,8 @@
                               Click="ContextMenu_StatusSettings"/>
                     <MenuItem Header="Quit"
                               Click="ContextMenu_Quit"
-                              Icon="{StaticResource CloseIcon}" 
-                              />
+                              Icon="{StaticResource CloseIcon}"
+                              ToolTip="Does not stop WifiSitter service." />
                 </ContextMenu>
             </tb:TaskbarIcon.ContextMenu>
         </tb:TaskbarIcon>

@@ -17,6 +17,10 @@ namespace WifiSitter
         private bool _isEnabled;
         private bool _isConnected;
 
+        public TrackedNic() {
+            
+        }
+
         #region constructor
         public TrackedNic(NetworkInterface Nic) {
             this._nic = Nic;
@@ -34,11 +38,18 @@ namespace WifiSitter
 
         public NetworkInterface Nic {
             get { return _nic; }
+            set { _nic = value; }
         }
 
         public bool IsEnabled {
             get { return _isEnabled; }
             set { _isEnabled = value; }
+        }
+
+
+        public bool IsConnected {
+            get { return _isConnected; }
+            set { _isConnected = value; }
         }
 
 
@@ -55,13 +66,7 @@ namespace WifiSitter
         public string Id {
             get { return Nic.Id; }
         }
-
-
-        public bool IsConnected {
-            get { return _isConnected; }
-            set { _isConnected = value; }
-        }
-
+        
         #endregion // properties
 
 

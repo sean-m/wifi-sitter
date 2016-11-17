@@ -15,6 +15,7 @@ using System.Diagnostics;
 
 using WifiSitterGui.ViewModel;
 using WifiSitter;
+using WifiSitter.Model;
 
 using XDMessaging;
 
@@ -78,7 +79,8 @@ namespace WifiSitterGui
         }
 
         private void GetServiceChannelName() {
-            var serviceProc = Process.GetProcesses().Where(x => x.ProcessName.ToLower() == "wifisitter").ToArray();
+            var serviceProc = Process.GetProcesses().Where(x => x.ProcessName.ToLower().StartsWith("wifisitter"))
+                .Where(x => !x.ProcessName.ToLower().Contains("gui")).ToArray();
             if (serviceProc != null && 
                 serviceProc.Length > 0) {
                 _serviceChannel = String.Format("{0}-{1}", serviceProc[0].Id, serviceProc[0].ProcessName);
@@ -134,9 +136,9 @@ namespace WifiSitterGui
             if (_sr != null) {
                 if (_sr.Request == "give_netstate") {
                     try {
-                        WifiSitter.NetworkState ns = Newtonsoft.Json.JsonConvert.DeserializeObject<WifiSitter.NetworkState>(_sr.Payload);
+                        _windowVm.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(System.Text.Encoding.UTF8.GetString(_sr.Payload));
                     }
-                    catch { WifiSitter.WifiSitter.LogLine("Failed to deserialize netstate, payload: {0}", _sr.Payload); }
+                    catch { WifiSitter.WifiSitter.LogLine("Failed to deserialize netstate, payload."); }
                 }
             }
             else {

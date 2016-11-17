@@ -73,18 +73,19 @@
     <Compile Include="..\WifiSitter\Helpers\NetshHelper.cs">
       <Link>Model\NetshHelper.cs</Link>
     </Compile>
-    <Compile Include="..\WifiSitter\NetworkState.cs">
+    <Compile Include="..\WifiSitter\Model\NetworkState.cs">
       <Link>Model\NetworkState.cs</Link>
     </Compile>
-    <Compile Include="..\WifiSitter\SitterNic.cs">
+    <Compile Include="..\WifiSitter\Model\SimpleNetworkState.cs">
+      <Link>Model\SimpleNetworkState.cs</Link>
+    </Compile>
+    <Compile Include="..\WifiSitter\Model\SitterNic.cs">
       <Link>Model\SitterNic.cs</Link>
     </Compile>
     <Compile Include="..\WifiSitter\WifiSitterIpc.cs">
       <Link>WifiSitterIpc.cs</Link>
     </Compile>
-    <Compile Include="..\WifiSitter\WifiSitterIpcMessage.cs">
-      <Link>WifiSitterIpcMessage.cs</Link>
-    </Compile>
+    <Compile Include="Model\WifiSitterIpcMessage.cs" />
     <Compile Include="Model\WifiSitterStub.cs" />
     <Compile Include="TrayIconControl.xaml.cs">
       <DependentUpon>TrayIconControl.xaml</DependentUpon>

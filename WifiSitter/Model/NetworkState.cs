@@ -22,6 +22,9 @@ namespace WifiSitter
 
 
         #region constructor
+        public NetworkState() {
+            Initialize();
+        }
 
         public NetworkState(string[] NicWhitelist) {
             if (NicWhitelist == null)
