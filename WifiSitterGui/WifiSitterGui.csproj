@@ -82,14 +82,18 @@
     <Compile Include="..\WifiSitter\Model\SitterNic.cs">
       <Link>Model\SitterNic.cs</Link>
     </Compile>
+    <Compile Include="..\WifiSitter\Model\WifiSitterIpcMessage.cs">
+      <Link>Model\WifiSitterIpcMessage.cs</Link>
+    </Compile>
     <Compile Include="..\WifiSitter\WifiSitterIpc.cs">
       <Link>WifiSitterIpc.cs</Link>
     </Compile>
-    <Compile Include="Model\WifiSitterIpcMessage.cs" />
+    <Compile Include="Helpers\RelayCommand.cs" />
     <Compile Include="Model\WifiSitterStub.cs" />
     <Compile Include="TrayIconControl.xaml.cs">
       <DependentUpon>TrayIconControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ViewModel\WifiSitterAgentViewModel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

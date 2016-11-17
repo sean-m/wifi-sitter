@@ -5,11 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WifiSitterGui"
         xmlns:tb="http://www.hardcodet.net/taskbar"
+        xmlns:vm="clr-namespace:WifiSitterGui.ViewModel"
         mc:Ignorable="d"
         Icon="pack://application:,,,/Resources/wifisitter-icon.ico"
         Title="WifiSitter Config" 
         Height="600" 
         Width="525">
+    
+    <Window.DataContext>
+        <vm:MainWindowViewModel/>
+    </Window.DataContext>
     <Grid>
         
     </Grid>

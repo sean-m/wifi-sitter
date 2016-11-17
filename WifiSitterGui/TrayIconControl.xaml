@@ -3,15 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WifiSitterGui"
+        xmlns:vm="clr-namespace:WifiSitterGui.ViewModel"
         xmlns:tb="http://www.hardcodet.net/taskbar"
         Visibility="Hidden"
         mc:Ignorable="d"
         Title="TrayIconControl" Height="300" Width="300">
 
-    <Window.Resources>
-
-    </Window.Resources>
+    <Window.DataContext>
+        <vm:WifiSitterAgentViewModel/>
+    </Window.DataContext>
     <Grid>
 
         <tb:TaskbarIcon
@@ -26,6 +26,7 @@
                               ToolTip="Restores interfaces to original status."/>
                     <MenuItem Header="Status and Settings" 
                               ToolTip=""
+                              Command="{Binding LaunchSettingsWindow}"
                               Click="ContextMenu_StatusSettings"/>
                     <MenuItem Header="Quit"
                               Click="ContextMenu_Quit"

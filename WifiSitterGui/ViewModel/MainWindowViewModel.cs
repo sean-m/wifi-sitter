@@ -8,7 +8,7 @@ using WifiSitter.Model;
 
 namespace WifiSitterGui.ViewModel
 {
-    class MainWindowViewModel : MvvmObservable
+    public class MainWindowViewModel : MvvmObservable
     {
         #region fields
 

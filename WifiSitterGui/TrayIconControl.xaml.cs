@@ -27,9 +27,8 @@ namespace WifiSitterGui
     public partial class TrayIconControl : Window
     {
         #region fields
-
-        private static MainWindowViewModel _windowVm;
-        private static MainWindow _statusGui;
+        
+        private static WifiSitterAgentViewModel _agentVM;
         private static WifiSitter.WifiSitterIpc _wsIpc;
         private static string _serviceChannel;
         private Action<object, XDMessageEventArgs> _handleMsgRcv;
@@ -41,8 +40,11 @@ namespace WifiSitterGui
 
         public TrayIconControl() {
             InitializeComponent();
+
+            _agentVM = new WifiSitterAgentViewModel(new MainWindowViewModel());
+            DataContext = _agentVM;
+
             
-            _windowVm = new ViewModel.MainWindowViewModel();
             //ShowStatusSettingsWindow();
 
             // Setup IPC message listener
@@ -91,34 +93,18 @@ namespace WifiSitterGui
 
 
         #region methods
-
-        void ShowStatusSettingsWindow() {
-            _statusGui = new MainWindow();
-            _statusGui.DataContext = _windowVm;
-            _statusGui.Closed += (s, e) => {
-                this.Dispatcher.Invoke(new Action(() => { _statusGui = null; }));
-            };
-            _statusGui.Show();
-        }
-
+        
         #endregion  // methods
 
 
         #region eventhandlers
         
         private void ContextMenu_StatusSettings(object sender, RoutedEventArgs e) {
-            if (_statusGui == null) {
-                ShowStatusSettingsWindow();
-            }
-            else {
-                _statusGui.WindowState = WindowState.Normal;
-                _statusGui.Activate();
-            }
+            
         }
 
 
         private void ContextMenu_Quit(object sender, RoutedEventArgs e) {
-            _statusGui?.Close();            
             Environment.Exit(0);
         }
 
@@ -136,7 +122,7 @@ namespace WifiSitterGui
             if (_sr != null) {
                 if (_sr.Request == "give_netstate") {
                     try {
-                        _windowVm.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(System.Text.Encoding.UTF8.GetString(_sr.Payload));
+                        _agentVM.WindowVM.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(System.Text.Encoding.UTF8.GetString(_sr.Payload));
                     }
                     catch { WifiSitter.WifiSitter.LogLine("Failed to deserialize netstate, payload."); }
                 }
