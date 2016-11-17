@@ -1,0 +1,23 @@
+﻿- Class Regions -
+
+#region fields
+#endregion // fields
+
+#region constructor
+#endregion // constructor
+
+#region properties
+#endregion // properties
+
+#region methods
+#endregion // methods
+
+#region commands
+#endregion // commands
+
+#region events
+#endregion // events
+
+
+Color Pallet
+https://color.adobe.com/create/color-wheel/?base=2&rule=Complementary&selected=0&name=My%20Color%20Theme&mode=rgb&rgbvalues=0.05782394694464945,0.2912650007520878,0.7,0.09999999999999998,0.4271640968657948,1,0,0.36351566318421646,1,0.7,0.4755089048318268,0,1,0.6792984354740383,0&swatchOrder=0,1,2,3,4
