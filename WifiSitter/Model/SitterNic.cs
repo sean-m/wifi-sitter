@@ -13,15 +13,20 @@ namespace WifiSitter
     /// </summary>
     public class TrackedNic
     {
+        #region fields
+
         private NetworkInterface _nic;
         private bool _isEnabled;
         private bool _isConnected;
 
-        public TrackedNic() {
-            
-        }
+        #endregion  // fields
 
         #region constructor
+
+        public TrackedNic() {
+
+        }
+
         public TrackedNic(NetworkInterface Nic) {
             this._nic = Nic;
             _isEnabled = false;
@@ -31,8 +36,8 @@ namespace WifiSitter
             _nic = Nic;
             _isEnabled = IsEnabled;
         }
-        #endregion // constructor
 
+        #endregion // constructor
 
         #region properties
 
@@ -68,7 +73,6 @@ namespace WifiSitter
         }
         
         #endregion // properties
-
 
         #region methods
 
