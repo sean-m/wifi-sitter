@@ -5,6 +5,7 @@ using System.Text;
 
 namespace WifiSitter
 {
+    [Serializable]
     public class WifiSitterIpcMessage
     {
         public string Request { get; set; }
@@ -17,6 +18,15 @@ namespace WifiSitter
             Requestor = WhosAsking;
             Target = WhereTo;
             Payload = SendingWhat;
+        }
+    }
+
+    public static class WifiSitterExtensions
+    {
+        public static string IpcMessageJsonString(this WifiSitterIpcMessage message) {
+            string result;
+            result = Newtonsoft.Json.JsonConvert.SerializeObject(message);
+            return result;
         }
     }
 }

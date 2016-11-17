@@ -6,10 +6,13 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading;
 using System.Reflection;
-using SimpleIPC;
-
-using WifiSitter.Helpers;
 using System.Threading.Tasks;
+
+// Project deps
+using WifiSitter.Helpers;
+
+// 3rd party deps
+using XDMessaging;
 
 namespace WifiSitter
 {
@@ -25,7 +28,8 @@ namespace WifiSitter
         private static string[] _ignoreNics;
         private volatile bool _paused;
         private static WifiSitterIpc _wsIpc;
-        private Action<object, MessageEventArgs> _handleMsgRecv;
+        private Action<object, XDMessageEventArgs> _handleMsgRecv;
+
         #endregion // fields
 
 
@@ -87,7 +91,7 @@ namespace WifiSitter
 
             // Setup IPC
             LogLine("Initializing IPC...");
-            _handleMsgRecv = new Action<object, MessageEventArgs>(HandleMsgReceived);
+            _handleMsgRecv = new Action<object, XDMessageEventArgs>(HandleMsgReceived);
             _wsIpc = new WifiSitterIpc(_handleMsgRecv);
 
             // Check if there are any interfaces not detected by GetAllNetworkInterfaces()
@@ -356,7 +360,7 @@ namespace WifiSitter
         }
 
 
-        private void HandleMsgReceived(object sender, MessageEventArgs e) {
+        private void HandleMsgReceived(object sender, XDMessageEventArgs e) {
             LogLine("Message received");
             if (!e.DataGram.IsValid) {
                 Trace.WriteLine("Invalid datagram received.");

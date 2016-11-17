@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace WifiSitter.Properties {
+namespace WifiSitterGui.Properties {
     using System;
     
     

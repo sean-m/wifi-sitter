@@ -11,11 +11,12 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using SimpleIPC;
 using System.Diagnostics;
 
 using WifiSitterGui.ViewModel;
 using WifiSitter;
+
+using XDMessaging;
 
 namespace WifiSitterGui
 {
@@ -30,7 +31,7 @@ namespace WifiSitterGui
         private static MainWindow _statusGui;
         private static WifiSitter.WifiSitterIpc _wsIpc;
         private static string _serviceChannel;
-        private Action<object, MessageEventArgs> _handleMsgRcv;
+        private Action<object, XDMessageEventArgs> _handleMsgRcv;
 
         #endregion  // fields
 
@@ -44,14 +45,18 @@ namespace WifiSitterGui
             //ShowStatusSettingsWindow();
 
             // Setup IPC message listener
-            _handleMsgRcv = new Action<object, MessageEventArgs>(wsIpc_MessageReceived);
+            _handleMsgRcv = new Action<object, XDMessageEventArgs>(wsIpc_MessageReceived);
             _wsIpc = new WifiSitter.WifiSitterIpc( _handleMsgRcv );
             
             Trace.WriteLine(String.Format("WifiSitter service msg channel: {0}", ServiceChannelName));
 
             if (! String.IsNullOrEmpty(ServiceChannelName)) {
-                
-                _wsIpc.MsgBroadcaster.SendToChannel(ServiceChannelName, new WifiSitterIpcMessage("get_netstate", _wsIpc.MyChannelName, _wsIpc.MyChannelName));
+                try {
+                    _wsIpc.MsgBroadcaster.SendToChannel(ServiceChannelName, new WifiSitterIpcMessage("get_netstate", _wsIpc.MyChannelName, _wsIpc.MyChannelName).IpcMessageJsonString());
+                }
+                catch (Exception e) {
+                    Trace.WriteLine(e.Message);
+                }
             }
 
         }
@@ -116,7 +121,7 @@ namespace WifiSitterGui
         }
 
 
-        internal void wsIpc_MessageReceived(object sender, MessageEventArgs e) {
+        internal void wsIpc_MessageReceived(object sender, XDMessageEventArgs e) {
             if (!e.DataGram.IsValid) {
                 Trace.WriteLine("Invalid datagram received.");
                 return;

@@ -5,29 +5,35 @@ using System.Text;
 
 using System.Diagnostics;
 
+using XDMessaging;
+
 namespace WifiSitter
 {
     public class WifiSitterIpc
     {
         private static string _myChannel = String.Format("{0}-{1}", Process.GetCurrentProcess().Id, Process.GetCurrentProcess().ProcessName);
-        public MessageListener MsgListener { get; private set; }
+
+        private XDMessagingClient _msgClient = new XDMessagingClient();
+
+        public IXDListener MsgListener { get; private set; }
         
-        public MessageBroadcaster MsgBroadcaster { get; private set; }
+        public IXDBroadcaster MsgBroadcaster { get; private set; }
 
         public string MyChannelName { get { return _myChannel; } }
 
-        public WifiSitterIpc (Action<object, MessageEventArgs> MessageReceivedHandler) {
-            MsgListener = new MessageListener();
+        public WifiSitterIpc(Action<object, XDMessageEventArgs> MessageReceivedHandler) {
+            
             try {
                 WifiSitter.LogLine("Registering listener channel: {0}", _myChannel);
+                MsgListener = _msgClient.Listeners.GetListenerForMode(XDTransportMode.Compatibility);
                 MsgListener.RegisterChannel(_myChannel);
             }
             catch {
                 WifiSitter.LogLine("Failed to register IPC listener channel {0}", _myChannel);
             }
-            MsgListener.MessageReceived += (o,e) => { MessageReceivedHandler(o, e); };
+            MsgListener.MessageReceived += (o, e) => { MessageReceivedHandler(o, e); };
 
-            MsgBroadcaster = new MessageBroadcaster();
+            MsgBroadcaster = _msgClient.Broadcasters.GetBroadcasterForMode(XDTransportMode.Compatibility);
         }
     }
 }
