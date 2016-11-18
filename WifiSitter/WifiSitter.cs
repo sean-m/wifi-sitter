@@ -29,6 +29,7 @@ namespace WifiSitter
         private volatile bool _paused;
         private static WifiSitterIpc _wsIpc;
         private Action<object, XDMessageEventArgs> _handleMsgRecv;
+        private System.Timers.Timer _pauseTimer;
 
         #endregion // fields
 
@@ -90,9 +91,16 @@ namespace WifiSitter
             LogLine("Version: {0}", v.ToString());
 
             // Setup IPC
+            // TODO make this tunable, cmd argument?
             LogLine("Initializing IPC...");
             _handleMsgRecv = new Action<object, XDMessageEventArgs>(HandleMsgReceived);
             _wsIpc = new WifiSitterIpc(_handleMsgRecv);
+
+            // Initialize timeout timer
+            _pauseTimer = new System.Timers.Timer();
+            _pauseTimer.AutoReset = false;
+            _pauseTimer.Interval = 5 * 60 * 1000;  // five minutes
+            _pauseTimer.Elapsed += (o, e) => { _paused = false; };
 
             // Check if there are any interfaces not detected by GetAllNetworkInterfaces()
             // That method will not show disabled interfaces
@@ -260,6 +268,9 @@ namespace WifiSitter
             while (!_shutdownEvent.WaitOne(0)) {
 
                 if (_paused) {
+
+                    // TODO do network state checks while paused so state can be sent to client, if client has polled in the last 90 seconds
+
                     Thread.Sleep(1000);
                     continue;
                 }
@@ -332,6 +343,9 @@ namespace WifiSitter
         }
 
         private void ResetNicState (NetworkState netstate) {
+            if (netstate == null)
+                return;
+
             var taskList = new List<Task>();
             foreach (var n in netstate.OriginalNicState) {
                 var id   = n[0];
@@ -370,19 +384,35 @@ namespace WifiSitter
             WifiSitterIpcMessage _msg = null;
             try { _msg = Newtonsoft.Json.JsonConvert.DeserializeObject<WifiSitterIpcMessage>(e.DataGram.Message); }
             catch { LogLine("Deserialize to WifiSitterIpcMessage failed."); }
-
+            WifiSitterIpcMessage response;
             if (_msg != null) {
-                if (_msg.Request == "get_netstate") {
-                    LogLine("Sending netstate to: {0}", _msg.Requestor);
-                    var response = new WifiSitterIpcMessage("give_netstate", _wsIpc.MyChannelName, "", Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate)));
-                    _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
+                switch (_msg.Request) {
+                    case "get_netstate":
+                        LogLine("Sending netstate to: {0}", _msg.Requestor);
+                        response = new WifiSitterIpcMessage("give_netstate", _wsIpc.MyChannelName, "", Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate)));
+                        _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
+                        break;
+                    case "take_five":
+                        try {
+                            LogLine("Taking 5 minute break and restoring interfaces.");
+                            _pauseTimer.Stop();
+                            _pauseTimer.Start();
+                            _paused = true;
+                            ResetNicState(netstate);
+                            response = new WifiSitterIpcMessage("taking_five", _wsIpc.MyChannelName, "", "");
+                            _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
+                        }
+                        catch { WriteLog(LogType.error, "Failed to enter paused state after 'take_five' request received."); }
+                        break;
+                    default:
+                        break;
                 }
             }
             else {
-                Trace.WriteLine(e.DataGram.Message);
+                Trace.WriteLine(String.Format("Message issue: {0}", e.DataGram.Message));
             }
         }
-
+        
         #endregion // methods
 
 

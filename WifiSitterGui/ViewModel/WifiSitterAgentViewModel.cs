@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using WifiSitter;
 using WifiSitter.Model;
 using WifiSitterGui.Helpers;
@@ -18,11 +19,13 @@ namespace WifiSitterGui.ViewModel
 
         private static MainWindowViewModel _windowVM;
         private RelayCommand _launchWindowCommand;
+        private RelayCommand _takeFiveCommand;  // Asks service to pause for 5 minutes
         private static MainWindow _statusGui;
         private static WifiSitterIpc _wsIpc;
         private Action<object, XDMessageEventArgs> _handleMsgRcv;
         private static string _serviceChannel;
-        
+        private System.Timers.Timer _netstateCheckTimer;
+
         #endregion  // fields
 
         #region constructor
@@ -43,16 +46,14 @@ namespace WifiSitterGui.ViewModel
             _handleMsgRcv = new Action<object, XDMessageEventArgs>(wsIpc_MessageReceived);
             _wsIpc = new WifiSitter.WifiSitterIpc(_handleMsgRcv);
 
-            Trace.WriteLine(String.Format("WifiSitter service msg channel: {0}", ServiceChannelName));
+            // Intermittent network state polling
+            _netstateCheckTimer = new System.Timers.Timer();
+            _netstateCheckTimer.AutoReset = true;
+            _netstateCheckTimer.Interval = 30 * 1000;  // 30 seconds
+            _netstateCheckTimer.Elapsed += (o, e) => { RequestNetworkState(); };
+            _netstateCheckTimer.Start();
 
-            if (!String.IsNullOrEmpty(ServiceChannelName)) {
-                try {
-                    _wsIpc.MsgBroadcaster.SendToChannel(ServiceChannelName, new WifiSitterIpcMessage("get_netstate", _wsIpc.MyChannelName, _wsIpc.MyChannelName).IpcMessageJsonString());
-                }
-                catch (Exception e) {
-                    Trace.WriteLine(e.Message);
-                }
-            }
+            Trace.WriteLine(String.Format("WifiSitter service msg channel: {0}", ServiceChannelName));
         }
 
         #endregion  // constructor
@@ -82,19 +83,28 @@ namespace WifiSitterGui.ViewModel
                 return _serviceChannel;
             }
         }
-
-        private void GetServiceChannelName() {
-            
-        }
-
+        
         #endregion  // properties
 
         #region methods
+
+        private void RequestNetworkState () {
+            if (!String.IsNullOrEmpty(ServiceChannelName)) {
+                try {
+                    Trace.WriteLine("Checking for network state.");
+                    _wsIpc.MsgBroadcaster.SendToChannel(ServiceChannelName, new WifiSitterIpcMessage("get_netstate", _wsIpc.MyChannelName, _wsIpc.MyChannelName).IpcMessageJsonString());
+                }
+                catch (Exception e) {
+                    Trace.WriteLine(e.Message);
+                }
+            }
+        }
+
         #endregion  // methods
 
         #region commands
 
-        public RelayCommand LaunchSettingsWindow {
+        public ICommand LaunchSettingsWindow {
             get {
                 if (_launchWindowCommand == null) {
                     _launchWindowCommand = new RelayCommand(() => {
@@ -114,6 +124,20 @@ namespace WifiSitterGui.ViewModel
             }
         }
 
+
+        public ICommand SendTakeFiveRequest {
+            get {
+                if (_takeFiveCommand == null) {
+                    _takeFiveCommand = new RelayCommand(() => {
+                        var request = new WifiSitterIpcMessage("take_five", _wsIpc.MyChannelName, _wsIpc.MyChannelName);
+                        _wsIpc.MsgBroadcaster.SendToChannel(_serviceChannel, request.IpcMessageJsonString());
+                        // TODO need response validation mechanism
+                    });
+                }
+                return _takeFiveCommand;
+            }
+        } 
+
         #endregion  // commands
 
         #region events
@@ -129,11 +153,20 @@ namespace WifiSitterGui.ViewModel
             catch { Trace.WriteLine("Deserialize to ServiceRequest failed."); }
 
             if (_sr != null) {
-                if (_sr.Request == "give_netstate") {
-                    try {
-                        WindowVM.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(System.Text.Encoding.UTF8.GetString(_sr.Payload));
-                    }
-                    catch { WifiSitter.WifiSitter.LogLine("Failed to deserialize netstate, payload."); }
+                switch (_sr.Request) {
+                    case "give_netstate":
+                        try { WindowVM.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(System.Text.Encoding.UTF8.GetString(_sr.Payload)); }
+                        catch { WifiSitter.WifiSitter.LogLine("Failed to deserialize netstate, payload."); }
+                        break;
+                    case "taking_five":
+                        Trace.WriteLine("Service paused.");
+                        break;
+                    case "service_status":
+                        // TODO issue service status update
+                        break;
+                    default:
+                        Trace.WriteLine(String.Format("Unknown request type: {0} from {1}", _sr?.Request, _sr?.Requestor));
+                        break;
                 }
             }
             else {
