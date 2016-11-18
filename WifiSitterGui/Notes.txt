@@ -21,3 +21,15 @@
 
 Color Pallet
 https://color.adobe.com/create/color-wheel/?base=2&rule=Complementary&selected=0&name=My%20Color%20Theme&mode=rgb&rgbvalues=0.05782394694464945,0.2912650007520878,0.7,0.09999999999999998,0.4271640968657948,1,0,0.36351566318421646,1,0.7,0.4755089048318268,0,1,0.6792984354740383,0&swatchOrder=0,1,2,3,4
+
+
+* TODO
+** Commands [0/2]
+*** TODO 5 min pause command send
+*** TODO 5 min pause command action
+** Settings [0/4]
+*** TODO Whitelist editing
+*** TODO Status view
+*** TODO Service stats
+*** TODO Launch on login
+
