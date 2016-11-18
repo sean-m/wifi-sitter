@@ -27,6 +27,7 @@ https://color.adobe.com/create/color-wheel/?base=2&rule=Complementary&selected=0
 ** Commands [0/2]
 *** TODO 5 min pause command send
 *** TODO 5 min pause command action
+*** TODO message dedupe, getting each message twice in wifisitter service. Event fires on 2 threads? Init called twice?
 ** Settings [0/4]
 *** TODO Whitelist editing
 *** TODO Status view
