@@ -22,11 +22,12 @@
               NoLeftClickDelay="True">
             <tb:TaskbarIcon.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="Pause for 5 minutes" 
+                    <MenuItem Header="Pause for 5 minutes"
+                              Icon="{StaticResource PauseIcon}"
                               ToolTip="Restores interfaces to original status." 
                               Command="{Binding SendTakeFiveRequest}" />
                     <MenuItem Header="Status and Settings" 
-                              ToolTip=""
+                              Icon="{StaticResource SettingsIcon}"
                               Command="{Binding LaunchSettingsWindow}" />
                     <Separator />
                     <MenuItem Header="Quit"
