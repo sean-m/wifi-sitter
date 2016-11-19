@@ -40,15 +40,11 @@ namespace WifiSitterGui
 
             _agentVM = new WifiSitterAgentViewModel(new MainWindowViewModel());
             DataContext = _agentVM;
-
-            Closing += (o, e) => {
-                TaskBarIcon.Visibility = Visibility.Hidden;
-                TaskBarIcon.Dispose();
-            };
         }
 
         ~TrayIconControl() {
-            
+            if (TaskBarIcon != null) TaskBarIcon.Visibility = Visibility.Hidden;
+            TaskBarIcon?.Dispose();
         }
 
         #endregion  // constructor
@@ -61,14 +57,14 @@ namespace WifiSitterGui
 
 
         #region methods
-        
+
         #endregion  // methods
 
 
         #region eventhandlers
-        
+
         private void ContextMenu_Quit(object sender, RoutedEventArgs e) {
-            Environment.Exit(0);
+            Task.Run(() => { Environment.Exit(0); });
         }
         
         #endregion  // eventhandlers
