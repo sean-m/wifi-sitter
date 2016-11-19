@@ -7,9 +7,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.ServiceProcess;
+using System.Net.NetworkInformation;
+
 using WifiSitter;
 using WifiSitter.Model;
 using WifiSitterGui.Helpers;
+
 using XDMessaging;
 
 namespace WifiSitterGui.ViewModel
@@ -42,13 +45,19 @@ namespace WifiSitterGui.ViewModel
 
 
         private void Intitialize() {
-            
+            // Get NetState
+            RequestNetworkState();
+
             // Intermittent network state polling
             _netstateCheckTimer = new System.Timers.Timer();
             _netstateCheckTimer.AutoReset = true;
             _netstateCheckTimer.Interval = 30 * 1000;  // 30 seconds
             _netstateCheckTimer.Elapsed += (o, e) => { RequestNetworkState(); };
             _netstateCheckTimer.Start();
+
+            // Connection state changed event handler setup
+            NetworkChange.NetworkAvailabilityChanged += (o, e) => { RequestNetworkState(3 * 1000); };
+            NetworkChange.NetworkAddressChanged += (o, e) => { RequestNetworkState(3 * 1000); };
 
             Trace.WriteLine(String.Format("WifiSitter service msg channel: {0}", ServiceChannelName));
         }
@@ -67,6 +76,7 @@ namespace WifiSitterGui.ViewModel
                 return _wsIpc;
             }
         }
+        
 
         public MainWindowViewModel WindowVM {
             get { if (_windowVM == null) {
@@ -77,6 +87,8 @@ namespace WifiSitterGui.ViewModel
             private set { _windowVM = value; OnPropertyChanged("WindowVM"); }
         }
 
+
+        public int IconSize { get { return 40; } }
 
         internal string ServiceChannelName {
             get {
@@ -97,7 +109,11 @@ namespace WifiSitterGui.ViewModel
 
         #region methods
 
-        private void RequestNetworkState () {
+        public void RequestNetworkState(int Delay) {
+            Task.Delay(Delay).ContinueWith((task) => { RequestNetworkState(); }, TaskScheduler.FromCurrentSynchronizationContext());
+        }
+        
+        public void RequestNetworkState () {
             if (!String.IsNullOrEmpty(ServiceChannelName)) {
                 try {
                     Trace.WriteLine("Checking for network state.");
