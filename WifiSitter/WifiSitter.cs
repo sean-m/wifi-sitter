@@ -323,17 +323,19 @@ namespace WifiSitter
         private void ResetNicState (NetworkState netstate) {
             var taskList = new List<Task>();
             foreach (var n in netstate.OriginalNicState) {
-                var id   = n[0];
-                var stat = n[1];
+                var id    = n[0];
+                var state = n[1];
                 TrackedNic now = netstate.Nics.Where(x => x.Id == id).FirstOrDefault();
                 if (now != null) {
-                    if (stat.ToLower() != now.IsEnabled.ToString().ToLower()) {
-                        if (stat == true.ToString()) {
+                    if (state.ToLower() != now.IsEnabled.ToString().ToLower()) {
+                        if (state == true.ToString()) {
+                            WriteLog(LogType.info, "Restoring adapter state, enabling adapter: {0} - {1}", now.Name, now.Description);
                             var enableTask = new Task(() => { now.Enable(); });
                             enableTask.Start();
                             taskList.Add(enableTask);
                         }
                         else {
+                            WriteLog(LogType.info, "Restoring adapter state, disabling adapter: {0} - {1}", now.Name, now.Description);
                             var disableTask = new Task(() => { now.Disable(); });
                             disableTask.Start();
                             taskList.Add(disableTask); }
