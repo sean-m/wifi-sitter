@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.ServiceProcess;
 using WifiSitter;
 using WifiSitter.Model;
 using WifiSitterGui.Helpers;
@@ -41,11 +42,7 @@ namespace WifiSitterGui.ViewModel
 
 
         private void Intitialize() {
-
-            // Setup IPC message listener
-            _handleMsgRcv = new Action<object, XDMessageEventArgs>(wsIpc_MessageReceived);
-            _wsIpc = new WifiSitter.WifiSitterIpc(_handleMsgRcv);
-
+            
             // Intermittent network state polling
             _netstateCheckTimer = new System.Timers.Timer();
             _netstateCheckTimer.AutoReset = true;
@@ -59,6 +56,17 @@ namespace WifiSitterGui.ViewModel
         #endregion  // constructor
 
         #region properties
+
+        internal WifiSitterIpc WsIpc {
+            get {
+                if (_wsIpc == null) {
+                    // Setup IPC message listener
+                    _handleMsgRcv = new Action<object, XDMessageEventArgs>(wsIpc_MessageReceived);
+                    _wsIpc = new WifiSitterIpc(_handleMsgRcv);
+                }
+                return _wsIpc;
+            }
+        }
 
         public MainWindowViewModel WindowVM {
             get { if (_windowVM == null) {
@@ -83,7 +91,8 @@ namespace WifiSitterGui.ViewModel
                 return _serviceChannel;
             }
         }
-        
+
+
         #endregion  // properties
 
         #region methods
@@ -92,7 +101,7 @@ namespace WifiSitterGui.ViewModel
             if (!String.IsNullOrEmpty(ServiceChannelName)) {
                 try {
                     Trace.WriteLine("Checking for network state.");
-                    _wsIpc.MsgBroadcaster.SendToChannel(ServiceChannelName, new WifiSitterIpcMessage("get_netstate", _wsIpc.MyChannelName, _wsIpc.MyChannelName).IpcMessageJsonString());
+                    WsIpc.MsgBroadcaster.SendToChannel(ServiceChannelName, new WifiSitterIpcMessage("get_netstate", _wsIpc.MyChannelName, _wsIpc.MyChannelName).IpcMessageJsonString());
                 }
                 catch (Exception e) {
                     Trace.WriteLine(e.Message);
@@ -130,7 +139,7 @@ namespace WifiSitterGui.ViewModel
                 if (_takeFiveCommand == null) {
                     _takeFiveCommand = new RelayCommand(() => {
                         var request = new WifiSitterIpcMessage("take_five", _wsIpc.MyChannelName, _wsIpc.MyChannelName);
-                        _wsIpc.MsgBroadcaster.SendToChannel(_serviceChannel, request.IpcMessageJsonString());
+                        WsIpc.MsgBroadcaster.SendToChannel(_serviceChannel, request.IpcMessageJsonString());
                         // TODO need response validation mechanism
                     });
                 }
