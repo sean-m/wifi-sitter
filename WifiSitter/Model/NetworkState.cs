@@ -32,7 +32,8 @@ namespace WifiSitter
             this.Nics = QueryNetworkAdapters(NicWhitelist);
 
             // Loop through nics and add id:state to _originalNicState list
-            Nics.ForEach(x => _originalNicState.Add(new string[] { x.Id, x.IsEnabled.ToString() }));
+            Nics.Where(x => !NicWhitelist.Any(y => x.Description.StartsWith(y))).ToList()
+                .ForEach(x => _originalNicState.Add(new string[] { x.Id, x.IsEnabled.ToString() }));
 
             _ignoreAdapters = NicWhitelist;
 
