@@ -29,8 +29,7 @@ namespace WifiSitter
         private volatile bool _paused;
         private static WifiSitterIpc _wsIpc;
         private Action<object, XDMessageEventArgs> _handleMsgRecv;
-        private System.Timers.Timer _pauseTimer;
-
+        
         #endregion // fields
 
 
@@ -62,17 +61,13 @@ namespace WifiSitter
             Version v = asm.GetName().Version;
             LogLine("Version: {0}", v.ToString());
 
+
             // Setup IPC
             // TODO make this tunable, cmd argument?
             LogLine("Initializing IPC...");
             _handleMsgRecv = new Action<object, XDMessageEventArgs>(HandleMsgReceived);
             _wsIpc = new WifiSitterIpc(_handleMsgRecv);
-
-            // Initialize timeout timer
-            _pauseTimer = new System.Timers.Timer();
-            _pauseTimer.AutoReset = false;
-            _pauseTimer.Interval = 5 * 60 * 1000;  // five minutes
-            _pauseTimer.Elapsed += (o, e) => { _paused = false; };
+            
 
             // Check if there are any interfaces not detected by GetAllNetworkInterfaces()
             // That method will not show disabled interfaces
@@ -269,9 +264,6 @@ namespace WifiSitter
             while (!_shutdownEvent.WaitOne(0)) {
 
                 if (_paused) {
-
-                    // TODO do network state checks while paused so state can be sent to client, if client has polled in the last 90 seconds
-
                     Thread.Sleep(1000);
                     continue;
                 }
@@ -392,15 +384,15 @@ namespace WifiSitter
                 switch (_msg.Request) {
                     case "get_netstate":
                         LogLine("Sending netstate to: {0}", _msg.Requestor);
+                        if (_paused) netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
                         response = new WifiSitterIpcMessage("give_netstate", _wsIpc.MyChannelName, "", Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate)));
                         _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
                         break;
                     case "take_five":
                         try {
                             LogLine("Taking 5 minute break and restoring interfaces.");
-                            _pauseTimer.Stop();
-                            _pauseTimer.Start();
-                            _paused = true;
+                            OnPause();
+                            Task.Delay(5 * 60 * 1000).ContinueWith((task) => { OnContinue(); }, TaskScheduler.FromCurrentSynchronizationContext());
                             ResetNicState(netstate);
                             response = new WifiSitterIpcMessage("taking_five", _wsIpc.MyChannelName, "", "");
                             _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
