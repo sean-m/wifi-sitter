@@ -16,8 +16,28 @@
         <vm:MainWindowViewModel/>
     </Window.DataContext>
     <Grid>
-        <DataGrid x:Name="DataGridNics"
-            ItemsSource="{Binding Nics, Mode=OneWay}" 
-            />
+        <TabControl>
+            <TabItem Header="Status">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="62"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock>
+                        <Run>Service Status: </Run> <Run Text="{Binding ServiceState, Mode=OneWay}"/>
+                    </TextBlock>
+                    
+                    <DataGrid x:Name="DataGridNics"
+                              Grid.Row="1"
+                              ItemsSource="{Binding Nics, Mode=OneWay}" />
+                </Grid>
+            </TabItem>
+            
+            <TabItem Header="Settings">
+                
+            </TabItem>
+            
+        </TabControl>
     </Grid>
 </Window>
