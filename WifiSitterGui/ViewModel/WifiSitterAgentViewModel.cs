@@ -38,6 +38,7 @@ namespace WifiSitterGui.ViewModel
             Intitialize();
         }
 
+
         public WifiSitterAgentViewModel(MainWindowViewModel WindowVM) {
             _windowVM = WindowVM;
             Intitialize();
@@ -87,9 +88,7 @@ namespace WifiSitterGui.ViewModel
             private set { _windowVM = value; OnPropertyChanged("WindowVM"); }
         }
 
-
-        public int IconSize { get { return 40; } }
-
+        
         internal string ServiceChannelName {
             get {
                 if (_serviceChannel == null) {
@@ -103,7 +102,6 @@ namespace WifiSitterGui.ViewModel
                 return _serviceChannel;
             }
         }
-
 
         #endregion  // properties
 
