@@ -45,34 +45,6 @@ namespace WifiSitter
             }
         }
 
-        #endregion // constructor
-
-
-        #region properties
-
-        public override string DisplayName {
-            get {
-                return _serviceName;
-            }
-        }
-
-        protected override Guid UninstallGuid {
-            get {
-                System.Guid.TryParse("23a42c57-a16c-4b93-a5cb-60cff20c1f7a", out _uninstGuid);
-                return _uninstGuid;
-            }
-        }
-
-        public override string ServiceDesc {
-            get {
-                return "Manages WiFi adapters based on wired ethernet connectivity.";
-            }
-        }
-
-        #endregion // properties
-
-
-        #region methods
 
         /// <summary>
         /// Do initial nic discovery and netsh trickery
@@ -108,9 +80,38 @@ namespace WifiSitter
             if (_ignoreNics.Count() < 1) {
                 WriteLog(LogType.info, "No network adapter whitelist configured.");
             }
-            netstate = new NetworkState(DiscoverAllNetworkDevices(null,false), _ignoreNics);
+            netstate = new NetworkState(DiscoverAllNetworkDevices(null, false), _ignoreNics);
             LogLine("Initialized...");
         }
+
+        #endregion // constructor
+
+
+        #region properties
+
+        public override string DisplayName {
+            get {
+                return _serviceName;
+            }
+        }
+
+        protected override Guid UninstallGuid {
+            get {
+                System.Guid.TryParse("23a42c57-a16c-4b93-a5cb-60cff20c1f7a", out _uninstGuid);
+                return _uninstGuid;
+            }
+        }
+
+        public override string ServiceDesc {
+            get {
+                return "Manages WiFi adapters based on wired ethernet connectivity.";
+            }
+        }
+
+        #endregion // properties
+
+
+        #region methods
 
         private string[] ReadNicWhitelist() {
             List<string> results = new List<string>();
@@ -338,7 +339,7 @@ namespace WifiSitter
                     netstate.StateChecked();
                 }
 
-                Thread.Sleep(1000);
+                Thread.Sleep(500);
             }
         }
 
