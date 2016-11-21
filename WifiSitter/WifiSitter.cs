@@ -384,7 +384,10 @@ namespace WifiSitter
                 switch (_msg.Request) {
                     case "get_netstate":
                         LogLine("Sending netstate to: {0}", _msg.Requestor);
-                        if (_paused) netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
+                        if (_paused && netstate.CheckNet) {
+                            netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
+                            netstate.StateChecked();
+                        }
                         response = new WifiSitterIpcMessage("give_netstate", _wsIpc.MyChannelName, "", Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate)));
                         _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
                         break;
@@ -392,7 +395,9 @@ namespace WifiSitter
                         try {
                             LogLine("Taking 5 minute break and restoring interfaces.");
                             OnPause();
-                            Task.Delay(5 * 60 * 1000).ContinueWith((task) => { OnContinue(); }, TaskScheduler.FromCurrentSynchronizationContext());
+                            Task.Delay(5 * 60 * 1000).ContinueWith((task) => {
+                                netstate.ShouldCheckState();   // Main loop should check state again when resuming from paused state
+                                OnContinue(); });
                             ResetNicState(netstate);
                             response = new WifiSitterIpcMessage("taking_five", _wsIpc.MyChannelName, "", "");
                             _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());

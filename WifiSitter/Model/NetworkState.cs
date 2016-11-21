@@ -87,6 +87,10 @@ namespace WifiSitter
             this.ProcessingState = false;
         }
 
+        internal void ShouldCheckState() {
+            this.CheckNet = true;
+        }
+
         public void UpdateNics(List<TrackedNic> Nics) {
             foreach (var n in Nics) {
                 if (!_originalNicState.Any(x => x[0] == n.Id)) _originalNicState.Add(new string[] { n.Id, n.IsEnabled.ToString() });
