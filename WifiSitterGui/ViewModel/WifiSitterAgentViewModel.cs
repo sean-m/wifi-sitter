@@ -91,14 +91,13 @@ namespace WifiSitterGui.ViewModel
         
         internal string ServiceChannelName {
             get {
-                if (_serviceChannel == null) {
-                    var serviceProc = Process.GetProcesses().Where(x => x.ProcessName.ToLower().StartsWith("wifisitter"))
-                        .Where(x => !x.ProcessName.ToLower().Contains("gui")).ToArray();
-                    if (serviceProc != null &&
-                        serviceProc.Length > 0) {
-                        _serviceChannel = String.Format("{0}-{1}", serviceProc[0].Id, serviceProc[0].ProcessName);
-                    }
+                var serviceProc = Process.GetProcesses().Where(x => x.ProcessName.ToLower().StartsWith("wifisitter"))
+                    .Where(x => !x.ProcessName.ToLower().Contains("gui")).ToArray();
+                if (serviceProc != null &&
+                    serviceProc.Length > 0) {
+                    _serviceChannel = String.Format("{0}-{1}", serviceProc[0].Id, serviceProc[0].ProcessName);
                 }
+                
                 return _serviceChannel;
             }
         }
@@ -153,7 +152,7 @@ namespace WifiSitterGui.ViewModel
                 if (_takeFiveCommand == null) {
                     _takeFiveCommand = new RelayCommand(() => {
                         var request = new WifiSitterIpcMessage("take_five", _wsIpc.MyChannelName, _wsIpc.MyChannelName);
-                        WsIpc.MsgBroadcaster.SendToChannel(_serviceChannel, request.IpcMessageJsonString());
+                        WsIpc.MsgBroadcaster.SendToChannel(ServiceChannelName, request.IpcMessageJsonString());
                         // TODO need response validation mechanism
                     });
                 }
@@ -178,7 +177,7 @@ namespace WifiSitterGui.ViewModel
             if (_sr != null) {
                 switch (_sr.Request) {
                     case "give_netstate":
-                        try { WindowVM.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(System.Text.Encoding.UTF8.GetString(_sr.Payload)); }
+                        try { WindowVM.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(Encoding.UTF8.GetString(_sr.Payload)); }
                         catch { WifiSitter.WifiSitter.LogLine("Failed to deserialize netstate, payload."); }
                         break;
                     case "taking_five":
