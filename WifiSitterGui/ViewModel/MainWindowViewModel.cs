@@ -49,16 +49,17 @@ namespace WifiSitterGui.ViewModel
         }
 
         
-        public List<SimpleNic> Nics { get { return NetState.Nics; } }
+        public List<SimpleNic> Nics { get { return NetState?.Nics; } }
 
 
         public string ServiceState {
             get {
-                try { if (_sc == null) _sc = new ServiceController("WifiSitter"); }
+                ServiceControllerStatus status;
+                try { if (_sc == null) _sc = new ServiceController("WifiSitter"); status = _sc.Status; }
                 catch { return "No Service"; }
 
                 _sc.Refresh();
-                switch (_sc.Status) {
+                switch (status) {
                     case ServiceControllerStatus.Running:
                         return "Running";
                     case ServiceControllerStatus.Stopped:
