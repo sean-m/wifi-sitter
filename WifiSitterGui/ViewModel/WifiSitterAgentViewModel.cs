@@ -110,6 +110,7 @@ namespace WifiSitterGui.ViewModel
             Task.Delay(Delay).ContinueWith((task) => { RequestNetworkState(); }, TaskScheduler.FromCurrentSynchronizationContext());
         }
         
+
         public void RequestNetworkState () {
             if (!String.IsNullOrEmpty(ServiceChannelName)) {
                 try {
@@ -181,7 +182,7 @@ namespace WifiSitterGui.ViewModel
                         catch { WifiSitter.WifiSitter.LogLine("Failed to deserialize netstate, payload."); }
                         break;
                     case "taking_five":
-                        Trace.WriteLine("Service paused.");
+                        Trace.WriteLine(String.Format("Responded 'taking_five' : {0}", Encoding.UTF8.GetString(_sr.Payload)));
                         break;
                     case "service_status":
                         // TODO issue service status update
