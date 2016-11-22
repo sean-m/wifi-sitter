@@ -393,14 +393,29 @@ namespace WifiSitter
                         break;
                     case "take_five":
                         try {
-                            LogLine("Taking 5 minute break and restoring interfaces.");
-                            OnPause();
-                            Task.Delay(5 * 60 * 1000).ContinueWith((task) => {
-                                netstate.ShouldCheckState();   // Main loop should check state again when resuming from paused state
-                                OnContinue(); });
-                            ResetNicState(netstate);
-                            response = new WifiSitterIpcMessage("taking_five", _wsIpc.MyChannelName, "", "");
-                            _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
+                            if (_paused) {
+                                response = new WifiSitterIpcMessage("taking_five", _wsIpc.MyChannelName, "", "already_paused");
+                                _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
+                            }
+                            else {
+                                int minutes = 5;
+#if DEBUG
+                                minutes = 1;  // I'm impatient while debugging
+#endif                          
+
+                                WriteLog(LogType.info, "Taking {0} minute break and restoring interfaces to initial state.", minutes.ToString());
+                                OnPause();
+                                Task.Delay(minutes * 60 * 1000).ContinueWith((task) => {
+                                    WriteLog(LogType.info, "Break elapsed. Resuming operation.");
+                                    netstate.ShouldCheckState();   // Main loop should check state again when resuming from paused state
+                                    OnContinue();
+                                    response = new WifiSitterIpcMessage("taking_five", _wsIpc.MyChannelName, "", "resuming");
+                                    _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
+                                });
+                                ResetNicState(netstate);
+                                response = new WifiSitterIpcMessage("taking_five", _wsIpc.MyChannelName, "", "pausing");
+                                _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
+                            }
                         }
                         catch { WriteLog(LogType.error, "Failed to enter paused state after 'take_five' request received."); }
                         break;
