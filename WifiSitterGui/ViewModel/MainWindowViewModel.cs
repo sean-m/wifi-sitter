@@ -56,8 +56,7 @@ namespace WifiSitterGui.ViewModel
             }
         }
 
-
-
+        
         public ObservableCollection<string> IgnoredNics {
             get {
                 if (NetState == null) return null;
