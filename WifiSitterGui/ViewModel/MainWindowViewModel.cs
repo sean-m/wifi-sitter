@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.ServiceProcess;
 using System.Text;
@@ -49,7 +50,20 @@ namespace WifiSitterGui.ViewModel
         }
 
         
-        public List<SimpleNic> Nics { get { return NetState?.Nics; } }
+        public List<SimpleNic> Nics {
+            get {
+                return NetState?.Nics.Where(x => !NetState.IgnoreAdapters.Any(y => x.Description.StartsWith(y))).ToList();
+            }
+        }
+
+
+
+        public ObservableCollection<string> IgnoredNics {
+            get {
+                if (NetState == null) return null;
+                return new ObservableCollection<string>(NetState?.IgnoreAdapters);
+            }
+        }
 
 
         public string ServiceState {

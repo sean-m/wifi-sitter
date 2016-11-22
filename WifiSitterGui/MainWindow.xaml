@@ -22,6 +22,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="62"/>
                         <RowDefinition/>
+                        <RowDefinition/>
                     </Grid.RowDefinitions>
 
                     <TextBlock>
@@ -31,6 +32,9 @@
                     <DataGrid x:Name="DataGridNics"
                               Grid.Row="1"
                               ItemsSource="{Binding Nics, Mode=OneWay}" />
+                    <ListBox x:Name="IgnoredNicsList"
+                             Grid.Row="2"
+                             ItemsSource="{Binding IgnoredNics, Mode=OneWay}" />
                 </Grid>
             </TabItem>
             
