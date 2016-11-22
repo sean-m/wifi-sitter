@@ -15,6 +15,7 @@ namespace WifiSitter.Model
         public List<SimpleNic> Nics { get; set; }
         public bool NetworkAvailable { get; set; }
         public bool ProcessingState { get; set; }
+        public List<string> IgnoreAdapters { get; set; }
 
         public SimpleNetworkState() { }
 
@@ -24,6 +25,7 @@ namespace WifiSitter.Model
             EthernetUp = netstate.EthernetUp;
             CheckNet = netstate.CheckNet;
             Nics = netstate.Nics.Select(x => new SimpleNic(x)).ToList();
+            IgnoreAdapters = netstate.IgnoreAdapters.ToList();
         }
     }
 

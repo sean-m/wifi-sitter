@@ -99,6 +99,10 @@ namespace WifiSitter
             this.Nics = Nics;
         }
 
+        internal string[] IgnoreAdapters {
+            get { return _ignoreAdapters; }
+        }
+
         internal static List<TrackedNic> QueryNetworkAdapters(string[] WhiteList) {
             List<TrackedNic> result = new List<TrackedNic>();
             foreach (var n in NetworkInterface.GetAllNetworkInterfaces().Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback
