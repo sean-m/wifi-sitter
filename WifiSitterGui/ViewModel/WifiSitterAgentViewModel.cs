@@ -182,11 +182,40 @@ namespace WifiSitterGui.ViewModel
         #region events
 
         private void _mqClient_ReceiveReady(object sender, NetMQSocketEventArgs e) {
-            bool hasmore = false;
-            e.Socket.Receive(out hasmore);
-            if (hasmore) {
-                // TODO handle responses
-                Trace.WriteLine("Response received.");
+            
+            // TODO handle responses
+            Trace.WriteLine("Response received.");
+            WifiSitterIpcMessage _sr = null;
+
+            var msg = e.Socket.ReceiveMultipartMessage();
+            if (msg.FrameCount >= 2) {
+                var msgString = String.Concat(msg.Where(x => x.BufferSize > 0).Select(x => x.ConvertToString()));
+                try { _sr = Newtonsoft.Json.JsonConvert.DeserializeObject<WifiSitterIpcMessage>(msgString); }
+                catch {
+                    Trace.WriteLine("Deserialize to WifiSitterIpcMessage failed.");
+                    // TODO respond with failure
+                }
+            }
+                
+            if (_sr != null) {
+                switch (_sr.Request) {
+                    case "give_netstate":
+                        try { WindowVM.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(Encoding.UTF8.GetString(_sr.Payload)); }
+                        catch { WifiSitter.WifiSitter.LogLine("Failed to deserialize netstate, payload."); }
+                        break;
+                    case "taking_five":
+                        Trace.WriteLine(String.Format("Responded 'taking_five' : {0}", Encoding.UTF8.GetString(_sr.Payload)));
+                        break;
+                    case "service_status":
+                        // TODO issue service status update
+                        break;
+                    default:
+                        Trace.WriteLine(String.Format("Unknown request type: {0} from {1}", _sr?.Request, _sr?.Requestor));
+                        break;
+                }
+            }
+            else {
+                Trace.WriteLine("Server response is null.");
             }
         }
         
