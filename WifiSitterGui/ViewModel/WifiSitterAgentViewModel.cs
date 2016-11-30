@@ -32,6 +32,7 @@ namespace WifiSitterGui.ViewModel
         private System.Timers.Timer _netstateCheckTimer;
         private static string _myChannel = String.Format("{0}-{1}", Process.GetCurrentProcess().Id, Process.GetCurrentProcess().ProcessName);
         private static DealerSocket _mqClient;
+        private static NetMQPoller _poller;
 
         #endregion  // fields
 
@@ -54,6 +55,10 @@ namespace WifiSitterGui.ViewModel
             _mqClient = new DealerSocket();
             _mqClient.Options.Identity = Encoding.UTF8.GetBytes(_myChannel);
             _mqClient.Connect(connString);
+            _poller = new NetMQPoller();
+            _poller.Add(_mqClient);
+            _mqClient.ReceiveReady += _mqClient_ReceiveReady;
+            _poller.RunAsync();
 
             // Get NetState
             RequestNetworkState();
@@ -71,11 +76,14 @@ namespace WifiSitterGui.ViewModel
 
             Trace.WriteLine(String.Format("WifiSitter service msg channel: {0}", ServiceChannelName));
         }
-
+        
+        ~WifiSitterAgentViewModel() {
+            _poller?.Dispose();
+        }
         #endregion  // constructor
 
         #region properties
-        
+
         public MainWindowViewModel WindowVM {
             get { if (_windowVM == null) {
                     _windowVM = new MainWindowViewModel();
@@ -167,44 +175,21 @@ namespace WifiSitterGui.ViewModel
                 }
                 return _takeFiveCommand;
             }
-        } 
+        }
 
         #endregion  // commands
 
         #region events
-        
-        internal void wsIpc_MessageReceived() {
-            //if (!e.DataGram.IsValid) {
-            //    Trace.WriteLine("Invalid datagram received.");
-            //    return;
-            //}
 
-            //WifiSitterIpcMessage _sr = null;
-            //try { _sr = Newtonsoft.Json.JsonConvert.DeserializeObject<WifiSitterIpcMessage>(e.DataGram.Message); }
-            //catch { Trace.WriteLine("Deserialize to ServiceRequest failed."); }
-
-            //if (_sr != null) {
-            //    switch (_sr.Request) {
-            //        case "give_netstate":
-            //            try { WindowVM.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(Encoding.UTF8.GetString(_sr.Payload)); }
-            //            catch { WifiSitter.WifiSitter.LogLine("Failed to deserialize netstate, payload."); }
-            //            break;
-            //        case "taking_five":
-            //            Trace.WriteLine(String.Format("Responded 'taking_five' : {0}", Encoding.UTF8.GetString(_sr.Payload)));
-            //            break;
-            //        case "service_status":
-            //            // TODO issue service status update
-            //            break;
-            //        default:
-            //            Trace.WriteLine(String.Format("Unknown request type: {0} from {1}", _sr?.Request, _sr?.Requestor));
-            //            break;
-            //    }
-            //}
-            //else {
-            //    Trace.WriteLine(e.DataGram.Message);
-            //}
+        private void _mqClient_ReceiveReady(object sender, NetMQSocketEventArgs e) {
+            bool hasmore = false;
+            e.Socket.Receive(out hasmore);
+            if (hasmore) {
+                // TODO handle responses
+                Trace.WriteLine("Response received.");
+            }
         }
-
+        
         #endregion  // events
     }
 }
