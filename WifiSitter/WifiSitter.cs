@@ -379,6 +379,7 @@ namespace WifiSitter
             while (true) {  // TODO need to signal stop
 
                 var clientMessage = server.ReceiveMultipartMessage();
+                var clientAddress = clientMessage[0];
 
                 if (clientMessage.FrameCount > 2) {
 
@@ -394,7 +395,7 @@ namespace WifiSitter
                     if (_msg != null) {
                         switch (_msg.Request) {
                             case "get_netstate":
-                                LogLine("Sending netstate to: {0}", _msg.Requestor);
+                                LogLine("Sending netstate to: {0}", clientAddress.ConvertToString());
                                 if (_paused && netstate.CheckNet) {
                                     netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
                                     netstate.StateChecked();
@@ -428,8 +429,9 @@ namespace WifiSitter
                                                                                 server.Options.Identity.ToString(),
                                                                                 "resuming").ToJsonString();
                                             // Send response
+                                            var t_clientAddress = clientAddress;
                                             var t_responseMessage = new NetMQMessage();
-                                            t_responseMessage.Append(server.Options.Identity);
+                                            t_responseMessage.Append(t_clientAddress);
                                             t_responseMessage.AppendEmptyFrame();
                                             t_responseMessage.Append(t_response);
                                             server.SendMultipartMessage(t_responseMessage);
@@ -448,7 +450,7 @@ namespace WifiSitter
 
                         // Send response
                         var responseMessage = new NetMQMessage();
-                        responseMessage.Append(server.Options.Identity);
+                        responseMessage.Append(clientAddress);
                         responseMessage.AppendEmptyFrame();
                         responseMessage.Append(response);
                         server.SendMultipartMessage(responseMessage);
