@@ -12,24 +12,21 @@ namespace WifiSitter
     {
         public string Request { get; set; }
         public string Requestor { get; set;  }
-        public string Target { get; set; }
         public byte[] Payload { get; set; }
         public Type PayloadType { get; set; }
 
         public WifiSitterIpcMessage() { }
 
-        public WifiSitterIpcMessage(string Verb, string WhosAsking, string WhereTo, string SendingWhat = "") {
+        public WifiSitterIpcMessage(string Verb, string WhosAsking, string SendingWhat = "") {
             Request = Verb;
             Requestor = WhosAsking;
-            Target = WhereTo;
-            Payload = System.Text.Encoding.UTF8.GetBytes(SendingWhat);
+            Payload = Encoding.UTF8.GetBytes(SendingWhat);
             PayloadType = typeof(string);
         }
 
-        public WifiSitterIpcMessage(string Verb, string WhosAsking, string WhereTo, object SendingWhat, Type type) {
+        public WifiSitterIpcMessage(string Verb, string WhosAsking, object SendingWhat, Type type) {
             Request = Verb;
             Requestor = WhosAsking;
-            Target = WhereTo;
             Payload = SendingWhat.ObjectToByteArray();
             PayloadType = SendingWhat.GetType();
         }
@@ -37,7 +34,7 @@ namespace WifiSitter
 
     public static class WifiSitterExtensions
     {
-        public static string IpcMessageJsonString(this WifiSitterIpcMessage message) {
+        public static string ToJsonString(this WifiSitterIpcMessage message) {
             string result;
             result = Newtonsoft.Json.JsonConvert.SerializeObject(message);
             return result;

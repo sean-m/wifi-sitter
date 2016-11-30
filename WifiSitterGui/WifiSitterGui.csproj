@@ -40,8 +40,16 @@
     <ApplicationIcon>wifisitter-icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AsyncIO, Version=0.1.20.0, Culture=neutral, PublicKeyToken=44a94435bd6f33f8, processorArchitecture=MSIL">
+      <HintPath>..\packages\AsyncIO.0.1.20.0\lib\net40\AsyncIO.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Hardcodet.Wpf.TaskbarNotification, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Hardcodet.NotifyIcon.Wpf.1.0.8\lib\net451\Hardcodet.Wpf.TaskbarNotification.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NetMQ, Version=3.3.3.4, Culture=neutral, PublicKeyToken=a6decef4ddc58b3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\NetMQ.3.3.3.4\lib\net40\NetMQ.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -61,10 +69,6 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="XDMessaging.Lite, Version=5.0.1.0, Culture=neutral, PublicKeyToken=737bc70442f2c4af, processorArchitecture=MSIL">
-      <HintPath>..\packages\XDMessaging.Lite.5.0.1\lib\net40-Client\XDMessaging.Lite.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -85,9 +89,6 @@
     </Compile>
     <Compile Include="..\WifiSitter\Model\WifiSitterIpcMessage.cs">
       <Link>Model\WifiSitterIpcMessage.cs</Link>
-    </Compile>
-    <Compile Include="..\WifiSitter\WifiSitterIpc.cs">
-      <Link>WifiSitterIpc.cs</Link>
     </Compile>
     <Compile Include="Helpers\RelayCommand.cs" />
     <Compile Include="Model\WifiSitterStub.cs" />

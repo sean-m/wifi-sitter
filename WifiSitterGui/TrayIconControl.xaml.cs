@@ -17,8 +17,6 @@ using WifiSitterGui.ViewModel;
 using WifiSitter;
 using WifiSitter.Model;
 
-using XDMessaging;
-
 namespace WifiSitterGui
 {
     /// <summary>

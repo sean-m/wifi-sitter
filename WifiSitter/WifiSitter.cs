@@ -12,7 +12,9 @@ using System.Threading.Tasks;
 using WifiSitter.Helpers;
 
 // 3rd party deps
-using XDMessaging;
+using NetMQ;
+using NetMQ.Sockets;
+using System.Text;
 
 namespace WifiSitter
 {
@@ -23,13 +25,14 @@ namespace WifiSitter
         internal volatile static NetworkState netstate;
         private const string _serviceName = "WifiSitter";
         private Guid _uninstGuid;
-        private Thread _thread;
+        private Thread _mainLoopThread;
+        private Thread _mqServerThread;
         private ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
         private static string[] _ignoreNics;
         private volatile bool _paused;
-        private static WifiSitterIpc _wsIpc;
-        private Action<object, XDMessageEventArgs> _handleMsgRecv;
-        
+        private SynchronizationContext _sync;
+        private static string _myChannel = String.Format("{0}-{1}", Process.GetCurrentProcess().Id, Process.GetCurrentProcess().ProcessName);
+
         #endregion // fields
 
 
@@ -60,13 +63,6 @@ namespace WifiSitter
             Assembly asm = GetType().Assembly;
             Version v = asm.GetName().Version;
             LogLine("Version: {0}", v.ToString());
-
-
-            // Setup IPC
-            // TODO make this tunable, cmd argument?
-            LogLine("Initializing IPC...");
-            _handleMsgRecv = new Action<object, XDMessageEventArgs>(HandleMsgReceived);
-            _wsIpc = new WifiSitterIpc(_handleMsgRecv);
             
 
             // Check if there are any interfaces not detected by GetAllNetworkInterfaces()
@@ -78,6 +74,7 @@ namespace WifiSitter
             netstate = new NetworkState(DiscoverAllNetworkDevices(null, false), _ignoreNics);
             LogLine("Initialized...");
         }
+
 
         #endregion // constructor
 
@@ -369,65 +366,100 @@ namespace WifiSitter
         }
 
 
-        private void HandleMsgReceived(object sender, XDMessageEventArgs e) {
-            LogLine("Message received");
-            if (!e.DataGram.IsValid) {
-                Trace.WriteLine("Invalid datagram received.");
-                return;
-            }
 
-            WifiSitterIpcMessage _msg = null;
-            try { _msg = Newtonsoft.Json.JsonConvert.DeserializeObject<WifiSitterIpcMessage>(e.DataGram.Message); }
-            catch { LogLine("Deserialize to WifiSitterIpcMessage failed."); }
-            WifiSitterIpcMessage response;
-            if (_msg != null) {
-                switch (_msg.Request) {
-                    case "get_netstate":
-                        LogLine("Sending netstate to: {0}", _msg.Requestor);
-                        if (_paused && netstate.CheckNet) {
-                            netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
-                            netstate.StateChecked();
-                        }
-                        response = new WifiSitterIpcMessage("give_netstate", _wsIpc.MyChannelName, "", Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate)));
-                        _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
-                        break;
-                    case "take_five":
-                        try {
-                            if (_paused) {
-                                response = new WifiSitterIpcMessage("taking_five", _wsIpc.MyChannelName, "", "already_paused");
-                                _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
-                            }
-                            else {
-                                int minutes = 5;
+        private void ZeroMQRouterRun() {
+            // TODO handle port bind failure, increment port and try again, quit after 3 tries
+            int port = 37247;
+            int tries = 0;
+            string connString = String.Format("@tcp://127.0.0.1:{0}", port);
+
+            var server = new RouterSocket(connString);
+            server.Options.Identity = Encoding.UTF8.GetBytes(_myChannel);
+
+            while (true) {  // TODO need to signal stop
+
+                var clientMessage = server.ReceiveMultipartMessage();
+
+                if (clientMessage.FrameCount > 2) {
+
+                    WifiSitterIpcMessage _msg = null;
+                    string response = String.Empty;
+                    var msgString = String.Concat(clientMessage.Skip(2).ToList().Select(x => x.ConvertToString()));
+                    try { _msg = Newtonsoft.Json.JsonConvert.DeserializeObject<WifiSitterIpcMessage>(msgString); }
+                    catch {
+                        LogLine("Deserialize to WifiSitterIpcMessage failed.");
+                        // TODO respond with failure
+                    }
+
+                    if (_msg != null) {
+                        switch (_msg.Request) {
+                            case "get_netstate":
+                                LogLine("Sending netstate to: {0}", _msg.Requestor);
+                                if (_paused && netstate.CheckNet) {
+                                    netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
+                                    netstate.StateChecked();
+                                }
+                                // form response
+                                response = new WifiSitterIpcMessage("give_netstate",
+                                                                    server.Options.Identity.ToString(),
+                                                                    Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate))).ToJsonString();
+                                break;
+                            case "take_five":
+                                try {
+                                    if (_paused) {
+                                        response = new WifiSitterIpcMessage("taking_five",
+                                                                            server.Options.Identity.ToString(),
+                                                                            "already_paused").ToJsonString();
+                                    }
+                                    else {
+                                        int minutes = 5;
 #if DEBUG
-                                minutes = 1;  // I'm impatient while debugging
-#endif                          
+                                        minutes = 1;  // I'm impatient while debugging
+#endif
 
-                                WriteLog(LogType.info, "Taking {0} minute break and restoring interfaces to initial state.", minutes.ToString());
-                                OnPause();
-                                Task.Delay(minutes * 60 * 1000).ContinueWith((task) => {
-                                    WriteLog(LogType.info, "Break elapsed. Resuming operation.");
-                                    netstate.ShouldCheckState();   // Main loop should check state again when resuming from paused state
-                                    OnContinue();
-                                    response = new WifiSitterIpcMessage("taking_five", _wsIpc.MyChannelName, "", "resuming");
-                                    _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
-                                });
-                                ResetNicState(netstate);
-                                response = new WifiSitterIpcMessage("taking_five", _wsIpc.MyChannelName, "", "pausing");
-                                _wsIpc.MsgBroadcaster.SendToChannel(_msg.Target, response.IpcMessageJsonString());
-                            }
+                                        WriteLog(LogType.info, "Taking {0} minute break and restoring interfaces to initial state.", minutes.ToString());
+                                        OnPause();
+                                        Task.Delay(minutes * 60 * 1000).ContinueWith((task) => {
+                                            WriteLog(LogType.info, "Break elapsed. Resuming operation.");
+                                            netstate.ShouldCheckState();   // Main loop should check state again when resuming from paused state
+                                            OnContinue();
+                                            // prefixing t_ to differentiate from outer scope
+                                            string t_response = new WifiSitterIpcMessage("taking_five",
+                                                                                server.Options.Identity.ToString(),
+                                                                                "resuming").ToJsonString();
+                                            // Send response
+                                            var t_responseMessage = new NetMQMessage();
+                                            t_responseMessage.Append(server.Options.Identity);
+                                            t_responseMessage.AppendEmptyFrame();
+                                            t_responseMessage.Append(t_response);
+                                            server.SendMultipartMessage(t_responseMessage);
+                                        });
+                                        ResetNicState(netstate);
+                                        response = new WifiSitterIpcMessage("taking_five",
+                                                                            server.Options.Identity.ToString(),
+                                                                            "pausing").ToJsonString();
+                                    }
+                                }
+                                catch { WriteLog(LogType.error, "Failed to enter paused state after 'take_five' request received."); }
+                                break;
+                            default:
+                                break;
                         }
-                        catch { WriteLog(LogType.error, "Failed to enter paused state after 'take_five' request received."); }
-                        break;
-                    default:
-                        break;
+
+                        // Send response
+                        var responseMessage = new NetMQMessage();
+                        responseMessage.Append(server.Options.Identity);
+                        responseMessage.AppendEmptyFrame();
+                        responseMessage.Append(response);
+                        server.SendMultipartMessage(responseMessage);
+                    }
+                    else {
+                        Trace.WriteLine(String.Format("Message issue: {0}", clientMessage.ToString()));
+                    }
                 }
             }
-            else {
-                Trace.WriteLine(String.Format("Message issue: {0}", e.DataGram.Message));
-            }
         }
-        
+
         #endregion // methods
 
 
@@ -440,10 +472,22 @@ namespace WifiSitter
 
                 Intialize();
 
-                _thread = new Thread(WorkerThreadFunc);
-                _thread.Name = "WifiSitter Main Loop";
-                _thread.IsBackground = true;
-                _thread.Start();
+                // Setup background thread for running main loop
+                _mainLoopThread = new Thread(WorkerThreadFunc);
+                _mainLoopThread.Name = "WifiSitter Main Loop";
+                _mainLoopThread.IsBackground = true;
+                _mainLoopThread.Start();
+
+
+
+                // Setup IPC, 0mq messaging thread
+                // TODO make this tunable, cmd argument?
+                LogLine("Initializing IPC...");
+                
+                _mqServerThread = new Thread(ZeroMQRouterRun);
+                _mqServerThread.Name = "0MQ Server Thread";
+                _mqServerThread.IsBackground = true;
+                _mqServerThread.Start();
             }
             catch (Exception e) {
                 WriteLog(LogType.error, e.Source, e.Message);
@@ -454,8 +498,8 @@ namespace WifiSitter
         protected override void OnStopImpl() {
             ResetNicState(netstate);
             _shutdownEvent.Set();
-            if (!_thread.Join(3000)) {
-                _thread.Abort();
+            if (!_mainLoopThread.Join(3000)) {
+                _mainLoopThread.Abort();
             }
         }
 
