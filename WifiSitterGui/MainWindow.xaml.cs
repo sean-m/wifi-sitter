@@ -19,8 +19,22 @@ namespace WifiSitterGui
     /// </summary>
     public partial class MainWindow : Window
     {
+        private Window _about;
+
         public MainWindow() {
             InitializeComponent();
+        }
+        
+        private void Btn_About_Click(object sender, RoutedEventArgs e) {
+            if (_about == null) {
+                _about = new WifiSitterGui.View.About();
+                _about.Closed += (s, args) => { _about = null; };
+                _about.Show();
+            }
+            else {
+                _about.WindowState = WindowState.Normal;
+                _about.Activate();
+            }
         }
     }
 }

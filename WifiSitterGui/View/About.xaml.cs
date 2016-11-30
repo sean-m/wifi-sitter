@@ -12,6 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
+using WifiSitterGui.Helpers;
+
 namespace WifiSitterGui.View
 {
     /// <summary>
@@ -21,6 +23,11 @@ namespace WifiSitterGui.View
     {
         public About() {
             InitializeComponent();
+
+            Rtb_About.SetRtf(new Uri("pack://application:,,,/Resources/About.rtf"));
+            Rtb_ReadMe.SetRtf(new Uri("pack://application:,,,/Resources/ReadMe.rtf"));
+            Rtb_License.SetRtf(new Uri("pack://application:,,,/Resources/LICENSE.rtf"));
+            Rtb_Troubleshooting.SetRtf(new Uri("pack://application:,,,/Resources/Troubleshooting.rtf"));
         }
     }
 }

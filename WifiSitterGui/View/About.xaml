@@ -4,63 +4,37 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="About" Height="462" Width="412" ResizeMode="NoResize" SizeToContent="Height">
-    <Grid Background="#0F4AB2">
-        <RichTextBox Margin="10"
-                     Background="#0F4AB2"
-                     Foreground="White"
-                     BorderThickness="0">
-            <FlowDocument>
-                <Paragraph FontFamily="Calibri" 
-                           FontSize="24" 
-                           FontWeight="Bold" 
-                           TextAlignment="Center">
-                    Wifi Sitter
-                </Paragraph>
-
-                <Paragraph Margin="30,0,30,0">
-                    Thank you for using Wifi Sitter, it's been fun and challenging to build. 
-                    I hope you've found it useful.
-                    <LineBreak/>
-                    <LineBreak/>
-                    The source code to Wifi Sitter is MIT licensed but the install packages and associated
-                    binaries are Emailware; if you found them useful, shoot me an email. I love hearing from users.
-                    <LineBreak/>
-                </Paragraph>
-
-                <Paragraph Margin="160,0,0,0">
-                    <Italic>
-                        <Run>
-                            - Sean McArdle
-                        </Run>
-                    </Italic>
-                    <LineBreak/>
-                </Paragraph>
-
-                <Paragraph Margin="14, 20,14,4"
-                           Padding="0,10"
-                           FontFamily="Lucida Console" 
-                           TextAlignment="Center"
-                           FontSize="10"
-                           BorderBrush="Gray" 
-                           BorderThickness="0,2,0,0">
-                    The MIT License (MIT)
-                    <LineBreak/>
-                    <LineBreak/>
-                    Copyright (c) 20016 Sean McArdle
-                    <LineBreak/>
-                </Paragraph>
-
-                <Paragraph Margin="14,0,14,10" 
-                           FontFamily="Lucida Console" 
-                           TextAlignment="Justify"
-                           FontSize="9">
-                Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-                    <LineBreak/>
-                </Paragraph>
-            </FlowDocument>
-        </RichTextBox>
+        Title="About WifiSitter" 
+        Height="500" Width="680" 
+        ResizeMode="NoResize">
+<Grid>
+        <TabControl>
+            <TabItem Header="About">
+                <RichTextBox Name="Rtb_About" 
+                             Margin="10"
+                             Foreground="Black"
+                             BorderThickness="0"/>
+            </TabItem>
+            <TabItem Header="Read Me">
+                <RichTextBox Name="Rtb_ReadMe" 
+                             Margin="10"
+                             Foreground="Black"
+                             BorderThickness="0"/>
+            </TabItem>
+            <TabItem Header="License">
+                <RichTextBox Name="Rtb_License" 
+                             Margin="10"
+                             Foreground="Black"
+                             BorderThickness="0"/>
+            </TabItem>
+            <TabItem Header="Troubleshooting">
+                <RichTextBox Name="Rtb_Troubleshooting" 
+                             Margin="10"
+                             Foreground="Black"
+                             BorderThickness="0"/>
+            </TabItem>
+            
+        
+        </TabControl>
     </Grid>
 </Window>

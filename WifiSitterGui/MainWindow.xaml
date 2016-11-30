@@ -43,5 +43,11 @@
             </TabItem>
             
         </TabControl>
+
+        <Button x:Name="Btn_About"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="4,0"
+                Click="Btn_About_Click">About</Button>
     </Grid>
 </Window>

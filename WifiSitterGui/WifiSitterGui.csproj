@@ -90,6 +90,7 @@
     <Compile Include="..\WifiSitter\Model\WifiSitterIpcMessage.cs">
       <Link>Model\WifiSitterIpcMessage.cs</Link>
     </Compile>
+    <Compile Include="Helpers\Extensions.cs" />
     <Compile Include="Helpers\RelayCommand.cs" />
     <Compile Include="Model\WifiSitterStub.cs" />
     <Compile Include="TrayIconControl.xaml.cs">
@@ -140,6 +141,18 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <Resource Include="..\About.rtf">
+      <Link>Resources\About.rtf</Link>
+    </Resource>
+    <Resource Include="..\LICENSE.rtf">
+      <Link>Resources\LICENSE.rtf</Link>
+    </Resource>
+    <Resource Include="..\Troubleshooting.rtf">
+      <Link>Resources\Troubleshooting.rtf</Link>
+    </Resource>
+    <None Include="..\ReadMe.rtf">
+      <Link>Resources\ReadMe.rtf</Link>
+    </None>
     <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
