@@ -376,7 +376,7 @@ namespace WifiSitter
             var server = new RouterSocket(connString);
             server.Options.Identity = Encoding.UTF8.GetBytes(_myChannel);
 
-            while (true) {  // TODO need to signal stop
+            while (!_shutdownEvent.WaitOne(0)) {
 
                 var clientMessage = server.ReceiveMultipartMessage();
                 var clientAddress = clientMessage[0];
