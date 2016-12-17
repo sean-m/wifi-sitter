@@ -49,17 +49,7 @@ namespace WifiSitterGui.ViewModel
 
 
         private void Intitialize() {
-            int port = 37247;
-            string connString = String.Format("tcp://127.0.0.1:{0}", port);
-
-            _mqClient = new DealerSocket();
-            _mqClient.Options.Identity = Encoding.UTF8.GetBytes(_myChannel);
-            _mqClient.Connect(connString);
-            _poller = new NetMQPoller();
-            _poller.Add(_mqClient);
-            _mqClient.ReceiveReady += _mqClient_ReceiveReady;
-            _poller.RunAsync();
-
+            
             // Get NetState
             RequestNetworkState();
 
@@ -78,8 +68,10 @@ namespace WifiSitterGui.ViewModel
         }
         
         ~WifiSitterAgentViewModel() {
+            _poller?.StopAsync();
             _poller?.Dispose();
         }
+        
         #endregion  // constructor
 
         #region properties
@@ -114,24 +106,73 @@ namespace WifiSitterGui.ViewModel
         public void RequestNetworkState(int Delay) {
             Task.Delay(Delay).ContinueWith((task) => { RequestNetworkState(); }, TaskScheduler.FromCurrentSynchronizationContext());
         }
-        
 
+
+        System.Timers.Timer _netstateTimer;
         public void RequestNetworkState () {
+            
+            // Setup timer to throttle requests
+            if (_netstateTimer == null) {
+                _netstateTimer = new System.Timers.Timer();
+                _netstateTimer.Interval = 3000;
+                _netstateTimer.AutoReset = false;
+            }
+
+            if (_netstateTimer.Enabled) {
+                Trace.WriteLine("Requested network state less than 2 seconds ago, skipping.");
+                return;
+            }
+            else {
+                _netstateTimer.Start();
+            }
+
+
             if (!String.IsNullOrEmpty(ServiceChannelName)) {
                 try {
                     Trace.WriteLine("Checking for network state.");
                     string request = new WifiSitterIpcMessage("get_netstate", _myChannel).ToJsonString();
-                    var reqMessage = new NetMQMessage();
-                    reqMessage.Append(_mqClient.Options.Identity);
-                    reqMessage.AppendEmptyFrame();
-                    reqMessage.Append(request);
-                    bool success = _mqClient.TrySendMultipartMessage(reqMessage);
-                    if (!success) Trace.WriteLine("Failed to send get_networkstate");
+                    bool success = SendMessageToService(request);
+                    if (!success) Trace.WriteLine("Failed to send request network state.");
                 }
                 catch (Exception e) {
                     Trace.WriteLine(e.Message);
                 }
             }
+        }
+
+
+        private bool SendMessageToService(string msg) {
+
+            // Initialize messaging componenets if needed.
+            int port = 37247;
+            string connString = String.Format("tcp://127.0.0.1:{0}", port);
+
+            if (_mqClient == null) {
+                _mqClient = new DealerSocket();
+                _mqClient.Options.Identity = Encoding.UTF8.GetBytes(_myChannel);
+                _mqClient.Connect(connString);
+                _mqClient.ReceiveReady += _mqClient_ReceiveReady;
+            }
+
+            if (_poller == null) {
+                _poller = new NetMQPoller();
+                _poller.Add(_mqClient);
+            }
+
+            if (!_poller.IsRunning) {
+                Trace.WriteLine("Reinitializing poller.");
+                _poller = new NetMQPoller();
+                _poller.Add(_mqClient);
+                _poller.RunAsync();
+            }
+
+
+            // Send message
+            var reqMessage = new NetMQMessage();
+            reqMessage.Append(_mqClient.Options.Identity);
+            reqMessage.AppendEmptyFrame();
+            reqMessage.Append(msg);
+            return  _mqClient.TrySendMultipartMessage(reqMessage);
         }
 
         #endregion  // methods
@@ -164,11 +205,7 @@ namespace WifiSitterGui.ViewModel
                 if (_takeFiveCommand == null) {
                     _takeFiveCommand = new RelayCommand(() => {
                         var request = new WifiSitterIpcMessage("take_five", _myChannel).ToJsonString();
-                        var reqMessage = new NetMQMessage();
-                        reqMessage.Append(_mqClient.Options.Identity);
-                        reqMessage.AppendEmptyFrame();
-                        reqMessage.Append(request);
-                        bool success = _mqClient.TrySendMultipartMessage(reqMessage);
+                        bool success = SendMessageToService(request);
                         if (!success) Trace.WriteLine("Failed to send take_five");
                         // TODO need response validation mechanism
                     });
@@ -183,8 +220,7 @@ namespace WifiSitterGui.ViewModel
 
         private void _mqClient_ReceiveReady(object sender, NetMQSocketEventArgs e) {
             
-            // TODO handle responses
-            Trace.WriteLine("Response received.");
+            Trace.WriteLine(">> Response received.");
             WifiSitterIpcMessage _sr = null;
 
             var msg = e.Socket.ReceiveMultipartMessage();
