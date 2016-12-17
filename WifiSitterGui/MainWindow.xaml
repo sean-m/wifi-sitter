@@ -31,6 +31,7 @@
                     
                     <DataGrid x:Name="DataGridNics"
                               Grid.Row="1"
+                              IsReadOnly="True"
                               ItemsSource="{Binding Nics, Mode=OneWay}" />
                     <ListBox x:Name="IgnoredNicsList"
                              Grid.Row="2"
