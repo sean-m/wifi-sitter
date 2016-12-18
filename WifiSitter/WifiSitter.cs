@@ -7,6 +7,7 @@ using System.Net.NetworkInformation;
 using System.Threading;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Text;
 
 // Project deps
 using WifiSitter.Helpers;
@@ -14,7 +15,6 @@ using WifiSitter.Helpers;
 // 3rd party deps
 using NetMQ;
 using NetMQ.Sockets;
-using System.Text;
 
 namespace WifiSitter
 {
