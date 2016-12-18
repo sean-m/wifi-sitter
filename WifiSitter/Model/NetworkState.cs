@@ -15,7 +15,7 @@ namespace WifiSitter
         private bool _checkNet;
         private bool _netAvailable;
         private bool _processingState;
-        private string[] _ignoreAdapters;  // List of Nic names to ignore during normal operation
+        private string[] _ignoreAdapters;  // List of Nic descriptions to ignore during normal operation
         private List<string[]> _originalNicState = new List<string[]>();
         private Timer _checkTimer;
         #endregion // fields
