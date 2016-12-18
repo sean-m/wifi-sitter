@@ -23,19 +23,36 @@
                         <RowDefinition Height="62"/>
                         <RowDefinition/>
                         <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
                     </Grid.RowDefinitions>
 
                     <TextBlock>
                         <Run>Service Status: </Run> <Run Text="{Binding ServiceState, Mode=OneWay}"/>
                     </TextBlock>
                     
-                    <DataGrid x:Name="DataGridNics"
+                    <DataGrid x:Name="DataGridWiredNics"
                               Grid.Row="1"
                               IsReadOnly="True"
-                              ItemsSource="{Binding Nics, Mode=OneWay}" />
+                              ItemsSource="{Binding WiredNics, Mode=OneWay}" />
+                    <DataGrid x:Name="DataGridWirelessNics"
+                              Grid.Row="2"
+                              IsReadOnly="True"
+                              ItemsSource="{Binding WirelessNics, Mode=OneWay}" />
+                    <DataGrid x:Name="DataGridIgnoredNics"
+                              Grid.Row="3"
+                              IsReadOnly="True"
+                              AutoGenerateColumns="False"
+                              ItemsSource="{Binding IgnoredNics, Mode=OneWay}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name"  Binding="{Binding Name}"/>
+                            <DataGridTextColumn Header="Description"  Binding="{Binding Description}"/>
+                            <DataGridTextColumn Header="Type"  Binding="{Binding NetworkInterfaceType}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
                     <ListBox x:Name="IgnoredNicsList"
-                             Grid.Row="2"
-                             ItemsSource="{Binding IgnoredNics, Mode=OneWay}" />
+                             Grid.Row="4"
+                             ItemsSource="{Binding Whitelist, Mode=OneWay}" />
                 </Grid>
             </TabItem>
             

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.ServiceProcess;
 using System.Text;
 using System.Timers;
@@ -50,17 +51,34 @@ namespace WifiSitterGui.ViewModel
         }
 
         
-        public List<SimpleNic> Nics {
+        public List<SimpleNic> WiredNics {
             get {
-                return NetState?.Nics.Where(x => !NetState.IgnoreAdapters.Any(y => x.Description.StartsWith(y))).ToList();
+                return NetState.Nics.Where(x => x.InterfaceType == "Ethernet").Where(x => !NetState.IgnoreAdapters.Any(y => x.Description.StartsWith(y))).ToList();
             }
         }
 
-        
-        public ObservableCollection<string> IgnoredNics {
+
+        public List<SimpleNic> WirelessNics {
+            get {
+                return NetState.Nics.Where(x => x.InterfaceType != "Ethernet").Where(x => !NetState.IgnoreAdapters.Any(y => x.Description.StartsWith(y))).ToList();
+            }
+        }
+
+
+        public List<NetworkInterface> IgnoredNics {
             get {
                 if (NetState == null) return null;
-                return new ObservableCollection<string>(NetState?.IgnoreAdapters);
+                var n = NetworkInterface.GetAllNetworkInterfaces();
+
+                return n.Where(x => NetState.IgnoreAdapters.Any(y => x.Description.StartsWith(y))).ToList();
+            }
+        }
+        
+
+        public List<string> Whitelist {
+            get {
+                if (NetState == null) return null;
+                return NetState.IgnoreAdapters;
             }
         }
 
