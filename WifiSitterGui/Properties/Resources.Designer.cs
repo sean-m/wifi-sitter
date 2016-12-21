@@ -61,6 +61,54 @@ namespace WifiSitterGui.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {\rtf1\adeflang1025\ansi\ansicpg1252\uc1\adeff0\deff0\stshfdbch31505\stshfloch31506\stshfhich31506\stshfbi0\deflang1033\deflangfe1033\themelang1033\themelangfe0\themelangcs0{\fonttbl{\f0\fbidi \froman\fcharset0\fprq2{\*\panose 02020603050405020304}Times New Roman;}{\f2\fbidi \fmodern\fcharset0\fprq1{\*\panose 02070309020205020404}Courier New;}
+        ///{\f3\fbidi \froman\fcharset2\fprq2{\*\panose 05050102010706020507}Symbol;}{\f10\fbidi \fnil\fcharset2\fprq2{\*\panose 05000000000000000000}Wingdings;}{\f34\fbidi \fr [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string About {
+            get {
+                return ResourceManager.GetString("About", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Lucida Console;}{\f1\fnil Consolas;}{\f2\fnil\fcharset0 Consolas;}}
+        ///{\colortbl ;\red255\green255\blue255;\red0\green0\blue255;}
+        ///{\*\generator Riched20 10.0.14393}\viewkind4\uc1 
+        ///\pard\sa200\sl276\slmult1\f0\fs20\lang9 The MIT License (MIT)\par
+        ///\par
+        ///Copyright (c) 2016 Sean McArdle\par
+        ///\par
+        ///Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string LICENSE {
+            get {
+                return ResourceManager.GetString("LICENSE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {\rtf1\adeflang1025\ansi\ansicpg1252\uc1\adeff0\deff0\stshfdbch31505\stshfloch31506\stshfhich31506\stshfbi0\deflang1033\deflangfe1033\themelang1033\themelangfe0\themelangcs0{\fonttbl{\f0\fbidi \froman\fcharset0\fprq2{\*\panose 02020603050405020304}Times New Roman;}{\f2\fbidi \fmodern\fcharset0\fprq1{\*\panose 02070309020205020404}Courier New;}
+        ///{\f3\fbidi \froman\fcharset2\fprq2{\*\panose 05050102010706020507}Symbol;}{\f10\fbidi \fnil\fcharset2\fprq2{\*\panose 05000000000000000000}Wingdings;}{\f34\fbidi \fr [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string ReadMe {
+            get {
+                return ResourceManager.GetString("ReadMe", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {\rtf1\ansi\ansicpg1252\deff0\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil\fcharset0 Courier New;}}
+        ///{\colortbl ;\red0\green0\blue0;\red131\green105\blue103;}
+        ///{\*\generator Msftedit 5.41.21.2510;}\viewkind4\uc1\pard\sb100\sa100\sl240\slmult1\lang9\b\f0\fs28 Adapter Whitelisting\par
+        ///\pard\sb100\sa100\sl240\slmult1\b0\fs24\line\i Taken from the README.md (Program Files\\WifiSitter\\README.md)\i0\line\b Configuration\b0\line There isn&apos;t much to configure in WifiSitter but there is one tunable t [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Troubleshooting {
+            get {
+                return ResourceManager.GetString("Troubleshooting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
         internal static System.Drawing.Icon wifisitter_icon {

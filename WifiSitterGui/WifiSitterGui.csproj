@@ -155,9 +155,9 @@
     <Resource Include="..\Troubleshooting.rtf">
       <Link>Resources\Troubleshooting.rtf</Link>
     </Resource>
-    <None Include="..\ReadMe.rtf">
+    <Resource Include="..\ReadMe.rtf">
       <Link>Resources\ReadMe.rtf</Link>
-    </None>
+    </Resource>
     <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
