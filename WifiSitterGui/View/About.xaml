@@ -6,30 +6,35 @@
         mc:Ignorable="d"
         Title="About WifiSitter" 
         Height="500" Width="680" 
-        ResizeMode="NoResize">
+        MaxWidth="900"
+        ResizeMode="CanResize">
 <Grid>
         <TabControl>
             <TabItem Header="About">
                 <RichTextBox Name="Rtb_About" 
                              Margin="10"
+                             IsReadOnly="True"
                              Foreground="Black"
                              BorderThickness="0"/>
             </TabItem>
             <TabItem Header="Read Me">
                 <RichTextBox Name="Rtb_ReadMe" 
                              Margin="10"
+                             IsReadOnly="True"
                              Foreground="Black"
                              BorderThickness="0"/>
             </TabItem>
             <TabItem Header="License">
                 <RichTextBox Name="Rtb_License" 
                              Margin="10"
+                             IsReadOnly="True"
                              Foreground="Black"
                              BorderThickness="0"/>
             </TabItem>
             <TabItem Header="Troubleshooting">
                 <RichTextBox Name="Rtb_Troubleshooting" 
                              Margin="10"
+                             IsReadOnly="True"
                              Foreground="Black"
                              BorderThickness="0"/>
             </TabItem>
