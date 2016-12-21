@@ -59,5 +59,24 @@
             </Grid>
         </Viewbox>
 
+        <Viewbox x:Key="RefreshIcon" x:Shared="false" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+            <Grid>
+                <Grid Name="backgroundGrid" Width="48" Height="48" Visibility="Visible">
+                    <Rectangle Fill="#FF000000" Name="Rect" Visibility="Visible" />
+                </Grid>
+                <Path Data="M23.31796,0L28.570003,13.172097 14.41392,12.338107 17.413936,8.1820688C13.447912,6.9120402 8.9538686,8.1760263 6.3478668,11.700102 3.0778596,16.120117 4.0088646,22.379139 8.430886,25.647169 12.857912,28.922218 19.112951,27.987213 22.384941,23.564144 23.592956,21.928146 24.220981,20.041168 24.314975,18.15114L24.314975,18.152117 28.701994,18.416157C28.557003,21.131144 27.650993,23.833189 25.914991,26.183184 21.198961,32.549259 12.188902,33.902237 5.8148739,29.186197 -0.55115808,24.4762 -1.8981809,15.462093 2.8088455,9.0920496 6.8638604,3.6159945 14.093911,1.8650044 20.090954,4.4720192z" Stretch="Uniform" Fill="#FFFFFFFF" Width="26" Height="26" Margin="0,0,0,0" RenderTransformOrigin="0.5,0.5">
+                    <Path.RenderTransform>
+                        <TransformGroup>
+                            <TransformGroup.Children>
+                                <RotateTransform Angle="0" />
+                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                            </TransformGroup.Children>
+                        </TransformGroup>
+                    </Path.RenderTransform>
+                </Path>
+            </Grid>
+        </Viewbox>
+
+
     </Application.Resources>
 </Application>

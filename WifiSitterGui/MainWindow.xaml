@@ -55,10 +55,15 @@
                              ItemsSource="{Binding Whitelist, Mode=OneWay}" />
                     <Button Grid.Row="4"
                             Margin="4"
-                            Content="Reload"
+                            Height="32"
+                            Width="32"
+                            Padding="-1"
+                            ToolTip="Reload whitelist"
                             Command="{Binding ReloadWhitelist}"
                             HorizontalAlignment="Right"
-                            VerticalAlignment="Top"/>
+                            VerticalAlignment="Top">
+                        <ContentControl Content="{StaticResource RefreshIcon}"/>
+                    </Button>
 
                 </Grid>
             </TabItem>
