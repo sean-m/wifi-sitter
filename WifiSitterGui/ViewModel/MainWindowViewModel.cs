@@ -6,9 +6,16 @@ using System.Net.NetworkInformation;
 using System.ServiceProcess;
 using System.Text;
 using System.Timers;
+using System.Windows.Input;
 
+// internal uings
 using WifiSitter;
 using WifiSitter.Model;
+using WifiSitterGui.ViewModel.Events;
+
+// 3rd party usings
+using Prism.Events;
+using WifiSitterGui.Helpers;
 
 namespace WifiSitterGui.ViewModel
 {
@@ -20,6 +27,8 @@ namespace WifiSitterGui.ViewModel
         private ServiceController _sc;
         private Timer _refreshProperties;
         private WifiSitterAgentViewModel _parent;
+        private RelayCommand _reloadWhitelistCommand;
+        private IEventAggregator _eventAggregator;
 
         #endregion  // fields
 
@@ -28,9 +37,10 @@ namespace WifiSitterGui.ViewModel
 
         public MainWindowViewModel() { }
 
-        public MainWindowViewModel (WifiSitterAgentViewModel Parent) {
-            _parent = Parent;
+        public MainWindowViewModel (IEventAggregator eventAggregator) {
 
+            _eventAggregator = eventAggregator;
+            
             _refreshProperties = new Timer();
             _refreshProperties.Interval = 1000 * 5;
             _refreshProperties.AutoReset = true;
@@ -112,6 +122,20 @@ namespace WifiSitterGui.ViewModel
 
         #region methods
         #endregion  // methods
+
+
+        #region commands
+
+        public ICommand ReloadWhitelist {
+            get {
+                return (_reloadWhitelistCommand != null) 
+                    ? _reloadWhitelistCommand 
+                    : _reloadWhitelistCommand = new RelayCommand(
+                        () => { _eventAggregator?.GetEvent<ReloadWhitelistEvent>().Publish(); });
+            }
+        }
+
+        #endregion  // commands
 
 
         #region eventhandlers

@@ -53,6 +53,13 @@
                     <ListBox x:Name="IgnoredNicsList"
                              Grid.Row="4"
                              ItemsSource="{Binding Whitelist, Mode=OneWay}" />
+                    <Button Grid.Row="4"
+                            Margin="4"
+                            Content="Reload"
+                            Command="{Binding ReloadWhitelist}"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"/>
+
                 </Grid>
             </TabItem>
             

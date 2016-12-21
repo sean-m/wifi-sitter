@@ -13,10 +13,12 @@ using System.Net.NetworkInformation;
 using WifiSitter;
 using WifiSitter.Model;
 using WifiSitterGui.Helpers;
+using WifiSitterGui.ViewModel.Events;
 
 // 3rd party usings
 using NetMQ;
 using NetMQ.Sockets;
+using Prism.Events;
 
 namespace WifiSitterGui.ViewModel
 {
@@ -27,12 +29,14 @@ namespace WifiSitterGui.ViewModel
         private static MainWindowViewModel _windowVM;
         private RelayCommand _launchWindowCommand;
         private RelayCommand _takeFiveCommand;  // Asks service to pause for 5 minutes
+        private RelayCommand _reloadWhitelistCommand;  // Asks service to reload the nic whitelist
         private static MainWindow _statusGui;
         private static string _serviceChannel;
         private System.Timers.Timer _netstateCheckTimer;
         private static string _myChannel = String.Format("{0}-{1}", Process.GetCurrentProcess().Id, Process.GetCurrentProcess().ProcessName);
         private static DealerSocket _mqClient;
         private static NetMQPoller _poller;
+        private IEventAggregator _eventAggregator;
 
         #endregion  // fields
 
@@ -42,14 +46,16 @@ namespace WifiSitterGui.ViewModel
         }
 
 
-        public WifiSitterAgentViewModel(MainWindowViewModel WindowVM) {
+        public WifiSitterAgentViewModel(IEventAggregator eventtAggregator) {
+            _eventAggregator = eventtAggregator;
+            _eventAggregator?.GetEvent<ReloadWhitelistEvent>().Subscribe(() => { RequestReloadWhitelist(); });
+
             _windowVM = WindowVM;
             Intitialize();
         }
 
 
         private void Intitialize() {
-            
             // Get NetState
             RequestNetworkState();
 
@@ -78,7 +84,7 @@ namespace WifiSitterGui.ViewModel
 
         public MainWindowViewModel WindowVM {
             get { if (_windowVM == null) {
-                    _windowVM = new MainWindowViewModel();
+                    _windowVM = new MainWindowViewModel(_eventAggregator);
                 }
                 return _windowVM;
             }
@@ -141,6 +147,21 @@ namespace WifiSitterGui.ViewModel
         }
 
 
+        public void RequestReloadWhitelist() {
+            if (!String.IsNullOrEmpty(ServiceChannelName)) {
+                try {
+                    Trace.WriteLine("Checking for network state.");
+                    string request = new WifiSitterIpcMessage("reload_whitelist", _myChannel).ToJsonString();
+                    bool success = SendMessageToService(request);
+                    if (!success) Trace.WriteLine("Failed to send request reload_whitelist.");
+                }
+                catch (Exception e) {
+                    Trace.WriteLine(e.Message);
+                }
+            }
+        }
+
+
         private bool SendMessageToService(string msg) {
 
             // Initialize messaging componenets if needed.
@@ -175,6 +196,11 @@ namespace WifiSitterGui.ViewModel
             return  _mqClient.TrySendMultipartMessage(reqMessage);
         }
 
+
+        private void ReceiveCommand(ICommand cmd) {
+
+        }
+
         #endregion  // methods
 
         #region commands
@@ -196,6 +222,21 @@ namespace WifiSitterGui.ViewModel
                     });
                 }
                 return _launchWindowCommand;
+            }
+        }
+
+
+        public ICommand SendReloadWhitelistRequest {
+            get {
+                if (_reloadWhitelistCommand == null) {
+                    _reloadWhitelistCommand = new RelayCommand(() => {
+                        var request = new WifiSitterIpcMessage("reload_whitelist", _myChannel).ToJsonString();
+                        bool success = SendMessageToService(request);
+                        if (!success) Trace.WriteLine("Failed to send reload_whitelist");
+                        // TODO need response validation mechanism
+                    });
+                }
+                return _reloadWhitelistCommand;
             }
         }
 
@@ -236,7 +277,9 @@ namespace WifiSitterGui.ViewModel
             if (_sr != null) {
                 switch (_sr.Request) {
                     case "give_netstate":
-                        try { WindowVM.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(Encoding.UTF8.GetString(_sr.Payload)); }
+                        try {
+                            _netstateTimer.Stop(); _netstateTimer.Start();
+                            WindowVM.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(Encoding.UTF8.GetString(_sr.Payload)); }
                         catch { WifiSitter.WifiSitter.LogLine("Failed to deserialize netstate, payload."); }
                         break;
                     case "taking_five":

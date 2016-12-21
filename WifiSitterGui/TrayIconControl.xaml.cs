@@ -16,6 +16,7 @@ using System.Diagnostics;
 using WifiSitterGui.ViewModel;
 using WifiSitter;
 using WifiSitter.Model;
+using Prism.Events;
 
 namespace WifiSitterGui
 {
@@ -36,12 +37,13 @@ namespace WifiSitterGui
         public TrayIconControl() {
             InitializeComponent();
 
-            _agentVM = new WifiSitterAgentViewModel(new MainWindowViewModel());
+            this.Closing += (o, e) => { this.TaskBarIcon.Visibility = Visibility.Hidden; };
+
+            _agentVM = new WifiSitterAgentViewModel(EventAggregator);
             DataContext = _agentVM;
         }
 
         ~TrayIconControl() {
-            if (TaskBarIcon != null) TaskBarIcon.Visibility = Visibility.Hidden;
             TaskBarIcon?.Dispose();
         }
 
@@ -50,6 +52,15 @@ namespace WifiSitterGui
 
         #region properties
 
+        private IEventAggregator _eventAggregator;
+        internal IEventAggregator EventAggregator {
+            get {
+                if (_eventAggregator == null)
+                    _eventAggregator = new EventAggregator();
+
+                return _eventAggregator;
+            }
+        }
 
         #endregion  // properties
 
