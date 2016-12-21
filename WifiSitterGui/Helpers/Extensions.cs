@@ -18,6 +18,7 @@ namespace WifiSitterGui.Helpers
                 reader.Position = 0;
                 rtb.SelectAll();
                 rtb.Selection.Load(reader, DataFormats.Rtf);
+                rtb.Selection.Select(rtb.Selection.Start, rtb.Selection.Start);
             }
         }
 
