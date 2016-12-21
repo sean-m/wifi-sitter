@@ -492,7 +492,7 @@ namespace WifiSitter
                 _mqServerThread.Start();
             }
             catch (Exception e) {
-                WriteLog(LogType.error, e.Source, e.Message);
+                WriteLog(LogType.error, e.Source + " {0}", e.Message);
             }
             
         }
