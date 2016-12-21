@@ -99,12 +99,14 @@ namespace WifiSitter
             this.Nics = Nics;
         }
 
-        internal string[] IgnoreAdapters {
-            get { return _ignoreAdapters; }
+        public void UpdateWhitelist(string[] Whitelist) {
+            _ignoreAdapters = Whitelist;
+            _checkNet = true;
         }
 
         internal static List<TrackedNic> QueryNetworkAdapters(string[] WhiteList) {
             List<TrackedNic> result = new List<TrackedNic>();
+            if (WhiteList == null) WhiteList = new string[] { };
             foreach (var n in NetworkInterface.GetAllNetworkInterfaces().Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback
                                                                                   && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel
                                                                                   && !x.Description.ToLower().Contains("bluetooth")
