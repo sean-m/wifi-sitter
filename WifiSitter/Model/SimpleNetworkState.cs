@@ -22,7 +22,7 @@ namespace WifiSitter.Model
         public SimpleNetworkState(NetworkState netstate) {
             NetworkAvailable = netstate.NetworkAvailable;
             ProcessingState = netstate.ProcessingState;
-            EthernetUp = netstate.EthernetUp;
+            EthernetUp = netstate.IsEthernetUp;
             CheckNet = netstate.CheckNet;
             Nics = netstate.Nics.Select(x => new SimpleNic(x)).ToList();
             IgnoreAdapters = netstate.IgnoreAdapters.ToList();

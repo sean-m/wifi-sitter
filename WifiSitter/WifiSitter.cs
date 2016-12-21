@@ -28,7 +28,6 @@ namespace WifiSitter
         private Thread _mainLoopThread;
         private Thread _mqServerThread;
         private ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
-        private static string[] _ignoreNics;
         private volatile bool _paused;
         private SynchronizationContext _sync;
         private static string _myChannel = String.Format("{0}-{1}", Process.GetCurrentProcess().Id, Process.GetCurrentProcess().ProcessName);
@@ -40,7 +39,6 @@ namespace WifiSitter
 
         public WifiSitter () : base(_serviceName) {
             _paused = false;
-            _ignoreNics = new string[] { };
             if (this.ServiceExecutionMode != ServiceExecutionMode.Console) {
                 this.AutoLog = true;
                 this.CanPauseAndContinue = true;
@@ -67,11 +65,13 @@ namespace WifiSitter
 
             // Check if there are any interfaces not detected by GetAllNetworkInterfaces()
             // That method will not show disabled interfaces
-            _ignoreNics = ReadNicWhitelist();
+            var _ignoreNics = ReadNicWhitelist();
             if (_ignoreNics.Count() < 1) {
                 WriteLog(LogType.info, "No network adapter whitelist configured.");
             }
-            netstate = new NetworkState(DiscoverAllNetworkDevices(null, false), _ignoreNics);
+            netstate = new NetworkState();
+            netstate.UpdateWhitelist(_ignoreNics);
+            netstate.UpdateNics(DiscoverAllNetworkDevices(null, false));
             LogLine("Initialized...");
         }
 
@@ -127,7 +127,19 @@ namespace WifiSitter
         public static List<TrackedNic> DiscoverAllNetworkDevices(List<TrackedNic> CurrentAdapters=null, bool quiet=false) {
             if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering all devices.");
 
-            var nics = (CurrentAdapters == null) ? NetworkState.QueryNetworkAdapters(_ignoreNics) : CurrentAdapters;
+
+            List<TrackedNic> nics;
+            if (CurrentAdapters == null) {
+                string[] whiteList;
+                if (netstate != null) {
+                    whiteList = netstate.IgnoreAdapters ?? new string[] { };
+                }
+                else {
+                    whiteList = new string[] { };
+                }
+
+                nics = NetworkState.QueryNetworkAdapters(whiteList); }
+            else { nics = CurrentAdapters; }
 
             List<TrackedNic> nicsPost;
             var netsh = NetshHelper.GetInterfaces();
@@ -150,12 +162,12 @@ namespace WifiSitter
                 
                 // Turn on disabled interfaces
                 foreach (var nic in disabledInterfaces) {
-                    if (!_ignoreNics.Any(x => nic.InterfaceName.StartsWith(x)))
+                    if (!netstate.IgnoreAdapters.Any(x => nic.InterfaceName.StartsWith(x)))
                         NetshHelper.EnableInterface(nic.InterfaceName);
                 }
 
                 // Query for network interfaces again
-                nicsPost = NetworkState.QueryNetworkAdapters(_ignoreNics);
+                nicsPost = NetworkState.QueryNetworkAdapters(netstate.IgnoreAdapters);
 
                 // Disable nics again
                 foreach (var nic in disabledInterfaces) {
@@ -276,7 +288,7 @@ namespace WifiSitter
                                             .ToArray();
 
                     if (netstate.NetworkAvailable) { // Network available
-                        if (netstate.EthernetUp) { // Ethernet is up
+                        if (netstate.IsEthernetUp) { // Ethernet is up
                             if (wifi != null) {
                                 foreach (var adapter in wifi) {
                                     WriteLog (LogType.warn, "Disable adaptor: {0,18}  {1}", adapter.Name, adapter.Description);
@@ -365,8 +377,6 @@ namespace WifiSitter
             }
         }
 
-
-
         private void ZeroMQRouterRun() {
             // TODO handle port bind failure, increment port and try again, quit after 3 tries
             int port = 37247;
@@ -393,6 +403,7 @@ namespace WifiSitter
                     }
 
                     if (_msg != null) {
+                        LogLine("Received netmq message: {0}", _msg.Request);
                         switch (_msg.Request) {
                             case "get_netstate":
                                 LogLine("Sending netstate to: {0}", clientAddress.ConvertToString());
@@ -443,6 +454,14 @@ namespace WifiSitter
                                     }
                                 }
                                 catch { WriteLog(LogType.error, "Failed to enter paused state after 'take_five' request received."); }
+                                break;
+                            case "reload_whitelist":
+                                var list = ReadNicWhitelist();
+                                netstate.UpdateWhitelist(list);
+                                // Respond with updated network state
+                                response = new WifiSitterIpcMessage("give_netstate",
+                                                                    server.Options.Identity.ToString(),
+                                                                    Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate))).ToJsonString();
                                 break;
                             default:
                                 break;

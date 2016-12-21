@@ -121,14 +121,19 @@ namespace WifiSitter
 
         #region properties
 
-        public bool EthernetUp {
+        public bool IsEthernetUp {
             get {
                 if (Nics == null) return false;
-
-                return Nics.Any(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Ethernet && x.IsConnected);
+                return Nics.Any(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Ethernet && x.IsConnected && (bool)!_ignoreAdapters?.Any(y => x.Nic.Description.StartsWith(y)));
             }
         }
-
+        
+        internal string[] IgnoreAdapters {
+            get {
+                if (_ignoreAdapters == null) _ignoreAdapters = new string[] { };
+                return _ignoreAdapters; }
+        }
+        
         public List<TrackedNic> Nics {
             get {
                 if (_nics == null) return new List<TrackedNic>();
