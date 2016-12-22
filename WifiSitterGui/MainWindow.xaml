@@ -7,65 +7,212 @@
         xmlns:tb="http://www.hardcodet.net/taskbar"
         xmlns:vm="clr-namespace:WifiSitterGui.ViewModel"
         mc:Ignorable="d"
-        Icon="pack://application:,,,/Resources/wifisitter-icon.ico"
+        Icon="pack://application:,,,/Resources/Wireless-04.ico"
         Title="WifiSitter Config" 
+        SizeToContent="Height"
         Height="600" 
         Width="525">
     
     <Window.DataContext>
         <vm:MainWindowViewModel/>
     </Window.DataContext>
-    <Grid>
-        <TabControl>
-            <TabItem Header="Status">
-                <Grid>
+
+    <Window.Resources>
+
+        <Style x:Key="AnimatedSwitch" TargetType="{x:Type ToggleButton}">
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="Background" Value="#FAFAFB" />
+            <Setter Property="BorderBrush" Value="#EAEAEB" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Viewbox Stretch="Uniform">
+                            <Canvas Name="Layer_1" Width="20" Height="20" Canvas.Left="10" Canvas.Top="0">
+                                <Ellipse  Canvas.Left="0" Width="20" Height="20" Fill="{TemplateBinding Background}" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="0.5"/>
+                                <Ellipse  Canvas.Left="15" Width="20" Height="20" Fill="{TemplateBinding Background}" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="0.5"/>
+                                <Border Canvas.Left="10" Width="15" Height="20" Name="rect416927" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0,0.5,0,0.5"/>
+                                <Ellipse x:Name="ellipse"  Canvas.Left="0" Width="20" Height="20" Fill="White" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="0.3">
+                                    <Ellipse.RenderTransform>
+                                        <TranslateTransform X="0" Y="0" />
+                                    </Ellipse.RenderTransform>
+                                    <Ellipse.BitmapEffect>
+                                        <DropShadowBitmapEffect Softness="0.1" ShadowDepth="0.7" Direction="270" Color="#BBBBBB"/>
+                                    </Ellipse.BitmapEffect>
+                                </Ellipse>
+                            </Canvas>
+                        </Viewbox>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True" >
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="Background.Color" To="#52D468" Duration="0:0:0.2" />
+                                            <ColorAnimation Storyboard.TargetProperty="BorderBrush.Color" To="#41C955" Duration="0:0:0.2" />
+                                            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(Ellipse.RenderTransform).(TranslateTransform.X)" Storyboard.TargetName="ellipse">
+                                                <SplineDoubleKeyFrame KeyTime="0" Value="0"/>
+                                                <SplineDoubleKeyFrame KeyTime="0:0:0.4" Value="15" KeySpline="0, 1, 0.6, 1"/>
+                                            </DoubleAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="Background.Color" To="#FAFAFB" Duration="0:0:0.2" />
+                                            <ColorAnimation Storyboard.TargetProperty="BorderBrush.Color" To="#EAEAEB" Duration="0:0:0.2" />
+                                            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(Ellipse.RenderTransform).(TranslateTransform.X)" Storyboard.TargetName="ellipse">
+                                                <SplineDoubleKeyFrame KeyTime="0" Value="15"/>
+                                                <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="0" KeySpline="0, 0.5, 0.5, 1"/>
+                                            </DoubleAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="InterfaceTemplate">
+            <Grid Margin="2" HorizontalAlignment="Stretch">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="62"/>
-                        <RowDefinition/>
-                        <RowDefinition/>
                         <RowDefinition/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
 
-                    <TextBlock>
+                    <!--Enabled-->
+                    <Grid Grid.Column="0" Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="56"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <ToggleButton Grid.Column="0"
+                                      Height="22" Width="36"
+                                      IsChecked="{Binding IsEnabled, Mode=OneWay}"
+                                      Style="{StaticResource AnimatedSwitch}"/>
+                        <Label Grid.Column="1">
+                            <Label.Style>
+                                <Style TargetType="Label">
+                                    <Setter Property="Content" Value="{Binding IsEnabled}"></Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEnabled}" Value="True">
+                                            <Setter Property="Content" Value="Enabled"/>
+                                            <Setter Property="ToolTip" Value="Interface Enabled"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                                            <Setter Property="Content" Value="Not Enabled"/>
+                                            <Setter Property="ToolTip" Value="Interface Not Enabled"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
+                    </Grid>
+
+                    <!--Connected-->
+                    <Grid Grid.Column="0" Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="56"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <ToggleButton Grid.Column="0"
+                                      Height="22" Width="36"
+                                      IsChecked="{Binding IsConnected, Mode=OneWay}"
+                                      Style="{StaticResource AnimatedSwitch}"/>
+                        <Label Grid.Column="1">
+                            <Label.Style>
+                                <Style TargetType="Label">
+                                    <Setter Property="Content" Value="{Binding IsConnected}"></Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                            <Setter Property="Content" Value="Connected"/>
+                                            <Setter Property="ToolTip" Value="Interface Connected"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                                            <Setter Property="Content" Value="Not Connected"/>
+                                            <Setter Property="ToolTip" Value="Interface Not Connected"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
+                    </Grid>
+
+                    <!--Name-->
+                    <Label Grid.Column="1" Grid.Row="0"
+                           Content="{Binding Name}" 
+                           ToolTip="Interface Name"/>
+
+                    <!--Description-->
+                    <Label Grid.Column="1" Grid.Row="1"
+                           Content="{Binding Description}"
+                           ToolTip="Interface Description"/>
+                </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="WhitelistedInterfaceTemplate">
+            <TextBlock>
+                <Run Text="{Binding Name, Mode=OneWay}"/> 
+                <Run Text="  -  "/>
+                <Run Text="{Binding Description, Mode=OneWay}"/>
+            </TextBlock>
+        </DataTemplate>
+
+    </Window.Resources>
+    
+    <Grid>
+        <TabControl>
+            <TabItem Header="Status">
+                <StackPanel>
+                    <TextBlock Height="64" FontSize="18">
                         <Run>Service Status: </Run> <Run Text="{Binding ServiceState, Mode=OneWay}"/>
                     </TextBlock>
-                    
-                    <DataGrid x:Name="DataGridWiredNics"
-                              Grid.Row="1"
-                              IsReadOnly="True"
-                              ItemsSource="{Binding WiredNics, Mode=OneWay}" />
-                    <DataGrid x:Name="DataGridWirelessNics"
-                              Grid.Row="2"
-                              IsReadOnly="True"
-                              ItemsSource="{Binding WirelessNics, Mode=OneWay}" />
-                    <DataGrid x:Name="DataGridIgnoredNics"
-                              Grid.Row="3"
-                              IsReadOnly="True"
-                              AutoGenerateColumns="False"
-                              ItemsSource="{Binding IgnoredNics, Mode=OneWay}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Name"  Binding="{Binding Name}"/>
-                            <DataGridTextColumn Header="Description"  Binding="{Binding Description}"/>
-                            <DataGridTextColumn Header="Type"  Binding="{Binding NetworkInterfaceType}"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                    <ListBox x:Name="IgnoredNicsList"
-                             Grid.Row="4"
-                             ItemsSource="{Binding Whitelist, Mode=OneWay}" />
-                    <Button Grid.Row="4"
-                            Margin="4"
-                            Height="32"
-                            Width="32"
-                            Padding="-1"
-                            ToolTip="Reload whitelist"
-                            Command="{Binding ReloadWhitelist}"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Top">
-                        <ContentControl Content="{StaticResource RefreshIcon}"/>
-                    </Button>
 
-                </Grid>
+                    <Label Content="Wired Interfaces"
+                           FontWeight="Bold"/>
+                    
+                    <ListBox x:Name="ListWiredNics"
+                             Grid.Row="1"
+                             ItemTemplate="{StaticResource InterfaceTemplate}"
+                             ItemsSource="{Binding WiredNics, Mode=OneWay}" />
+
+                    <Label Content="Wireless Interfaces"
+                           FontWeight="Bold"/>
+                    <ListBox x:Name="ListWirelessNics"
+                             Grid.Row="2"
+                             ItemTemplate="{StaticResource InterfaceTemplate}"
+                             ItemsSource="{Binding WirelessNics, Mode=OneWay}" />
+
+                    <Label Content="Whitelisted Interfaces"
+                           FontWeight="Bold" ToolTip="Disabled interfaces may not show in this list."/>
+                    <ListBox x:Name="DataGridIgnoredNics"
+                             Grid.Row="3"
+                             ItemTemplate="{StaticResource WhitelistedInterfaceTemplate}"
+                             ItemsSource="{Binding IgnoredNics, Mode=OneWay}"
+                             ToolTip="Disabled interfaces may not show in this list."/>
+
+                    <Label Content="Whitelist"
+                           FontWeight="Bold"/>
+                    <Grid>
+                        <ListBox x:Name="IgnoredNicsList"
+                                 ItemsSource="{Binding Whitelist, Mode=OneWay}" />
+                        <Button Margin="4"
+                                Height="32"
+                                Width="32"
+                                Padding="-1"
+                                ToolTip="Reload whitelist"
+                                Command="{Binding ReloadWhitelist}"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top">
+                            <ContentControl Content="{StaticResource RefreshIcon}"/>
+                        </Button>
+                    </Grid>
+                </StackPanel>
             </TabItem>
             
             <TabItem Header="Settings">
