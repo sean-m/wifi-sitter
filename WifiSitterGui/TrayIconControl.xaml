@@ -16,7 +16,7 @@
 
         <tb:TaskbarIcon
               x:Name="TaskBarIcon"
-              IconSource="pack://application:,,,/Resources/wifisitter-icon.ico"
+              IconSource="pack://application:,,,/Resources/Wireless-04.ico"
               ToolTipText="WifiSitter Agent" 
               MenuActivation="LeftOrRightClick"
               NoLeftClickDelay="True">
