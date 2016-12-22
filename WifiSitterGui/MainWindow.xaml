@@ -12,7 +12,7 @@
         SizeToContent="Height"
         Height="600" 
         Width="525">
-    
+
     <Window.DataContext>
         <vm:MainWindowViewModel/>
     </Window.DataContext>
@@ -76,83 +76,85 @@
 
         <DataTemplate x:Key="InterfaceTemplate">
             <Grid Margin="2" HorizontalAlignment="Stretch">
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <!--Enabled-->
+                <Grid Grid.Column="0" Grid.Row="0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
+                        <ColumnDefinition Width="56"/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-
-                    <!--Enabled-->
-                    <Grid Grid.Column="0" Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="56"/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-                        <ToggleButton Grid.Column="0"
+                    <ToggleButton Grid.Column="0"
                                       Height="22" Width="36"
                                       IsChecked="{Binding IsEnabled, Mode=OneWay}"
                                       Style="{StaticResource AnimatedSwitch}"/>
-                        <Label Grid.Column="1">
-                            <Label.Style>
-                                <Style TargetType="Label">
-                                    <Setter Property="Content" Value="{Binding IsEnabled}"></Setter>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsEnabled}" Value="True">
-                                            <Setter Property="Content" Value="Enabled"/>
-                                            <Setter Property="ToolTip" Value="Interface Enabled"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsEnabled}" Value="False">
-                                            <Setter Property="Content" Value="Not Enabled"/>
-                                            <Setter Property="ToolTip" Value="Interface Not Enabled"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Label.Style>
-                        </Label>
-                    </Grid>
+                    <Label Grid.Column="1">
+                        <Label.Style>
+                            <Style TargetType="Label">
+                                <Setter Property="Content" Value="{Binding IsEnabled}"></Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsEnabled}" Value="True">
+                                        <Setter Property="Content" Value="Enabled"/>
+                                        <Setter Property="ToolTip" Value="Interface Enabled"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                                        <Setter Property="Content" Value="Not Enabled"/>
+                                        <Setter Property="ToolTip" Value="Interface Not Enabled"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Label.Style>
+                    </Label>
+                </Grid>
 
-                    <!--Connected-->
-                    <Grid Grid.Column="0" Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="56"/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-                        <ToggleButton Grid.Column="0"
+                <!--Connected-->
+                <Grid Grid.Column="0" Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="56"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <ToggleButton Grid.Column="0"
                                       Height="22" Width="36"
                                       IsChecked="{Binding IsConnected, Mode=OneWay}"
                                       Style="{StaticResource AnimatedSwitch}"/>
-                        <Label Grid.Column="1">
-                            <Label.Style>
-                                <Style TargetType="Label">
-                                    <Setter Property="Content" Value="{Binding IsConnected}"></Setter>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsConnected}" Value="True">
-                                            <Setter Property="Content" Value="Connected"/>
-                                            <Setter Property="ToolTip" Value="Interface Connected"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsConnected}" Value="False">
-                                            <Setter Property="Content" Value="Not Connected"/>
-                                            <Setter Property="ToolTip" Value="Interface Not Connected"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Label.Style>
-                        </Label>
-                    </Grid>
+                    <Label Grid.Column="1">
+                        <Label.Style>
+                            <Style TargetType="Label">
+                                <Setter Property="Content" Value="{Binding IsConnected}"></Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsConnected}" Value="True">
+                                        <Setter Property="Content" Value="Connected"/>
+                                        <Setter Property="ToolTip" Value="Interface Connected"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsConnected}" Value="False">
+                                        <Setter Property="Content" Value="Not Connected"/>
+                                        <Setter Property="ToolTip" Value="Interface Not Connected"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Label.Style>
+                    </Label>
+                </Grid>
 
-                    <!--Name-->
-                    <Label Grid.Column="1" Grid.Row="0"
+
+
+                <!--Name-->
+                <Label Grid.Column="1" Grid.Row="0"
                            Content="{Binding Name}" 
                            ToolTip="Interface Name"/>
 
-                    <!--Description-->
-                    <Label Grid.Column="1" Grid.Row="1"
+                <!--Description-->
+                <Label Grid.Column="1" Grid.Row="1"
                            Content="{Binding Description}"
                            ToolTip="Interface Description"/>
-                </Grid>
+            </Grid>
         </DataTemplate>
 
         <DataTemplate x:Key="WhitelistedInterfaceTemplate">
@@ -164,7 +166,7 @@
         </DataTemplate>
 
     </Window.Resources>
-    
+
     <Grid>
         <TabControl>
             <TabItem Header="Status">
@@ -175,7 +177,7 @@
 
                     <Label Content="Wired Interfaces"
                            FontWeight="Bold"/>
-                    
+
                     <ListBox x:Name="ListWiredNics"
                              Grid.Row="1"
                              ItemTemplate="{StaticResource InterfaceTemplate}"
@@ -214,11 +216,11 @@
                     </Grid>
                 </StackPanel>
             </TabItem>
-            
+
             <TabItem Header="Settings">
-                
+
             </TabItem>
-            
+
         </TabControl>
 
         <Button x:Name="Btn_About"
