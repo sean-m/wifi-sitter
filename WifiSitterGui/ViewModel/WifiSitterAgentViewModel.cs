@@ -196,11 +196,6 @@ namespace WifiSitterGui.ViewModel
             return  _mqClient.TrySendMultipartMessage(reqMessage);
         }
 
-
-        private void ReceiveCommand(ICommand cmd) {
-
-        }
-
         #endregion  // methods
 
         #region commands
