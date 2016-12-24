@@ -377,6 +377,27 @@ namespace WifiSitter
             }
         }
 
+        private void WakeWifi(NetworkState netstate) {
+
+            List<Task> taskList = new List<Task>();
+
+            foreach (var n in netstate.Nics) {
+                if (n.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211
+                    && !n.IsEnabled) {
+                    var enableTask = new Task(() => { n.Enable(); });
+                    enableTask.Start();
+                    taskList.Add(enableTask);
+                }
+            }
+
+            try {
+                Task.WaitAll(taskList.ToArray());
+            }
+            catch (Exception e) {
+                WriteLog(LogType.error, "Exception when waking wifi,\n", e.InnerException.Message);
+            }
+        }
+
         private void ZeroMQRouterRun() {
             // TODO handle port bind failure, increment port and try again, quit after 3 tries
             int port = 37247;
@@ -430,7 +451,10 @@ namespace WifiSitter
 #endif
 
                                         WriteLog(LogType.info, "Taking {0} minute break and restoring interfaces to initial state.", minutes.ToString());
+
                                         OnPause();
+                                        WakeWifi(netstate);
+
                                         Task.Delay(minutes * 60 * 1000).ContinueWith((task) => {
                                             WriteLog(LogType.info, "Break elapsed. Resuming operation.");
                                             netstate.ShouldCheckState();   // Main loop should check state again when resuming from paused state
@@ -447,7 +471,7 @@ namespace WifiSitter
                                             t_responseMessage.Append(t_response);
                                             server.SendMultipartMessage(t_responseMessage);
                                         });
-                                        ResetNicState(netstate);
+                                        
                                         response = new WifiSitterIpcMessage("taking_five",
                                                                             server.Options.Identity.ToString(),
                                                                             "pausing").ToJsonString();
