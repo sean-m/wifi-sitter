@@ -61,8 +61,14 @@ namespace WifiSitterGui.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {\rtf1\adeflang1025\ansi\ansicpg1252\uc1\adeff0\deff0\stshfdbch31505\stshfloch31506\stshfhich31506\stshfbi0\deflang1033\deflangfe1033\themelang1033\themelangfe0\themelangcs0{\fonttbl{\f0\fbidi \froman\fcharset0\fprq2{\*\panose 02020603050405020304}Times New Roman;}{\f2\fbidi \fmodern\fcharset0\fprq1{\*\panose 02070309020205020404}Courier New;}
-        ///{\f3\fbidi \froman\fcharset2\fprq2{\*\panose 05050102010706020507}Symbol;}{\f10\fbidi \fnil\fcharset2\fprq2{\*\panose 05000000000000000000}Wingdings;}{\f34\fbidi \fr [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to {\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033\deflangfe1033{\fonttbl{\f0\fswiss\fprq2\fcharset0 Segoe UI;}}
+        ///{\colortbl ;\red51\green51\blue51;\red0\green0\blue255;}
+        ///{\*\generator Riched20 10.0.14393}{\*\mmathPr\mnaryLim0\mdispDef1\mwrapIndent1440 }\viewkind4\uc1 
+        ///\pard\widctlpar\cf1\kerning36\b\f0\fs48\lang9 WiFi Sitter\par
+        ///
+        ///\pard\widctlpar\sa150\kerning0\b0\fs21 It&apos;s a babysitter for your WiFi NIC. \par
+        ///\par
+        ///Thank you for using Wifi Sitter, I hope you&apos;ve found it useful. If you have any probl [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string About {
             get {

@@ -97,6 +97,11 @@
     <Compile Include="Helpers\Extensions.cs" />
     <Compile Include="Helpers\RelayCommand.cs" />
     <Compile Include="Model\WifiSitterStub.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="TrayIconControl.xaml.cs">
       <DependentUpon>TrayIconControl.xaml</DependentUpon>
     </Compile>
@@ -132,11 +137,6 @@
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
@@ -146,18 +146,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <Resource Include="..\About.rtf">
-      <Link>Resources\About.rtf</Link>
-    </Resource>
-    <Resource Include="..\LICENSE.rtf">
-      <Link>Resources\LICENSE.rtf</Link>
-    </Resource>
-    <Resource Include="..\Troubleshooting.rtf">
-      <Link>Resources\Troubleshooting.rtf</Link>
-    </Resource>
-    <Resource Include="..\ReadMe.rtf">
-      <Link>Resources\ReadMe.rtf</Link>
-    </Resource>
+    <None Include="Resources\About.rtf" />
+    <None Include="Resources\LICENSE.rtf" />
+    <None Include="Resources\ReadMe.rtf" />
     <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -165,6 +156,7 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
+    <None Include="Resources\Troubleshooting.rtf" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="..\WifiSitter\wifisitter-icon.ico">
