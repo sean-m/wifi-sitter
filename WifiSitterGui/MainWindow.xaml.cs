@@ -36,5 +36,10 @@ namespace WifiSitterGui
                 _about.Activate();
             }
         }
+
+        private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
+            var vis = e.OriginalSource as Visual;
+            if (!vis.IsDescendantOf(WhitelistExpander)) WhitelistExpander.IsExpanded = false;
+        }
     }
 }

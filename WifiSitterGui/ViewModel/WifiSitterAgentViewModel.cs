@@ -67,8 +67,7 @@ namespace WifiSitterGui.ViewModel
             _netstateCheckTimer.Start();
 
             // Connection state changed event handler setup
-            NetworkChange.NetworkAvailabilityChanged += (o, e) => { RequestNetworkState(3 * 1000); };
-            NetworkChange.NetworkAddressChanged += (o, e) => { RequestNetworkState(3 * 1000); };
+            NetworkChange.NetworkAddressChanged += (o, e) => { RequestNetworkState(3 * 1000); RequestNetworkState(5 * 1000); };
 
             Trace.WriteLine(String.Format("WifiSitter service msg channel: {0}", ServiceChannelName));
         }

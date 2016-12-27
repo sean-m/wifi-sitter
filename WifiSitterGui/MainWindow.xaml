@@ -7,9 +7,11 @@
         xmlns:tb="http://www.hardcodet.net/taskbar"
         xmlns:vm="clr-namespace:WifiSitterGui.ViewModel"
         mc:Ignorable="d"
+        PreviewMouseDown="Window_PreviewMouseDown"
         Icon="pack://application:,,,/Resources/Wireless-04.ico"
         Title="WifiSitter Config" 
         SizeToContent="Height"
+        MinHeight="450"
         Height="600" 
         Width="525">
 
@@ -202,23 +204,6 @@
                              ItemTemplate="{StaticResource WhitelistedInterfaceTemplate}"
                              ItemsSource="{Binding IgnoredNics, Mode=OneWay}"
                              ToolTip="Disabled interfaces may not show in this list."/>
-
-                    <Label Content="Whitelist"
-                           FontWeight="Bold"/>
-                    <Grid>
-                        <ListBox x:Name="IgnoredNicsList"
-                                 ItemsSource="{Binding Whitelist, Mode=OneWay}" />
-                        <Button Margin="4"
-                                Height="32"
-                                Width="32"
-                                Padding="-1"
-                                ToolTip="Reload whitelist"
-                                Command="{Binding ReloadWhitelist}"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Top">
-                            <ContentControl Content="{StaticResource RefreshIcon}"/>
-                        </Button>
-                    </Grid>
                 </StackPanel>
             </TabItem>
 
@@ -227,6 +212,46 @@
             </TabItem>
 
         </TabControl>
+
+        <Expander x:Name="WhitelistExpander"
+                  VerticalAlignment="Bottom"
+                  HorizontalContentAlignment="Stretch"
+                  ExpandDirection="Up"
+                  Background="White"
+                  Margin="2,0"
+                  ToolTip="Whitelist entries from system registry.">
+            <Expander.Header>
+                <Label Content="Whitelist Entries"
+                       FontWeight="Bold"/>
+            </Expander.Header>
+            <Expander.Effect>
+                <DropShadowEffect ShadowDepth="4"/>
+            </Expander.Effect>
+            <Expander.Content>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <ListBox x:Name="IgnoredNicsList"
+                             ItemsSource="{Binding Whitelist, Mode=OneWay}" />
+                    <Button Margin="4"
+                            Height="32"
+                            Width="32"
+                            Padding="-1"
+                            ToolTip="Refresh Whitelist"
+                            Command="{Binding ReloadWhitelist}"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Grid.RowSpan="2">
+                        <Button.Effect>
+                            <DropShadowEffect ShadowDepth="1"/>
+                        </Button.Effect>
+                        <ContentControl Content="{StaticResource RefreshIcon}"/>
+                    </Button>
+                </Grid>
+            </Expander.Content>
+        </Expander>
 
         <Button x:Name="Btn_About"
                 HorizontalAlignment="Right"
