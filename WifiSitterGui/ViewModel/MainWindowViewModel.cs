@@ -63,6 +63,7 @@ namespace WifiSitterGui.ViewModel
         
         public List<SimpleNic> WiredNics {
             get {
+                if (NetState == null) return null;
                 return NetState.Nics.Where(x => x.InterfaceType == "Ethernet").Where(x => !NetState.IgnoreAdapters.Any(y => x.Description.StartsWith(y))).ToList();
             }
         }
@@ -70,6 +71,7 @@ namespace WifiSitterGui.ViewModel
 
         public List<SimpleNic> WirelessNics {
             get {
+                if (NetState == null) return null;
                 return NetState.Nics.Where(x => x.InterfaceType != "Ethernet").Where(x => !NetState.IgnoreAdapters.Any(y => x.Description.StartsWith(y))).ToList();
             }
         }

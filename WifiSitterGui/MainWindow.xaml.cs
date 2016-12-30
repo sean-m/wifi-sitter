@@ -39,6 +39,7 @@ namespace WifiSitterGui
 
         private void Window_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
             var vis = e.OriginalSource as Visual;
+            if (vis == null) return;
             if (!vis.IsDescendantOf(WhitelistExpander)) WhitelistExpander.IsExpanded = false;
         }
     }
