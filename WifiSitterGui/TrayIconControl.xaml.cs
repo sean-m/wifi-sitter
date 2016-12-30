@@ -37,14 +37,14 @@ namespace WifiSitterGui
         public TrayIconControl() {
             InitializeComponent();
 
-            this.Closing += (o, e) => { this.TaskBarIcon.Visibility = Visibility.Hidden; };
+            this.Closing += (o, e) => { TaskBarIcon?.Dispose(); };
 
             _agentVM = new WifiSitterAgentViewModel(EventAggregator);
             DataContext = _agentVM;
         }
 
         ~TrayIconControl() {
-            TaskBarIcon?.Dispose();
+
         }
 
         #endregion  // constructor
@@ -73,6 +73,7 @@ namespace WifiSitterGui
         #region eventhandlers
 
         private void ContextMenu_Quit(object sender, RoutedEventArgs e) {
+            TaskBarIcon?.Dispose();
             Task.Run(() => { Environment.Exit(0); });
         }
         
