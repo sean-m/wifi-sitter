@@ -21,6 +21,7 @@ namespace WifiSitterGui
     {
         private Window _about;
         private View.HelpBubbleWindow bubbleWindow;
+        private bool helpLocked = false;
 
         public MainWindow() {
             InitializeComponent();
@@ -49,11 +50,17 @@ namespace WifiSitterGui
                 case Key.F1:
                     ShowHelp();
                     break;
+                case Key.Escape:
+                    if (bubbleWindow != null)
+                        if (!helpLocked) bubbleWindow.Close();
+                    break;
             }
         }
 
 
         private void ShowHelp() {
+            helpLocked = true;
+
             if (bubbleWindow == null) {
                 bubbleWindow = new View.HelpBubbleWindow();
                 bubbleWindow.Closed += (o, e) => { bubbleWindow = null; };
@@ -121,7 +128,17 @@ namespace WifiSitterGui
                 bubbleWindow.Close();
                 bubbleWindow = null;
             }
-            
+            helpLocked = false;
+        }
+
+        private void Window_LostFocus(object sender, RoutedEventArgs e) {
+            if (bubbleWindow != null)
+                if (!helpLocked) bubbleWindow.Close();
+        }
+
+        private void Window_LocationChanged(object sender, EventArgs e) {
+            if (bubbleWindow != null)
+                if (!helpLocked) bubbleWindow.Close();
         }
     }
 }

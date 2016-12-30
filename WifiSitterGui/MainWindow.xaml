@@ -8,6 +8,8 @@
         xmlns:vm="clr-namespace:WifiSitterGui.ViewModel"
         mc:Ignorable="d"
         PreviewMouseDown="Window_PreviewMouseDown"
+        LostFocus="Window_LostFocus"
+        LocationChanged="Window_LocationChanged"
         Icon="pack://application:,,,/Resources/Wireless-04.ico"
         Title="WifiSitter Config" 
         KeyUp="MainWindow_KeyUp"
