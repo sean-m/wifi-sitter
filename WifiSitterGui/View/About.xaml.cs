@@ -24,10 +24,10 @@ namespace WifiSitterGui.View
         public About() {
             InitializeComponent();
 
-            Rtb_About.SetRtf(new Uri("pack://application:,,,/Resources/About.rtf"));
-            Rtb_ReadMe.SetRtf(new Uri("pack://application:,,,/Resources/ReadMe.rtf"));
-            Rtb_License.SetRtf(new Uri("pack://application:,,,/Resources/LICENSE.rtf"));
-            Rtb_Troubleshooting.SetRtf(new Uri("pack://application:,,,/Resources/Troubleshooting.rtf"));
+            Rtb_About.SetRtf(Properties.Resources.About);
+            Rtb_ReadMe.SetRtf(Properties.Resources.ReadMe);
+            Rtb_License.SetRtf(Properties.Resources.LICENSE);
+            Rtb_Troubleshooting.SetRtf(Properties.Resources.Troubleshooting);
 
             Rtb_About.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
             Rtb_ReadMe.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
