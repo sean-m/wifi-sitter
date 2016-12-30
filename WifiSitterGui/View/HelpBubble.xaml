@@ -1,0 +1,32 @@
+﻿<UserControl x:Class="WifiSitterGui.View.HelpBubble"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:WifiSitterGui.View"
+             mc:Ignorable="d"
+             MinHeight="60"
+             Height="60"
+             Width="275">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="20"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0"
+                BorderThickness="4"
+                Padding="8"
+                BorderBrush="#007ACC"
+                Background="White">
+        </Border>
+
+        <Polygon x:Name="Arrow"
+                 Grid.Column="1"
+                 Margin="0,4"
+                 Points="0,0 20,15, 0,30" 
+                 Stroke="#007ACC" 
+                 Fill="#007ACC" />
+
+    </Grid>
+</UserControl>

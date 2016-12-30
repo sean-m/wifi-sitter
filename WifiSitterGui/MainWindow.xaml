@@ -10,10 +10,11 @@
         PreviewMouseDown="Window_PreviewMouseDown"
         Icon="pack://application:,,,/Resources/Wireless-04.ico"
         Title="WifiSitter Config" 
+        KeyUp="MainWindow_KeyUp"
         SizeToContent="Height"
         MinHeight="450"
         Height="600" 
-        Width="525" KeyUp="MainWindow_KeyUp">
+        Width="525" >
 
     <Window.DataContext>
         <vm:MainWindowViewModel/>
@@ -188,7 +189,7 @@
                             <RowDefinition/>
                         </Grid.RowDefinitions>
 
-                        <Label Grid.Column="0"
+                        <Label x:Name="StatusLabels" Grid.Column="0"
                                Grid.Row="0">
                             Service Status:
                         </Label>
@@ -222,7 +223,8 @@
                         </Label>
                     </Grid>
 
-                    <Label Content="Wired Interfaces"
+                    <Label x:Name="WiredInterfaceList"
+                            Content="Wired Interfaces"
                            FontWeight="Bold"/>
 
                     <ListBox x:Name="ListWiredNics"
@@ -230,14 +232,16 @@
                              ItemTemplate="{StaticResource InterfaceTemplate}"
                              ItemsSource="{Binding WiredNics, Mode=OneWay}" />
 
-                    <Label Content="Wireless Interfaces"
+                    <Label x:Name="WirelessInterfaceList"
+                            Content="Wireless Interfaces"
                            FontWeight="Bold"/>
                     <ListBox x:Name="ListWirelessNics"
                              Grid.Row="2"
                              ItemTemplate="{StaticResource InterfaceTemplate}"
                              ItemsSource="{Binding WirelessNics, Mode=OneWay}" />
 
-                    <Label Content="Whitelisted Interfaces"
+                    <Label x:Name="WhitelistedInterfaceList"
+                           Content="Whitelisted Interfaces"
                            FontWeight="Bold" ToolTip="Disabled interfaces may not show in this list."/>
                     <ListBox x:Name="DataGridIgnoredNics"
                              Grid.Row="3"
@@ -258,14 +262,17 @@
                   HorizontalContentAlignment="Stretch"
                   ExpandDirection="Up"
                   Background="White"
-                  Margin="2,0"
+                  Margin="0"
                   ToolTip="Whitelist entries from system registry.">
             <Expander.Header>
                 <Label Content="Whitelist Entries"
                        FontWeight="Bold"/>
             </Expander.Header>
             <Expander.Effect>
-                <DropShadowEffect ShadowDepth="4"/>
+                <DropShadowEffect ShadowDepth="1"
+                                  Direction="90"
+                                  RenderingBias="Performance">
+                </DropShadowEffect>
             </Expander.Effect>
             <Expander.Content>
                 <Grid>
