@@ -13,7 +13,7 @@
         SizeToContent="Height"
         MinHeight="450"
         Height="600" 
-        Width="525">
+        Width="525" KeyUp="MainWindow_KeyUp">
 
     <Window.DataContext>
         <vm:MainWindowViewModel/>
