@@ -51,7 +51,12 @@ namespace WifiSitterGui.ViewModel
             _eventAggregator?.GetEvent<ReloadWhitelistEvent>().Subscribe(() => { RequestReloadWhitelist(); });
 
             _windowVM = WindowVM;
+
             Intitialize();
+
+#if DEBUG
+            this.LaunchSettingsWindow.Execute(null);
+#endif
         }
 
 
