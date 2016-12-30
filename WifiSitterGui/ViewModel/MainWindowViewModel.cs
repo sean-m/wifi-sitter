@@ -119,6 +119,11 @@ namespace WifiSitterGui.ViewModel
             }
         }
 
+
+        public string CommuncationEstablished {
+            get { return (NetState != null).ToString(); }
+        }
+
         #endregion  // properties
 
 

@@ -100,7 +100,7 @@
                     <Label Grid.Column="1">
                         <Label.Style>
                             <Style TargetType="Label">
-                                <Setter Property="Content" Value="{Binding IsEnabled}"></Setter>
+                                <!--<Setter Property="Content" Value="{Binding IsEnabled}"></Setter>-->
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsEnabled}" Value="True">
                                         <Setter Property="Content" Value="Enabled"/>
@@ -129,7 +129,7 @@
                     <Label Grid.Column="1">
                         <Label.Style>
                             <Style TargetType="Label">
-                                <Setter Property="Content" Value="{Binding IsConnected}"></Setter>
+
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsConnected}" Value="True">
                                         <Setter Property="Content" Value="Connected"/>
@@ -178,9 +178,49 @@
         <TabControl>
             <TabItem Header="Status">
                 <StackPanel>
-                    <TextBlock Height="64" FontSize="18">
-                        <Run>Service Status: </Run> <Run Text="{Binding ServiceState, Mode=OneWay}"/>
-                    </TextBlock>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+
+                        <Label Grid.Column="0"
+                               Grid.Row="0">
+                            Service Status:
+                        </Label>
+                        <Label Grid.Column="1"
+                               Grid.Row="0"
+                               Content="{Binding ServiceState, Mode=OneWay}"/>
+
+                        <Label Grid.Column="0"
+                               Grid.Row="1"
+                               ToolTip="Is communcaiton established with WifiSitter.exe?">
+                            Communication:
+                        </Label>
+                        <Label Grid.Column="1"
+                               Grid.Row="1">
+                            <Label.Style>
+                                <Style TargetType="Label">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CommuncationEstablished}" Value="True">
+                                            <Setter Property="Content" Value="Communicating"/>
+                                            <Setter Property="Foreground" Value="Green"/>
+                                            <Setter Property="ToolTip" Value="Communicating with WifiSitter.exe"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding CommuncationEstablished}" Value="False">
+                                            <Setter Property="Content" Value="Not Communicating"/>
+                                            <Setter Property="Foreground" Value="Red"/>
+                                            <Setter Property="ToolTip" Value="Not communicating with WifiSitter.exe"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
+                    </Grid>
 
                     <Label Content="Wired Interfaces"
                            FontWeight="Bold"/>
