@@ -44,14 +44,18 @@ namespace WifiSitterGui
         }
 
         private void MainWindow_KeyUp(object sender, KeyEventArgs e) {
-            if (_about == null) {
-                _about = new WifiSitterGui.View.About();
-                _about.Closed += (s, args) => { _about = null; };
-                _about.Show();
-            }
-            else {
-                _about.WindowState = WindowState.Normal;
-                _about.Activate();
+            switch (e.Key) {
+                case Key.F1:
+                    if (_about == null) {
+                        _about = new WifiSitterGui.View.About();
+                        _about.Closed += (s, args) => { _about = null; };
+                        _about.Show();
+                    }
+                    else {
+                        _about.WindowState = WindowState.Normal;
+                        _about.Activate();
+                    }
+                    break;
             }
         }
     }
