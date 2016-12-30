@@ -27,5 +27,10 @@ namespace WifiSitterGui.View
         public void AddContentControl(UserControl control) {
             MainCanvas.Children.Add(control);
         }
+
+        private void Window_KeyUp(object sender, KeyEventArgs e) {
+            if (e.Key == Key.Escape ||
+                e.Key == Key.F1) this.Close();
+        }
     }
 }
