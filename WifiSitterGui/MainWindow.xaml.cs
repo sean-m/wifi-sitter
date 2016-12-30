@@ -25,6 +25,8 @@ namespace WifiSitterGui
 
         public MainWindow() {
             InitializeComponent();
+
+            Closing += (o, e) => { if (bubbleWindow != null) bubbleWindow.Close(); bubbleWindow = null; };
         }
         
         private void Btn_About_Click(object sender, RoutedEventArgs e) {
@@ -56,6 +58,16 @@ namespace WifiSitterGui
                     break;
             }
         }
+        
+        private void Window_LostFocus(object sender, RoutedEventArgs e) {
+            if (bubbleWindow != null)
+                if (!helpLocked) bubbleWindow.Close();
+        }
+
+        private void Window_LocationChanged(object sender, EventArgs e) {
+            if (bubbleWindow != null)
+                if (!helpLocked) bubbleWindow.Close();
+        }
 
 
         private void ShowHelp() {
@@ -66,7 +78,7 @@ namespace WifiSitterGui
                 bubbleWindow.Closed += (o, e) => { bubbleWindow = null; };
 
                 if (Left < bubbleWindow.Width) Left = bubbleWindow.Width + 10;
-                
+
                 var statusPoint = StatusLabels.TransformToAncestor(this)
                                   .Transform(new Point(0, 0));
                 var wiredPoint = WiredInterfaceList.TransformToAncestor(this)
@@ -117,9 +129,11 @@ namespace WifiSitterGui
                 var whitelistHelp = new View.HelpBubble();
                 whitelistHelp.HorizontalAlignment = HorizontalAlignment.Right;
                 whitelistHelp.Margin = stdMargin;
+                whitelistHelp.Height = (Height + 36) - whitelistExpanderPoint.Y;
+                bubbleWindow.AddContentControl(whitelistHelp);
+                Canvas.SetTop(whitelistHelp, whitelistExpanderPoint.Y + 10);
 
-
-                bubbleWindow.Height = Height + 48;
+                bubbleWindow.Height = Height + 60;
                 bubbleWindow.Top = Top + 15;
                 bubbleWindow.Left = Left - bubbleWindow.Width + 10;
                 bubbleWindow.Show();
@@ -131,14 +145,5 @@ namespace WifiSitterGui
             helpLocked = false;
         }
 
-        private void Window_LostFocus(object sender, RoutedEventArgs e) {
-            if (bubbleWindow != null)
-                if (!helpLocked) bubbleWindow.Close();
-        }
-
-        private void Window_LocationChanged(object sender, EventArgs e) {
-            if (bubbleWindow != null)
-                if (!helpLocked) bubbleWindow.Close();
-        }
     }
 }

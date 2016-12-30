@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:WifiSitterGui.View"
              mc:Ignorable="d"
              MinHeight="60"
+             MaxHeight="160"
              Height="60"
              Width="275">
     <Grid>
