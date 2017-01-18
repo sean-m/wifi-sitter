@@ -200,7 +200,9 @@ USAGE
                         throw new Exception("HKLM\\" + keyParent + "\\" + VALUE_NAME + " does not exist but was expected.");
                     }
 
-                    key.SetValue(VALUE_NAME, origPath.Replace("\"\"", "\"") + " /service");
+                    var opt = " /service";
+                    if ((bool)Configuration.GetOption("enable_ipc")) opt += " /i";
+                    key.SetValue(VALUE_NAME, origPath.Replace("\"\"", "\"") + opt);
                 }
             }
             catch (Exception ex)
