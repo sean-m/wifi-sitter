@@ -26,9 +26,9 @@ namespace WifiSitter
                 {"i|ipc", "Enable IPC communication for GUI.",
                     v => enableIPC = v != null},
                 {"console|service", "Direct wifisitter mode of operation.",
-                    v => mode = v },
+                    v => mode = v.ToLower() },
                 {"setupservice|install|uninstall|uninstallprompt", "Select wifisitter install/setup operation.",
-                    v => mode = v }
+                    v => mode = v.ToLower() }
             };
             try {
                 opts.Parse(args);
