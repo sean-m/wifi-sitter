@@ -207,6 +207,26 @@ namespace WifiSitter
             LogLine(ConsoleColor.White, msg);
         }
 
+        public static void LogLine(LogType type, params string[] msg) {
+            ConsoleColor color = Console.ForegroundColor;
+            switch (type) {
+                case LogType.error:
+                    color = ConsoleColor.Red;
+                    break;
+                case LogType.warn:
+                    color = ConsoleColor.Yellow;
+                    break;
+                case LogType.success:
+                    color = ConsoleColor.Green;
+                    break;
+                default:
+                    // Do nothing
+                    break;
+            }
+
+            LogLine(color, msg);
+        }
+
         public static void LogLine(ConsoleColor color, params string[] msg) {
             if (msg.Length == 0) return;
             string log = msg.Length > 0 ? String.Format(msg[0], msg.Skip(1).ToArray()) : msg[0];
@@ -523,16 +543,16 @@ namespace WifiSitter
                 _mainLoopThread.IsBackground = true;
                 _mainLoopThread.Start();
 
-
-
-                // Setup IPC, 0mq messaging thread
-                // TODO make this tunable, cmd argument?
-                LogLine("Initializing IPC...");
                 
-                _mqServerThread = new Thread(ZeroMQRouterRun);
-                _mqServerThread.Name = "0MQ Server Thread";
-                _mqServerThread.IsBackground = true;
-                _mqServerThread.Start();
+                if ((bool)Configuration.GetOption("enable_ipc")) {
+                    LogLine(LogType.warn, "Initializing IPC...");
+
+                    _mqServerThread = new Thread(ZeroMQRouterRun);
+                    _mqServerThread.Name = "0MQ Server Thread";
+                    _mqServerThread.IsBackground = true;
+                    _mqServerThread.Start();
+                }
+                else { WriteLog(LogType.warn, "IPC not initialized. May not communicate with GUI agent."); }
             }
             catch (Exception e) {
                 WriteLog(LogType.error, e.Source + " {0}", e.Message);

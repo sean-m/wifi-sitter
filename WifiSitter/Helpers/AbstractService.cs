@@ -72,63 +72,57 @@ USAGE
         {
             Environment.CurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-            if (args.Length == 0 && Debugger.IsAttached)
+            if (!Configuration.OptionsSet && Debugger.IsAttached)
             {
-                args = new[] { "/console" };
+                Configuration.SetOptions( new[] { "--console" } );
             }
-
-            if (args.Length == 0)
-            {
-                Console.WriteLine(HelpTextPattern, Path.GetFileName(GetType().Assembly.CodeBase));
+            else if (!Configuration.OptionsSet) {
+                Configuration.SetOptions(new[] { "-h" });
             }
-            else
+            
+            
+            switch ((string)Configuration.GetOption("operating_mode"))
             {
-                switch (args[0].ToLower())
-                {
-                    case "/service":
-                        ServiceExecutionMode = ServiceExecutionMode.Service;
-                        Run(new[] { this });
-                        break;
+                case "service":
+                    ServiceExecutionMode = ServiceExecutionMode.Service;
+                    Run(new[] { this });
+                    break;
 
-                    case "/setupservice":
-                        ServiceExecutionMode = ServiceExecutionMode.Install;
-                        SetupService();
-                        break;
+                case "setupservice":
+                    ServiceExecutionMode = ServiceExecutionMode.Install;
+                    SetupService();
+                    break;
 
-                    case "/console":
-                        ServiceExecutionMode = ServiceExecutionMode.Console;
-                        Console.WriteLine("Starting Service...");
-                        OnStart(args);
-                        OnStartCommandLine();
-                        OnStop();
-                        break;
+                case "console":
+                    ServiceExecutionMode = ServiceExecutionMode.Console;
+                    Console.WriteLine("Starting Service...");
+                    OnStart(args);
+                    OnStartCommandLine();
+                    OnStop();
+                    break;
 
-                    case "/install":
-                        ServiceExecutionMode = ServiceExecutionMode.Install;
-                        InstallService();
-                        break;
+                case "install":
+                    ServiceExecutionMode = ServiceExecutionMode.Install;
+                    InstallService();
+                    break;
 
-                    case "/uninstall":
-                        ServiceExecutionMode = ServiceExecutionMode.Uninstall;
+                case "uninstall":
+                    ServiceExecutionMode = ServiceExecutionMode.Uninstall;
+                    UninstallService();
+                    break;
+
+                case "uninstallprompt":
+                    ServiceExecutionMode = ServiceExecutionMode.Uninstall;
+                    if (ConfirmUninstall())
+                    {
                         UninstallService();
-                        break;
+                        InformUninstalled();
+                    }
+                    break;
 
-                    case "/uninstallprompt":
-                        ServiceExecutionMode = ServiceExecutionMode.Uninstall;
-                        if (ConfirmUninstall())
-                        {
-                            UninstallService();
-                            InformUninstalled();
-                        }
-                        break;
-
-                    default:
-                        if (!OnCustomCommandLine(args))
-                        {
-                            Console.WriteLine(HelpTextPattern, Path.GetFileName(GetType().Assembly.CodeBase));
-                        }
-                        break;
-                }
+                default:
+                    Configuration.SetOptions(new[] { "-h" });
+                    break;
             }
         }
 

@@ -2,6 +2,8 @@
 using System.Linq;
 using System;
 
+using WifiSitter;
+
 namespace WifiSitter
 {
     class Program
@@ -14,6 +16,7 @@ namespace WifiSitter
                 Environment.Exit(7);
             }
             else {
+                Configuration.SetOptions(args);
                 (new WifiSitter()).Run(args);
             }
         }
