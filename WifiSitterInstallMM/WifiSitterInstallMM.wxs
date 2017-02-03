@@ -4,13 +4,22 @@
   <!-- SourceDir instructs IsWiX the location of the directory that contains files for this merge module -->
   <?define SourceDir="..\Deploy"?>
   <Module Id="WifiSitterInstallMM" Language="1033" Version="1.0.0.0">
-    <Package Id="27a711a5-657d-4e8a-86cf-e4636a599192" Manufacturer="WifiSitterInstallMM" InstallerVersion="200" />
+    <Package Id="27a711a5-657d-4e8a-86cf-e4636a599192" Manufacturer="mcardletech.com" InstallerVersion="200" Comments="Contains everything needed to install WifiSitter as a Windows service." InstallPrivileges="elevated" InstallScope="perMachine" ShortNames="no" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="MergeRedirectFolder">
+        <Component Id="owc302C30EEF06DE6020AF828C59E8962BF" Guid="8aa1cf75-9cd2-f65e-c016-d96ce3e7a4da">
+          <File Id="owf302C30EEF06DE6020AF828C59E8962BF" Source="$(var.SourceDir)\AsyncIO.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="owc14AAE9B0AED65685CC1E502FDBE3C9C7" Guid="dfcc9867-c435-1b3e-2768-1218cd41b47b">
+          <File Id="owf14AAE9B0AED65685CC1E502FDBE3C9C7" Source="$(var.SourceDir)\NetMQ.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="owc3FC8434C1A84605AEEBC6A100CA2F3E1" Guid="47d7e276-db6d-424e-d797-1a69e1e24b3b">
+          <File Id="owf3FC8434C1A84605AEEBC6A100CA2F3E1" Source="$(var.SourceDir)\Newtonsoft.Json.dll" KeyPath="yes" />
+        </Component>
         <Component Id="owc5DB171672A528857E251FFF987889D7D" Guid="b6c6eb34-ffe5-5239-5443-7d4b7c291a35">
           <File Id="owf5DB171672A528857E251FFF987889D7D" Source="$(var.SourceDir)\WifiSitter.exe" KeyPath="yes" />
-          <ServiceInstall Id="WifiSitter" Name="WifiSitter" Description="Babysitter for your wifi." Start="auto" Type="ownProcess" ErrorControl="ignore" Vital="yes" Arguments="/console /i"/>
-          <ServiceControl Id="WifiSitter" Name="WifiSitter" Remove="uninstall" Start="install" Stop="both" Wait="no"/>
+          <ServiceInstall Id="WifiSitter" Name="WifiSitter" Description="Babysitter for your wifi." Start="auto" Type="ownProcess" ErrorControl="ignore" Vital="yes" Arguments="/console /i" />
+          <ServiceControl Id="WifiSitter" Name="WifiSitter" Remove="uninstall" Start="install" Stop="both" Wait="no" />
         </Component>
       </Directory>
     </Directory>

@@ -1,17 +1,19 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
-    
     <!-- Reference Custom Components Below -->
     <ComponentGroup Id="Custom">
-
+      <Component Id="_" Guid="{AA44A146-F7DB-4E9C-BD9F-360CC8BDC735}">
+        <RegistryValue Id="_" Root="HKLM" Key="SYSTEM\CurrentControlSet\services\WifiSitter\NicWhiteList" Name="0" Value="Microsoft Wi-Fi Direct" Type="string" KeyPath="yes" />
+      </Component>
+      <Component Id="__1" Guid="{D965BA81-CA82-4341-9EF1-F109460649B6}">
+        <RegistryValue Id="__1" Root="HKLM" Key="SYSTEM\CurrentControlSet\services\WifiSitter\NicWhiteList" Name="1" Value="VirtualBox Host" Type="string" KeyPath="yes" />
+      </Component>
+      <Component Id="__2" Guid="{2E1E118D-A0D4-4B3B-8CCF-B991D9E1C461}">
+        <RegistryValue Id="__2" Root="HKLM" Key="SYSTEM\CurrentControlSet\services\WifiSitter\NicWhiteList" Name="2" Value="VMware Network Adapter" Type="string" KeyPath="yes" />
+      </Component>
     </ComponentGroup>
-
     <!-- Author Custom Components Below -->
-    <DirectoryRef Id="MergeRedirectFolder">
-      
-
-    </DirectoryRef>
-
+    <DirectoryRef Id="MergeRedirectFolder"></DirectoryRef>
   </Fragment>
 </Wix>

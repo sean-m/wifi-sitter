@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiSitter", "WifiSitter\WifiSitter.csproj", "{B3A5D84A-C7A0-409D-881D-1D5FF36773D4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WifiSitterGui", "WifiSitterGui\WifiSitterGui.csproj", "{20552785-B57D-4A59-B891-EF4FB170CE1A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B3A5D84A-C7A0-409D-881D-1D5FF36773D4} = {B3A5D84A-C7A0-409D-881D-1D5FF36773D4}
+	EndProjectSection
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "WifiSitterInstallMM", "WifiSitterInstallMM\WifiSitterInstallMM.wixproj", "{332F9E25-675C-4D66-AD6F-3FCBC446373E}"
 	ProjectSection(ProjectDependencies) = postProject
