@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <Condition Message="You need to be an administrator to install this product.">
+      AdminUser
+    </Condition>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder" Name="PFiles">
+        <Directory Id="INSTALLLOCATION" Name="WifiSitter">
+          <Merge Id="WifiSitterInstallMM" SourceFile="$(var.WifiSitterInstallMM.TargetPath)" DiskId="1" Language="1033" />
+        </Directory>
+      </Directory>
+    </Directory>
+    <Feature Id="WifiSitterService" Title="WifiSitter Service" Description="Installs WifiSitter service." Level="1" AllowAdvertise="yes" Absent="allow" InstallDefault="local" TypicalDefault="install" Display="collapse">
+      <MergeRef Id="WifiSitterInstallMM" />
+      <ComponentRef Id="owc5DB171672A528857E251FFF987889D7D"/>
+    </Feature>
+  </Fragment>
+</Wix>

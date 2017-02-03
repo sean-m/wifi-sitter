@@ -89,7 +89,7 @@ namespace WifiSitter
 
         protected override Guid UninstallGuid {
             get {
-                System.Guid.TryParse("23a42c57-a16c-4b93-a5cb-60cff20c1f7a", out _uninstGuid);
+                System.Guid.TryParse("23A42C57-A16C-4B93-A5CB-60CFF20C1F7A", out _uninstGuid);
                 return _uninstGuid;
             }
         }

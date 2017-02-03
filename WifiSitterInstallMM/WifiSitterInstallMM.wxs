@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?define ComponentRules="OneToOne"?>
+  <!-- SourceDir instructs IsWiX the location of the directory that contains files for this merge module -->
+  <?define SourceDir="..\Deploy"?>
+  <Module Id="WifiSitterInstallMM" Language="1033" Version="1.0.0.0">
+    <Package Id="27a711a5-657d-4e8a-86cf-e4636a599192" Manufacturer="WifiSitterInstallMM" InstallerVersion="200" />
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="MergeRedirectFolder">
+        <Component Id="owc5DB171672A528857E251FFF987889D7D" Guid="b6c6eb34-ffe5-5239-5443-7d4b7c291a35">
+          <File Id="owf5DB171672A528857E251FFF987889D7D" Source="$(var.SourceDir)\WifiSitter.exe" KeyPath="yes" />
+          <ServiceInstall Id="WifiSitter" Name="WifiSitter" Description="Babysitter for your wifi." Start="auto" Type="ownProcess" ErrorControl="ignore" Vital="yes" Arguments="/console /i"/>
+          <ServiceControl Id="WifiSitter" Name="WifiSitter" Remove="uninstall" Start="install" Stop="both" Wait="no"/>
+        </Component>
+      </Directory>
+    </Directory>
+    <ComponentGroupRef Id="Custom" />
+  </Module>
+</Wix>

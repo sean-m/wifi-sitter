@@ -26,7 +26,6 @@ namespace WifiSitterGui.ViewModel
         SimpleNetworkState _netState;
         private ServiceController _sc;
         private Timer _refreshProperties;
-        private WifiSitterAgentViewModel _parent;
         private RelayCommand _reloadWhitelistCommand;
         private IEventAggregator _eventAggregator;
 

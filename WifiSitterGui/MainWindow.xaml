@@ -108,6 +108,24 @@
             </Setter>
         </Style>
 
+        <Style x:Key="ServiceStatusStyle" TargetType="Label">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ServiceState}" Value="No Service">
+                    <Setter Property="ToolTip" Value="Service is not installed!"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ServiceState}" Value="No Service">
+                    <Setter Property="ToolTip">
+                        <Setter.Value>
+                            <TextBlock>
+                                <Run>Service is </Run>
+                                <Run Text="{Binding ServiceState}"/>
+                            </TextBlock>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <DataTemplate x:Key="WhitelistedInterfaceTemplate">
             <TextBlock>
                 <Run Text="{Binding Name, Mode=OneWay}"/> 
