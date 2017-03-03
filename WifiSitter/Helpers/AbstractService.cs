@@ -72,11 +72,11 @@ USAGE
         {
             Environment.CurrentDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-            if (!Configuration.OptionsSet && Debugger.IsAttached)
+            if (!Configuration.IsModeSet && Debugger.IsAttached)
             {
                 Configuration.SetOptions( new[] { "--console" } );
             }
-            else if (!Configuration.OptionsSet) {
+            else if (!Configuration.IsModeSet) {
                 Configuration.SetOptions(new[] { "-h" });
             }
             

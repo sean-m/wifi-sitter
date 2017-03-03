@@ -23,7 +23,7 @@ namespace WifiSitter
             var opts = new OptionSet() {
                 {"h|?|help", "Show this help and exit.",
                     v => showHelp = v != null },
-                {"i|ipc", "Enable IPC communication for GUI.",
+                {"i|ipc", "Option to enable IPC communication for GUI.",
                     v => enableIPC = v != null},
                 {"console|service", "Direct wifisitter mode of operation.",
                     v => mode = v.ToLower() },
@@ -49,7 +49,9 @@ namespace WifiSitter
             return _options[key];
         }
 
-        public static bool OptionsSet { get { return _options != null; } }
+        public static bool IsOptionsSet { get { return _options != null; } }
+
+        public static bool IsModeSet { get { if (IsOptionsSet) { return !String.IsNullOrEmpty((string)_options["operating_mode"]); }; return false; } }
 
         public static void ShowHelp(OptionSet opts, int exitCode = 0) {
             Console.WriteLine("Usage: wifisitter.exe [option] [directive]");
