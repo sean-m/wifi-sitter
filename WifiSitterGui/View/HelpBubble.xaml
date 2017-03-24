@@ -17,9 +17,12 @@
 
         <Border Grid.Column="0"
                 BorderThickness="4"
-                Padding="8"
+                Padding="4"
                 BorderBrush="#007ACC"
                 Background="White">
+            <TextBlock x:Name="helpText" 
+                       TextWrapping="Wrap" 
+                       />
         </Border>
 
         <Polygon x:Name="Arrow"

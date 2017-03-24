@@ -26,6 +26,12 @@ namespace WifiSitterGui.View
         public void TriangleVirt(VerticalAlignment Pos) {
             Arrow.VerticalAlignment = Pos;            
         }
+
+        public HelpBubble(string msg) {
+            InitializeComponent();
+
+            this.helpText.Text = msg;
+        }
     }
     
 }

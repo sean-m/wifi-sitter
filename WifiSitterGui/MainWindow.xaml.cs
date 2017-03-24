@@ -93,7 +93,9 @@ namespace WifiSitterGui
                 var stdMargin = new Thickness(0, 4, 0, 4);
 
                 // Status Help
-                var statusHelp = new View.HelpBubble();
+                var statusHelpTxt = "Shows the status of the WifiSitter " +
+                                    "service to aid in troubleshooting.";
+                var statusHelp = new View.HelpBubble(statusHelpTxt);
                 statusHelp.TriangleVirt(VerticalAlignment.Bottom);
                 statusHelp.HorizontalAlignment = HorizontalAlignment.Right;
                 statusHelp.Margin = stdMargin;
