@@ -79,21 +79,22 @@ USAGE
             else if (!Configuration.IsModeSet) {
                 Configuration.SetOptions(new[] { "-h" });
             }
-            
-            
-            switch ((string)Configuration.GetOption("operating_mode"))
+
+            var mode = (OperatingMode)Properties.Settings.Default.operating_mode;
+
+            switch (mode)
             {
-                case "service":
+                case OperatingMode.service:
                     ServiceExecutionMode = ServiceExecutionMode.Service;
                     Run(new[] { this });
                     break;
 
-                case "setupservice":
+                case OperatingMode.setupservice:
                     ServiceExecutionMode = ServiceExecutionMode.Install;
                     SetupService();
                     break;
 
-                case "console":
+                case OperatingMode.console:
                     ServiceExecutionMode = ServiceExecutionMode.Console;
                     Console.WriteLine("Starting Service...");
                     OnStart(args);
@@ -101,17 +102,17 @@ USAGE
                     OnStop();
                     break;
 
-                case "install":
+                case OperatingMode.install:
                     ServiceExecutionMode = ServiceExecutionMode.Install;
                     InstallService();
                     break;
 
-                case "uninstall":
+                case OperatingMode.uninstall:
                     ServiceExecutionMode = ServiceExecutionMode.Uninstall;
                     UninstallService();
                     break;
 
-                case "uninstallprompt":
+                case OperatingMode.uninstallprompt:
                     ServiceExecutionMode = ServiceExecutionMode.Uninstall;
                     if (ConfirmUninstall())
                     {
@@ -119,7 +120,6 @@ USAGE
                         InformUninstalled();
                     }
                     break;
-
                 default:
                     Configuration.SetOptions(new[] { "-h" });
                     break;
@@ -201,7 +201,7 @@ USAGE
                     }
 
                     var opt = " /service";
-                    if ((bool)Configuration.GetOption("enable_ipc")) opt += " /i";
+                    if (Properties.Settings.Default.enable_ipc) opt += " /i";
                     key.SetValue(VALUE_NAME, origPath.Replace("\"\"", "\"") + opt);
                 }
             }

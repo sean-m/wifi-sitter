@@ -544,7 +544,7 @@ namespace WifiSitter
                 _mainLoopThread.Start();
 
                 
-                if ((bool)Configuration.GetOption("enable_ipc")) {
+                if (Properties.Settings.Default.enable_ipc) {
                     LogLine(LogType.warn, "Initializing IPC...");
 
                     _mqServerThread = new Thread(ZeroMQRouterRun);
@@ -557,7 +557,6 @@ namespace WifiSitter
             catch (Exception e) {
                 WriteLog(LogType.error, e.Source + " {0}", e.Message);
             }
-            
         }
 
         protected override void OnStopImpl() {

@@ -12,13 +12,12 @@ namespace WifiSitter
     public static class Configuration
     {
         private static Dictionary<string, object> _options;
-        
-        public static void SetOptions(string[] args) {
-            _options = new Dictionary<string, object>();
+        private static bool _optionsSet = false;
 
+        public static void SetOptions(string[] args) {
             bool showHelp = false;
             bool enableIPC = false;
-            string mode = String.Empty;
+            var mode = OperatingMode.none;
 
             var opts = new OptionSet() {
                 {"h|?|help", "Show this help and exit.",
@@ -26,9 +25,41 @@ namespace WifiSitter
                 {"i|ipc", "Option to enable IPC communication for GUI.",
                     v => enableIPC = v != null},
                 {"console|service", "Direct wifisitter mode of operation.",
-                    v => mode = v.ToLower() },
+                    v => {
+                        switch (v.ToLower()) {
+                            case "console":
+                                mode = OperatingMode.console;
+                                break;
+                            case "service":
+                                mode = OperatingMode.service;
+                                break;
+                            default:
+                                mode = OperatingMode.none;
+                                break;
+                        }
+                    }
+                },
                 {"setupservice|install|uninstall|uninstallprompt", "Select wifisitter install/setup operation.",
-                    v => mode = v.ToLower() }
+                    v => {
+                        switch (v.ToLower()) {
+                            case "setupservice":
+                                mode = OperatingMode.setupservice;
+                                break;
+                            case "install":
+                                mode = OperatingMode.install;
+                                break;
+                            case "uninstall":
+                                mode = OperatingMode.uninstall;
+                                break;
+                            case "uninstallprompt":
+                                mode = OperatingMode.uninstallprompt;
+                                break;
+                            default:
+                                mode = OperatingMode.none;
+                                break;
+                        }
+                    }
+                }
             };
             try {
                 opts.Parse(args);
@@ -40,18 +71,21 @@ namespace WifiSitter
 
             if (showHelp) ShowHelp(opts);
 
-            _options.Add("enable_ipc", enableIPC);
-            _options.Add("operating_mode", mode);
+            Properties.Settings.Default.enable_ipc = enableIPC;
+            Properties.Settings.Default.operating_mode = (int)mode;
+            _optionsSet = true;
         }
+        
+        public static bool IsOptionsSet { get { return _optionsSet; } }
 
-        public static object GetOption(string key) {
-            if (!_options.ContainsKey(key)) return null;
-            return _options[key];
+        public static bool IsModeSet {
+            get {
+                if (IsOptionsSet) {
+                    return (OperatingMode)Properties.Settings.Default.operating_mode != OperatingMode.none;
+                };
+                return false;
+            }
         }
-
-        public static bool IsOptionsSet { get { return _options != null; } }
-
-        public static bool IsModeSet { get { if (IsOptionsSet) { return !String.IsNullOrEmpty((string)_options["operating_mode"]); }; return false; } }
 
         public static void ShowHelp(OptionSet opts, int exitCode = 0) {
             Console.WriteLine("Usage: wifisitter.exe [option] [directive]");
@@ -64,5 +98,16 @@ namespace WifiSitter
 
             Environment.Exit(exitCode);
         }
+    }
+
+    public enum OperatingMode
+    {
+        none = 0,
+        console,
+        service,
+        setupservice,
+        install,
+        uninstall,
+        uninstallprompt
     }
 }
