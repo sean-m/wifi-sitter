@@ -19,7 +19,8 @@
               IconSource="pack://application:,,,/Resources/Wireless-04.ico"
               ToolTipText="WifiSitter Agent" 
               MenuActivation="LeftOrRightClick"
-              NoLeftClickDelay="True">
+              NoLeftClickDelay="True"
+              DoubleClickCommand="{Binding LaunchSettingsWindow}">
             <tb:TaskbarIcon.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Pause for 5 minutes"
