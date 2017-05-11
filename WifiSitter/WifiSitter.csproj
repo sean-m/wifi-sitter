@@ -174,7 +174,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_StartDate="2000/1/1" BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="False" />
+      <UserProperties BuildVersion_UpdateFileVersion="False" BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_StartDate="2000/1/1" />
     </VisualStudio>
   </ProjectExtensions>
   <Import Project="..\packages\Fody.1.29.4\build\dotnet\Fody.targets" Condition="Exists('..\packages\Fody.1.29.4\build\dotnet\Fody.targets')" />
@@ -184,6 +184,13 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Fody.1.29.4\build\dotnet\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Fody.1.29.4\build\dotnet\Fody.targets'))" />
   </Target>
+  <PropertyGroup>
+    <PostBuildEvent>del "$(ProjectDir)$(OutDir)AsyncIO.dll"
+del "$(ProjectDir)$(OutDir)NetMQ.dll"
+del "$(ProjectDir)$(OutDir)NetMQ.xml"
+del "$(ProjectDir)$(OutDir)Newtonsoft.Json.dll"
+del "$(ProjectDir)$(OutDir)Newtonsoft.Json.xml"</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
