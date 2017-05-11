@@ -72,7 +72,7 @@ namespace WifiSitter
             netstate = new NetworkState();
             netstate.UpdateWhitelist(_ignoreNics);
             netstate.UpdateNics(DiscoverAllNetworkDevices(null, false));
-            LogLine("Initialized...");
+            LogLine("Initialized basic state...");
         }
 
 
@@ -538,6 +538,7 @@ namespace WifiSitter
                 Intialize();
 
                 // Setup background thread for running main loop
+                LogLine("Spawning main thread...");
                 _mainLoopThread = new Thread(WorkerThreadFunc);
                 _mainLoopThread.Name = "WifiSitter Main Loop";
                 _mainLoopThread.IsBackground = true;
@@ -545,8 +546,7 @@ namespace WifiSitter
 
                 
                 if (Properties.Settings.Default.enable_ipc) {
-                    LogLine(LogType.warn, "Initializing IPC...");
-
+                    LogLine(LogType.info, "Initializing IPC worker thread...");
                     _mqServerThread = new Thread(ZeroMQRouterRun);
                     _mqServerThread.Name = "0MQ Server Thread";
                     _mqServerThread.IsBackground = true;
