@@ -6,14 +6,15 @@
         xmlns:local="clr-namespace:WifiSitterGui"
         xmlns:tb="http://www.hardcodet.net/taskbar"
         xmlns:vm="clr-namespace:WifiSitterGui.ViewModel"
-        mc:Ignorable="d"
-        PreviewMouseDown="Window_PreviewMouseDown"
-        LostFocus="Window_LostFocus"
-        LocationChanged="Window_LocationChanged"
         Icon="pack://application:,,,/Resources/Wireless-04.ico"
+        PreviewMouseDown="Window_PreviewMouseDown"
+        LocationChanged="Window_LocationChanged"
+        WindowStartupLocation="CenterScreen"
+        LostFocus="Window_LostFocus"
         Title="WifiSitter Config" 
         KeyUp="MainWindow_KeyUp"
         SizeToContent="Height"
+        mc:Ignorable="d"
         MinHeight="450"
         Height="600" 
         Width="525" >
@@ -73,7 +74,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <Rectangle x:Name="BackgroundRectangle" Stretch="Fill" Fill="#FF1F3B53" Grid.ColumnSpan="2" />
+                            <Rectangle x:Name="BackgroundRectangle" Stretch="Fill" Fill="#FF6D879C" Grid.ColumnSpan="2" />
 
                             <Rectangle x:Name="BackgroundGradient" Stretch="Fill" Grid.ColumnSpan="2" >
                                 <Rectangle.Fill>
@@ -132,9 +133,54 @@
                             <RowDefinition/>
                         </Grid.RowDefinitions>
 
-                        <Label Grid.Column="0"
+                        <!--<Label Grid.Column="0"
                                Grid.Row="0"
-                               Content="{Binding ServiceState, Mode=OneWay}"/>
+                               Content="{Binding ServiceState, Mode=OneWay}">-->
+                        
+                        <Label Grid.Column="0"
+                               Grid.Row="0">
+                            <Label.Style>
+                                <Style TargetType="Label">
+                                    <!--
+                                    "Running"
+                                    "Stopped"
+                                    "Paused"
+                                    "Stopping"
+                                    "Starting"
+                                    
+                                    ServiceState
+                                    -->
+                                    
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ServiceState}" Value="Running">
+                                            <Setter Property="Content" Value="Service Running"/>
+                                            <Setter Property="Foreground" Value="Green"/>
+                                            <Setter Property="ToolTip" Value="Service running."/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ServiceState}" Value="Stopped">
+                                            <Setter Property="Content" Value="Service Stopped"/>
+                                            <Setter Property="Foreground" Value="#FFB81010"/>
+                                            <Setter Property="ToolTip" Value="Service stopped."/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ServiceState}" Value="Paused">
+                                            <Setter Property="Content" Value="Service Paused"/>
+                                            <Setter Property="Foreground" Value="#FF3A3A3A"/>
+                                            <Setter Property="ToolTip" Value="Service paused."/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ServiceState}" Value="Stopping">
+                                            <Setter Property="Content" Value="Service Stopping"/>
+                                            <Setter Property="Foreground" Value="Goldenrod"/>
+                                            <Setter Property="ToolTip" Value="Service stopping."/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ServiceState}" Value="Starting">
+                                            <Setter Property="Content" Value="Service Starting"/>
+                                            <Setter Property="Foreground" Value="Goldenrod"/>
+                                            <Setter Property="ToolTip" Value="Service starting."/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Label.Style>
+                        </Label>
 
                         <Label Grid.Column="0"
                                Grid.Row="1">
@@ -142,13 +188,13 @@
                                 <Style TargetType="Label">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CommuncationEstablished}" Value="True">
-                                            <Setter Property="Content" Value="Communicating"/>
+                                            <Setter Property="Content" Value="Agent Communicating"/>
                                             <Setter Property="Foreground" Value="Green"/>
                                             <Setter Property="ToolTip" Value="Communicating with WifiSitter.exe"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding CommuncationEstablished}" Value="False">
-                                            <Setter Property="Content" Value="Not Communicating"/>
-                                            <Setter Property="Foreground" Value="Red"/>
+                                            <Setter Property="Content" Value="Agent Not Communicating"/>
+                                            <Setter Property="Foreground" Value="#FFB81010"/>
                                             <Setter Property="ToolTip" Value="PC Load Letter 😦"/>
                                         </DataTrigger>
                                     </Style.Triggers>
