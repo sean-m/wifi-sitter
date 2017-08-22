@@ -25,8 +25,9 @@ namespace WifiSitter
         internal volatile static NetworkState netstate;
         private const string _serviceName = "WifiSitter";
         private Guid _uninstGuid;
-        private Thread _mainLoopThread;
-        private Thread _mqServerThread;
+        private Task _mainLoopTask;
+        private Task _mqServerTask;
+        private List<TaskSupervisor> _monitoredTask = new List<TaskSupervisor>();
         private ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
         private volatile bool _paused;
         private SynchronizationContext _sync;
@@ -289,7 +290,7 @@ namespace WifiSitter
         }
 
         private void WorkerThreadFunc() {
-            
+
             while (!_shutdownEvent.WaitOne(0)) {
 
                 if (_paused) {
@@ -364,7 +365,10 @@ namespace WifiSitter
             }
         }
 
+        private volatile bool _nics_reset = false;
         private void ResetNicState (NetworkState netstate) {
+            if (_nics_reset) return;
+
             if (netstate == null)
                 return;
 
@@ -537,34 +541,66 @@ namespace WifiSitter
 
                 Intialize();
 
+                var syncContext = (SynchronizationContext.Current != null)
+                    ? TaskScheduler.FromCurrentSynchronizationContext()
+                    : TaskScheduler.Current;
+
                 // Setup background thread for running main loop
                 LogLine("Spawning main thread...");
-                _mainLoopThread = new Thread(WorkerThreadFunc);
-                _mainLoopThread.Name = "WifiSitter Main Loop";
-                _mainLoopThread.IsBackground = true;
-                _mainLoopThread.Start();
+                _mainLoopTask = new Task(WorkerThreadFunc);
+                _mainLoopTask.ContinueWith((worker) => {
+                    if (worker.IsFaulted) {
+                        WriteLog(LogType.error, 
+                            "Error in main main worker:\n{0}", 
+                            String.Join("\n", worker?.Exception?.InnerExceptions?.Select(
+                                x => String.Format("{0} : {1}", x.TargetSite, x.Message))) ?? "Cannot get exception.");
+                        _shutdownEvent.Set();
+                        Stop();
+                    }
+                }, syncContext);
 
+                try {
+                    _mainLoopTask.Start();
+                }
+                catch (Exception e) {
+                    WriteLog(LogType.error, "Exception in main task:\n{0}", _mainLoopTask.Exception.Message);
+                }
                 
+                
+                // Setup 0mq message router task
                 if (Properties.Settings.Default.enable_ipc) {
                     LogLine(LogType.info, "Initializing IPC worker thread...");
-                    _mqServerThread = new Thread(ZeroMQRouterRun);
-                    _mqServerThread.Name = "0MQ Server Thread";
-                    _mqServerThread.IsBackground = true;
-                    _mqServerThread.Start();
+                    _mqServerTask = new Task(ZeroMQRouterRun);
+                    _mqServerTask.ContinueWith((worker) => {
+                        if (worker.IsFaulted) {
+                            WriteLog(LogType.error, "Error in main 0mq router:\n\t{1} : {0}", 
+                                String.Join("\n", worker?.Exception?.InnerExceptions?.Select(
+                                    x => String.Format("{0} : {1}", x.TargetSite, x.Message))) ?? "Cannot get exception.");
+                        }
+                    }, syncContext);
+                    _mqServerTask.Start();
                 }
                 else { WriteLog(LogType.warn, "IPC not initialized. May not communicate with GUI agent."); }
+
             }
             catch (Exception e) {
                 WriteLog(LogType.error, e.Source + " {0}", e.Message);
             }
         }
 
+        protected override void OnStartCommandLine() {
+            Console.WriteLine("Service is running...  Hit CTRL+C to break.");
+            bool run = true;
+            Console.CancelKeyPress += (o, e) => { run = false; };
+            while (run) {
+                if ((bool)_shutdownEvent?.WaitOne(10)) { run = false; }
+            };
+        }
+
         protected override void OnStopImpl() {
-            ResetNicState(netstate);
+            LogLine("Stopping now...");
             _shutdownEvent.Set();
-            if (!_mainLoopThread.Join(3000)) {
-                _mainLoopThread.Abort();
-            }
+            ResetNicState(netstate);
         }
 
         protected override void OnPause() {

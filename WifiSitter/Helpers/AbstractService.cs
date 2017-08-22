@@ -86,6 +86,7 @@ USAGE
             {
                 case OperatingMode.service:
                     ServiceExecutionMode = ServiceExecutionMode.Service;
+                    CanStop = true;
                     Run(new[] { this });
                     break;
 
@@ -99,7 +100,7 @@ USAGE
                     Console.WriteLine("Starting Service...");
                     OnStart(args);
                     OnStartCommandLine();
-                    OnStop();
+                    Stop();
                     break;
 
                 case OperatingMode.install:
@@ -133,11 +134,7 @@ USAGE
             AppDomain.CurrentDomain.UnhandledException += OnCurrentDomainUnhandledException;
         }
 
-        protected virtual void OnStartCommandLine()
-        {
-            Console.WriteLine("Service is running...  Hit ENTER to break.");
-            Console.ReadLine();
-        }
+        protected abstract void OnStartCommandLine();
 
         protected abstract void OnStartImpl(string[] args);
 
