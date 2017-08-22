@@ -65,9 +65,10 @@ namespace WifiSitterGui.ViewModel
             RequestNetworkState();
 
             // Intermittent network state polling
-            _netstateCheckTimer = new System.Timers.Timer();
-            _netstateCheckTimer.AutoReset = true;
-            _netstateCheckTimer.Interval = 30 * 1000;  // 30 seconds
+            _netstateCheckTimer = new System.Timers.Timer() {
+                AutoReset = true,
+                Interval = 30 * 1000  // 30 seconds
+            };
             _netstateCheckTimer.Elapsed += (o, e) => { RequestNetworkState(); };
             _netstateCheckTimer.Start();
 
@@ -180,8 +181,9 @@ namespace WifiSitterGui.ViewModel
             }
 
             if (_poller == null) {
-                _poller = new NetMQPoller();
-                _poller.Add(_mqClient);
+                _poller = new NetMQPoller {
+                    _mqClient
+                };
             }
 
             if (!_poller.IsRunning) {
@@ -209,8 +211,9 @@ namespace WifiSitterGui.ViewModel
                 if (_launchWindowCommand == null) {
                     _launchWindowCommand = new RelayCommand(() => {
                         if (_statusGui == null) {
-                            _statusGui = new MainWindow();
-                            _statusGui.DataContext = WindowVM;
+                            _statusGui = new MainWindow() {
+                                DataContext = WindowVM
+                            };
                             _statusGui.Closed += (s, e) => { _statusGui = null; };
                             _statusGui.Show();
                         }

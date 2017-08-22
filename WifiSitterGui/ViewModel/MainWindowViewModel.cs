@@ -40,10 +40,11 @@ namespace WifiSitterGui.ViewModel
         public MainWindowViewModel (IEventAggregator eventAggregator) {
 
             _eventAggregator = eventAggregator;
-            
-            _refreshProperties = new Timer();
-            _refreshProperties.Interval = 1000 * 5;
-            _refreshProperties.AutoReset = true;
+
+            _refreshProperties = new Timer() {
+                Interval = 1000 * 5,
+                AutoReset = true
+            };
             _refreshProperties.Elapsed += (o, e) => {
                 this.OnPropertyChanged("ServiceState");
             };
@@ -135,10 +136,8 @@ namespace WifiSitterGui.ViewModel
 
         public ICommand ReloadWhitelist {
             get {
-                return (_reloadWhitelistCommand != null) 
-                    ? _reloadWhitelistCommand 
-                    : _reloadWhitelistCommand = new RelayCommand(
-                        () => { _eventAggregator?.GetEvent<ReloadWhitelistEvent>().Publish(); });
+                return _reloadWhitelistCommand ?? (_reloadWhitelistCommand = new RelayCommand(
+                        () => { _eventAggregator?.GetEvent<ReloadWhitelistEvent>().Publish(); }));
             }
         }
 
