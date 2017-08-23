@@ -33,5 +33,9 @@ namespace WifiSitterGui.Helpers
                 }
             }
         }
+
+        public static bool SoonerThan(this DateTime then, DateTime now) {
+            return then > now;
+        }
     }
 }

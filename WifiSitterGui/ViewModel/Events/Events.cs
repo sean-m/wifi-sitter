@@ -8,4 +8,7 @@ using Prism.Events;
 namespace WifiSitterGui.ViewModel.Events
 {
     public class ReloadWhitelistEvent : PubSubEvent { }
+
+    public class ReceivedFromServer : PubSubEvent<DateTime> { }
+    
 }

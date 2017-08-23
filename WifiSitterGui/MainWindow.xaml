@@ -133,10 +133,6 @@
                             <RowDefinition/>
                         </Grid.RowDefinitions>
 
-                        <!--<Label Grid.Column="0"
-                               Grid.Row="0"
-                               Content="{Binding ServiceState, Mode=OneWay}">-->
-                        
                         <Label Grid.Column="0"
                                Grid.Row="0">
                             <Label.Style>
@@ -269,18 +265,19 @@
                   HorizontalContentAlignment="Stretch"
                   ExpandDirection="Up"
                   Background="White"
+                  Padding="4,0,0,0"
                   Margin="0"
                   ToolTip="Whitelist entries from system registry.">
             <Expander.Header>
                 <Label Content="Whitelist Entries"
                        FontWeight="Bold"/>
             </Expander.Header>
-            <Expander.Effect>
+            <!--<Expander.Effect>
                 <DropShadowEffect ShadowDepth="1"
                                   Direction="90"
                                   RenderingBias="Performance">
                 </DropShadowEffect>
-            </Expander.Effect>
+            </Expander.Effect>-->
             <Expander.Content>
                 <Grid>
                     <Grid.RowDefinitions>

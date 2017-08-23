@@ -264,6 +264,9 @@ namespace WifiSitterGui.ViewModel
         private void _mqClient_ReceiveReady(object sender, NetMQSocketEventArgs e) {
             
             Trace.WriteLine(">> Response received.");
+
+            _eventAggregator.GetEvent<ReceivedFromServer>().Publish(DateTime.Now);
+
             WifiSitterIpcMessage _sr = null;
 
             var msg = e.Socket.ReceiveMultipartMessage();

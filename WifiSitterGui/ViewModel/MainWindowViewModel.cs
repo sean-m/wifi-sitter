@@ -29,6 +29,7 @@ namespace WifiSitterGui.ViewModel
         private WifiSitterAgentViewModel _parent;
         private RelayCommand _reloadWhitelistCommand;
         private IEventAggregator _eventAggregator;
+        private DateTime _lastSpokeToServer;
 
         #endregion  // fields
 
@@ -49,6 +50,11 @@ namespace WifiSitterGui.ViewModel
                 this.OnPropertyChanged("ServiceState");
             };
             _refreshProperties.Start();
+
+
+            // Update _lastSpokeToServer time
+            _eventAggregator.GetEvent<ReceivedFromServer>().Subscribe(
+                (dt) => { this._lastSpokeToServer = dt; } );
         }
         
         #endregion  // constructor
@@ -122,7 +128,10 @@ namespace WifiSitterGui.ViewModel
 
 
         public string CommuncationEstablished {
-            get { return (NetState != null).ToString(); }
+            get {
+                return (_lastSpokeToServer != default(DateTime)
+                        && _lastSpokeToServer.SoonerThan(DateTime.Now.AddMinutes(-1)))
+                        .ToString(); }
         }
 
         #endregion  // properties
@@ -145,6 +154,9 @@ namespace WifiSitterGui.ViewModel
 
 
         #region eventhandlers
+
+
+
         #endregion  // methods
     }
 }
