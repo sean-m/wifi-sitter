@@ -163,3 +163,5 @@ packages/MoreLinq.Portable.1.4.0/COPYING.txt
 packages/MoreLinq.Portable.1.4.0/MoreLinq.Portable.1.4.0.nupkg
 packages/MoreLinq.Portable.1.4.0/lib/portable-net4+sl5+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1/MoreLinq.Portable.XML
 packages/MoreLinq.Portable.1.4.0/lib/portable-net4+sl5+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1/MoreLinq.Portable.dll
+
+Deploy/*
