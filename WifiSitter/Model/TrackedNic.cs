@@ -125,6 +125,11 @@ namespace WifiSitter
             return IsEnabled;
         }
 
+        public void Disconnect() {
+            if (Nic?.NetworkInterfaceType != NetworkInterfaceType.Wireless80211) return;
+
+
+        }
 
         private int EnableDisableInterface(bool Enable) {
             string state = Enable ? "ENABLED" : "DISABLED";

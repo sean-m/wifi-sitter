@@ -82,6 +82,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="..\WifiSitter\Helpers\Interop.cs">
+      <Link>Helpers\Interop.cs</Link>
+    </Compile>
+    <Compile Include="..\WifiSitter\Helpers\NativeWifi.cs">
+      <Link>Helpers\NativeWifi.cs</Link>
+    </Compile>
     <Compile Include="..\WifiSitter\Helpers\NetshHelper.cs">
       <Link>Model\NetshHelper.cs</Link>
     </Compile>
@@ -91,8 +97,8 @@
     <Compile Include="..\WifiSitter\Model\SimpleNetworkState.cs">
       <Link>Model\SimpleNetworkState.cs</Link>
     </Compile>
-    <Compile Include="..\WifiSitter\Model\SitterNic.cs">
-      <Link>Model\SitterNic.cs</Link>
+    <Compile Include="..\WifiSitter\Model\TrackedNic.cs">
+      <Link>Model\TrackedNic.cs</Link>
     </Compile>
     <Compile Include="..\WifiSitter\Model\WifiSitterIpcMessage.cs">
       <Link>Model\WifiSitterIpcMessage.cs</Link>
