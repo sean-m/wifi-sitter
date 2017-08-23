@@ -27,7 +27,6 @@ namespace WifiSitter
         private Guid _uninstGuid;
         private Task _mainLoopTask;
         private Task _mqServerTask;
-        private List<TaskSupervisor> _monitoredTask = new List<TaskSupervisor>();
         private ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
         private volatile bool _paused;
         private SynchronizationContext _sync;
