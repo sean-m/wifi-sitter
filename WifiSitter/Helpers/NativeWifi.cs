@@ -440,6 +440,16 @@ namespace NativeWifi
                 Marshal.FreeHGlobal(connectionParams.dot11SsidPtr);
             }
 
+
+            /// <summary>
+            /// Disconnects to a network
+            /// </summary>
+            public void Disconnect()
+            {
+                Wlan.ThrowIfError(Wlan.WlanDisconnect(client.clientHandle, info.interfaceGuid, IntPtr.Zero));
+            }
+
+
             /// <summary>
             /// Deletes a profile.
             /// </summary>

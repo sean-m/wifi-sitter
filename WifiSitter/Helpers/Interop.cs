@@ -201,6 +201,12 @@ namespace NativeWifi
             [In] IntPtr pIeData,
             [In, Out] IntPtr pReserved);
 
+        [DllImport("wlanapi.dll")]
+        public static extern int WlanDisconnect(
+            [In] IntPtr clientHandle,
+            [In, MarshalAs(UnmanagedType.LPStruct)] Guid interfaceGuid,
+            [In, Out] IntPtr pReserved);
+
         /// <summary>
         /// Defines flags passed to <see cref="WlanGetAvailableNetworkList"/>.
         /// </summary>
