@@ -107,10 +107,11 @@ namespace WifiSitter
         internal static List<TrackedNic> QueryNetworkAdapters(string[] WhiteList) {
             List<TrackedNic> result = new List<TrackedNic>();
             if (WhiteList == null) WhiteList = new string[] { };
-            foreach (var n in NetworkInterface.GetAllNetworkInterfaces().Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback
-                                                                                  && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel
-                                                                                  && !x.Description.ToLower().Contains("bluetooth")
-                                                                                  && !WhiteList.Any(y => x.Description.StartsWith(y))))) {
+            foreach (var n in NetworkInterface.GetAllNetworkInterfaces()
+                .Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback
+                    && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel
+                    && !x.Description.ToLower().Contains("bluetooth")
+                    && !WhiteList.Any(y => x.Description.StartsWith(y))))) {
                 result.Add(new TrackedNic(n));
             }
             return result;
