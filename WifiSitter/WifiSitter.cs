@@ -31,6 +31,7 @@ namespace WifiSitter
         private volatile bool _paused;
         private SynchronizationContext _sync;
         private static string _myChannel = String.Format("{0}-{1}", Process.GetCurrentProcess().Id, Process.GetCurrentProcess().ProcessName);
+        private static Object _consoleLock = new Object();
 
         #endregion // fields
 
@@ -229,11 +230,14 @@ namespace WifiSitter
 
         public static void LogLine(ConsoleColor color, params string[] msg) {
             if (msg.Length == 0) return;
-            string log = msg.Length > 0 ? String.Format(msg[0], msg.Skip(1).ToArray()) : msg[0];
-            Console.Write(DateTime.Now.ToString());
-            Console.ForegroundColor = color;
-            Console.WriteLine("  {0}", log);
-            Console.ResetColor();
+            
+            lock (_consoleLock) {
+                string log = msg.Length > 0 ? String.Format(msg[0], msg.Skip(1).ToArray()) : msg[0];
+                Console.Write(DateTime.Now.ToString());
+                Console.ForegroundColor = color;
+                Console.WriteLine("  {0}", log);
+                Console.ResetColor();
+            }
         }
         
         public void WriteLog(LogType type, params string[] msg) {
