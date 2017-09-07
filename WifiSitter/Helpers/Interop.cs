@@ -361,7 +361,9 @@ namespace NativeWifi
             /// </remarks>
             AllUser = 0,
             GroupPolicy = 1,
-            User = 2
+            User = 2,
+            SetByClient = 0x00010000,
+            ConnModeAuto = 0x00020000
         }
 
         [DllImport("wlanapi.dll")]
@@ -374,6 +376,34 @@ namespace NativeWifi
             [In] bool overwrite,
             [In] IntPtr pReserved,
             [Out] out WlanReasonCode reasonCode);
+
+        [DllImport("wlanapi.dll")]
+        public static extern int WlanSaveTemporaryProfile(
+            [In] IntPtr clientHandle,
+            [In, MarshalAs(UnmanagedType.LPStruct)] Guid interfaceGuid,
+            [In, MarshalAs(UnmanagedType.LPWStr)] string profileName,
+            [In, Optional, MarshalAs(UnmanagedType.LPWStr)] string allUserProfileSecurity,
+            [In] WlanProfileFlags flags,
+            [In] bool overwrite,
+            [In] IntPtr pReserved);
+
+        public enum WL_DISPLAY_PAGES
+        {
+            WLConnectionPage,
+            WLSecurityPage
+        }
+
+        [DllImport("wlanapi.dll")]
+        public static extern int WlanUIEditProfile(
+            [In] uint dwClientVersion,
+            [In, MarshalAs(UnmanagedType.LPWStr)] string profileName,
+            [In, MarshalAs(UnmanagedType.LPStruct)] Guid interfaceGuid,
+            [In] IntPtr hWnd,
+            [In] WL_DISPLAY_PAGES wlStartPage,
+            [In] IntPtr pReserved,
+            [Out] out WlanReasonCode reasonCode);
+
+        
 
         /// <summary>
         /// Defines the access mask of an all-user profile.
