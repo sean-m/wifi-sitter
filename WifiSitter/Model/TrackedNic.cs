@@ -18,6 +18,7 @@ namespace WifiSitter
         private NetworkInterface _nic;
         private bool _isEnabled;
         private bool _isConnected;
+        private string _connectedSSID;
 
         #endregion  // fields
 
@@ -71,7 +72,7 @@ namespace WifiSitter
         public string Id {
             get { return Nic.Id; }
         }
-        
+
         #endregion // properties
 
         #region methods
@@ -127,8 +128,14 @@ namespace WifiSitter
 
         public void Disconnect() {
             if (Nic?.NetworkInterfaceType != NetworkInterfaceType.Wireless80211) return;
+            var wclient = new NativeWifi.WlanClient();
+            var adapter = wclient.Interfaces.Where(x => Nic.Id.Contains(x.InterfaceGuid.ToString().ToUpper())).FirstOrDefault();
+            _connectedSSID = adapter?.CurrentConnection.profileName;
+            adapter?.Disconnect();
+        }
 
-
+        public void Connect() {
+            //TODO reimplement connection logic
         }
 
         private int EnableDisableInterface(bool Enable) {
@@ -167,7 +174,7 @@ namespace WifiSitter
 
             return proc.ExitCode == 0;
         }
-        
+
         private NetshInterface GetNetshInterface() {
             List<NetshInterface> _netsh;
             NetshInterface netsh = null;
