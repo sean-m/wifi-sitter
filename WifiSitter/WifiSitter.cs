@@ -316,8 +316,7 @@ namespace WifiSitter
                             if (wifi != null) {
                                 foreach (var adapter in wifi) {
                                     WriteLog (LogType.warn, "Disable adaptor: {0,18}  {1}", adapter.Name, adapter.Description);
-
-                                    adapter.Disable();
+                                    adapter.Disconnect();
                                 }
                             }
                         }
