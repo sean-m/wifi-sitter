@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace WifiSitter
@@ -13,7 +14,6 @@ namespace WifiSitter
         #region fields
         private List<TrackedNic> _nics;
         private bool _checkNet;
-        private bool _netAvailable;
         private bool _processingState;
         private string[] _ignoreAdapters;  // List of Nic descriptions to ignore during normal operation
         private List<string[]> _originalNicState = new List<string[]>();
@@ -52,7 +52,7 @@ namespace WifiSitter
 
         private void Initialize() {
             CheckNet = true;
-            _netAvailable = NetworkInterface.GetIsNetworkAvailable();
+            NetworkAvailable = NetworkInterface.GetIsNetworkAvailable();
             NetworkChange.NetworkAddressChanged += NetworkChange_NetworkAddressChanged; ;
             NetworkChange.NetworkAvailabilityChanged += NetworkChange_NetworkAvailabilityChanged;
 
@@ -62,9 +62,16 @@ namespace WifiSitter
             _checkTimer = new Timer();
             _checkTimer.AutoReset = true;
             _checkTimer.Interval = 10 * 1000;
-            _checkTimer.Elapsed += (obj, snd) => {
-                _netAvailable = NetworkInterface.GetIsNetworkAvailable() && _nics.Any(x => x.IsConnected);
-                if (!_netAvailable) {
+            _checkTimer.Elapsed += async (obj, snd) => {
+                if (!NetworkInterface.GetIsNetworkAvailable())
+                {
+                    _nics.ForEach(x => x.CheckYourself());
+                    await Task.Delay(1000);
+                }
+
+                NetworkAvailable = NetworkInterface.GetIsNetworkAvailable() && _nics.Any(x => x.IsConnected);
+
+                if (!NetworkAvailable) {
                     WifiSitter.LogLine(ConsoleColor.Red, "Intermittent check failed, network connection unavailable.");
                     this.CheckNet = true;
                 }
@@ -127,13 +134,22 @@ namespace WifiSitter
 
         #region properties
 
+        // * Note, only applies to adapters that aren't ignored by whitelist
         public bool IsEthernetUp {
             get {
                 if (Nics == null) return false;
                 return Nics.Any(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Ethernet && x.IsConnected && (bool)!_ignoreAdapters?.Any(y => x.Nic.Description.StartsWith(y)));
             }
         }
-        
+
+        // * Note, only applies to adapters that aren't ignored by whitelist
+        public bool IsWirelessUp {
+            get {
+                if (Nics == null) return false;
+                return Nics.Any(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 && x.IsConnected && (bool)!_ignoreAdapters?.Any(y => x.Nic.Description.StartsWith(y)));
+            }
+        }
+
         internal string[] IgnoreAdapters {
             get {
                 if (_ignoreAdapters == null) _ignoreAdapters = new string[] { };
@@ -158,9 +174,7 @@ namespace WifiSitter
         }
 
 
-        public bool NetworkAvailable {
-            get { return _netAvailable; }
-        }
+        public bool NetworkAvailable { get; private set; }
 
 
         public bool ProcessingState {
@@ -175,13 +189,13 @@ namespace WifiSitter
 
         private void NetworkChange_NetworkAvailabilityChanged(object sender, NetworkAvailabilityEventArgs e) {
             WifiSitter.LogLine(ConsoleColor.Cyan, "Event: Network availability changed.");
-            _netAvailable = NetworkInterface.GetIsNetworkAvailable();
+            NetworkAvailable = NetworkInterface.GetIsNetworkAvailable() && _nics.Any(x => x.IsConnected);
             _checkNet = true;
         }
 
         private void NetworkChange_NetworkAddressChanged(object sender, EventArgs e) {
             WifiSitter.LogLine(ConsoleColor.Cyan, "Event: Network address changed.");
-            _netAvailable = NetworkInterface.GetIsNetworkAvailable();
+            NetworkAvailable = NetworkInterface.GetIsNetworkAvailable() && _nics.Any(x => x.IsConnected);
             _checkNet = true;
         }
 

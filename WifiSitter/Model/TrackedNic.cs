@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using WifiSitter.Helpers;
+using static NativeWifi.Wlan;
 
 namespace WifiSitter
 {
@@ -20,7 +21,6 @@ namespace WifiSitter
         private NetworkInterface _nic;
         private bool _isEnabled;
         private bool _isConnected;
-        private string _connectedSSID;
         private NativeWifi.Wlan.WlanConnectionAttributes _lastConnection;
 
         #endregion  // fields
@@ -81,27 +81,48 @@ namespace WifiSitter
         #region methods
 
         public async void CheckYourself()
-        {
-            WifiSitter.LogLine(LogType.info, $"Checking myself: {Name}");
+        {  
             // We don't care about interfaces that are self assigned
             if (!_nic.GetIPProperties().GetIPv4Properties().IsAutomaticPrivateAddressingActive
                 && IsEnabled)
             {
-                IPAddress source = _nic.GetIPProperties().AnycastAddresses.FirstOrDefault()?.Address;
-                var gways = _nic.GetIPProperties().GatewayAddresses;
-                foreach (var ip in gways)
+                WifiSitter.LogLine(LogType.info, $"Checking myself: {Name}");
+
+                // If it's a wireless adapter get status with wclient
+                if (Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
                 {
-                    var destination = ip.Address;
-                    var pingResult = await Task.Run(() => { return IcmpPing.Send(source, destination); });
-                    if (pingResult.Status == IPStatus.Success)
+                    var wclient = new NativeWifi.WlanClient();
+                    var adapter = wclient.Interfaces.Where(x => Nic.Id.Contains(x.InterfaceGuid.ToString().ToUpper())).FirstOrDefault();
+                    if (adapter == null) return;
+                    if (adapter.InterfaceState == WlanInterfaceState.Connected)
                     {
-                        WifiSitter.LogLine(ConsoleColor.Green, new string[] { "NIC: {0}  IP status: {1}", Nic.Name, pingResult.Status.ToString() });
-                        this.IsConnected = true;
+                        IsConnected = true;
+                        _lastConnection = adapter.CurrentConnection;  // save for later
                     }
                     else
                     {
-                        WifiSitter.LogLine(ConsoleColor.Red, new string[] { "NIC: {0}  IP status: {1}", Nic.Name, pingResult.Status.ToString() });
-                        this.IsConnected = false;
+                        IsConnected = false;
+                    }
+                }
+                else
+                {
+                    IPAddress source = _nic.GetIPProperties().AnycastAddresses.FirstOrDefault()?.Address;
+                    var gways = _nic.GetIPProperties().GatewayAddresses;
+
+                    foreach (var ip in gways)
+                    {
+                        var destination = ip.Address;
+                        var pingResult = await Task.Run(() => { return IcmpPing.Send(source, destination); });
+                        if (pingResult.Status == IPStatus.Success)
+                        {
+                            WifiSitter.LogLine(ConsoleColor.Green, new string[] { "NIC: {0}  IP status: {1}", Nic.Name, pingResult.Status.ToString() });
+                            this.IsConnected = true;
+                        }
+                        else
+                        {
+                            WifiSitter.LogLine(ConsoleColor.Red, new string[] { "NIC: {0}  IP status: {1}", Nic.Name, pingResult.Status.ToString() });
+                            this.IsConnected = false;
+                        }
                     }
                 }
             }
@@ -168,7 +189,6 @@ namespace WifiSitter
         }
 
         public void Disconnect() {
-            Debug.Assert(Nic?.NetworkInterfaceType == NetworkInterfaceType.Wireless80211);
             if (Nic?.NetworkInterfaceType != NetworkInterfaceType.Wireless80211) return;
 
             var wclient = new NativeWifi.WlanClient();
@@ -178,20 +198,20 @@ namespace WifiSitter
             // Store connection info and disconnect
             // * note: Connection info is stored as struct so incurs a copy
             _lastConnection = adapter.CurrentConnection;
+            WifiSitter.LogLine(LogType.info, $"{Name}  disconnecting from: {_lastConnection.profileName}");
             adapter?.Disconnect();
         }
 
-        public void Connect() {
-            Debug.Assert(Nic?.NetworkInterfaceType == NetworkInterfaceType.Wireless80211);
-            if (Nic?.NetworkInterfaceType != NetworkInterfaceType.Wireless80211) return;
+        public void ConnectToLastSsid() {
+            if (Nic?.NetworkInterfaceType != NetworkInterfaceType.Wireless80211) return;  // Shouldn't happen but still..
 
-            if (!_lastConnection.Equals(default(NativeWifi.Wlan.WlanConnectionAttributes)))
+            if (!_lastConnection.Equals(default(WlanConnectionAttributes)))
             {
-
+                WifiSitter.LogLine(LogType.info, $"{Name}  reconnecting to: {_lastConnection.profileName}");
                 var wclient = new NativeWifi.WlanClient();
                 var adapter = wclient.Interfaces.Where(x => Nic.Id.Contains(x.InterfaceGuid.ToString().ToUpper())).FirstOrDefault();
-
-                adapter.ConnectSynchronously(_lastConnection.wlanConnectionMode, _lastConnection.wlanAssociationAttributes.dot11BssType, _lastConnection.profileName, 10);
+                adapter.SetProfile(WlanProfileFlags.AllUser, adapter.GetProfileXml(_lastConnection.profileName), true);
+                adapter.ConnectSynchronously(WlanConnectionMode.Profile, Dot11BssType.Any, _lastConnection.profileName, 30);
             }
         }
 

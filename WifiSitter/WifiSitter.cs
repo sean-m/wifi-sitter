@@ -305,22 +305,41 @@ namespace WifiSitter
 
                     netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
 
-                    var connected_wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                    if (netstate.NetworkAvailable
+                       && netstate.IsEthernetUp 
+                       && netstate.IsWirelessUp) { // Ethernet and wireless are both up, disconnect wireless
+
+                        var connected_wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
                                             .Where(x => x.IsConnected)
                                             .ToArray();
 
-                    if (netstate.NetworkAvailable &&
-                       netstate.IsEthernetUp) { // Ethernet is up
                         if (connected_wifi != null) {
+
+                            bool wait_after = false;  // If changes are made you kinda need to wait since this isn't a true event based system
+
                             foreach (var adapter in connected_wifi) {
                                 WriteLog (LogType.warn, "Disconnect adaptor: {0}  {1}", adapter.Name, adapter.Description);
                                 adapter.Disconnect();
+                                wait_after = true;
+                            }
+
+                            if (wait_after)
+                            {
+                                LogLine(LogType.info, "Waiting 3 seconds for all this to shake out.");
+                                Thread.Sleep(3 * 1000);
                             }
                         }
                     }
-                    else { // Network unavailable, enable wifi adapters
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        
+                    else if (netstate.NetworkAvailable &&
+                        netstate.IsWirelessUp) 
+                    {
+                        // Network available and connected over wifi, this is fine so there's nothing to change
+                    }
+                    else if (!netstate.NetworkAvailable) { // Network unavailable, enable wifi adapters
+
+                        bool wait_after = false;  // If changes are made you kinda need to wait since this isn't a true event based system
+
+                        // Re-enable disabled adapters
                         foreach (var nic in netstate.Nics.Where(x => !x.IsEnabled
                                                                  && x.Nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet
                                                                  && x.Nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet3Megabit
@@ -332,13 +351,18 @@ namespace WifiSitter
                             if (!enableResult) LogLine(ConsoleColor.Red, "Failed to enable NIC {0}", nic.Name);
                         }
 
-                        
-                        foreach (var adapter in netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211))
+                        // Attempt to reconnect to last tracked SSID
+                        foreach (var nic in netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211))
                         {
-                            WriteLog(LogType.warn, "Reconnect adaptor: {0}  {1}", adapter.Name, adapter.Description);
-                            adapter.Connect();
+                            nic.ConnectToLastSsid();
+                            wait_after = true;
                         }
-                        
+
+                        if (wait_after)
+                        {
+                            LogLine(LogType.info, "Waiting 3 seconds for all this to shake out.");
+                            Thread.Sleep(3 * 1000);
+                        }
                     }
 
 
@@ -353,7 +377,7 @@ namespace WifiSitter
                     Console.WriteLine("{0,32} {1,48}  {2,16}  {3}  {4}\n", "Name", "Description", "Type", "Connected", "Enabled");
                     foreach (var adapter in netstate.Nics) {
                         Console.WriteLine("{0,32} {1,48}  {2,16}  {3,7}  {4,7}", adapter.Name,
-                                                                                 adapter.Description,
+                                                                                 adapter.Description.Substring(0, Math.Min(adapter.Description.Length, 46)),
                                                                                  adapter.Nic.NetworkInterfaceType,
                                                                                  adapter.IsConnected,
                                                                                  adapter.IsEnabled);
