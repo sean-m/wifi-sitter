@@ -72,7 +72,6 @@ namespace WifiSitter
             }
             netstate = new NetworkState();
             netstate.UpdateWhitelist(_ignoreNics);
-            netstate.UpdateNics(DiscoverAllNetworkDevices(null, false));
             LogLine("Initialized basic state...");
         }
 
@@ -126,6 +125,9 @@ namespace WifiSitter
         }
 
         public static List<TrackedNic> DiscoverAllNetworkDevices(List<TrackedNic> CurrentAdapters=null, bool quiet=false) {
+
+            // TODO completely rip this out and redo the logic consume events on a queue
+
             if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering all devices.");
 
 
@@ -291,6 +293,8 @@ namespace WifiSitter
         }
 
         private void WorkerThreadFunc() {
+
+            // TODO completely rip this out and redo the logic consume events on a queue
 
             while (!_shutdownEvent.WaitOne(0)) {
 
