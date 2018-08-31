@@ -63,7 +63,7 @@ namespace WifiSitter
             _checkTimer.AutoReset = true;
             _checkTimer.Interval = 10 * 1000;
             _checkTimer.Elapsed += (obj, snd) => {
-                _netAvailable = NetworkInterface.GetIsNetworkAvailable();
+                _netAvailable = NetworkInterface.GetIsNetworkAvailable() && _nics.Any(x => x.IsConnected);
                 if (!_netAvailable) {
                     WifiSitter.LogLine(ConsoleColor.Red, "Intermittent check failed, network connection unavailable.");
                     this.CheckNet = true;
@@ -110,10 +110,15 @@ namespace WifiSitter
             foreach (var n in NetworkInterface.GetAllNetworkInterfaces()
                 .Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback
                     && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel
-                    && !x.Description.ToLower().Contains("bluetooth")
-                    && !WhiteList.Any(y => x.Description.StartsWith(y))))) {
+                    && !x.Description.ToLower().Contains("bluetooth")))) {
+
+                if (WhiteList.Any(y => n.Description.StartsWith(y))) { continue; }
+
                 result.Add(new TrackedNic(n));
             }
+
+            foreach (var i in result) i.CheckYourself();
+
             return result;
         }
 
@@ -155,7 +160,6 @@ namespace WifiSitter
 
         public bool NetworkAvailable {
             get { return _netAvailable; }
-            private set { _netAvailable = value; }
         }
 
 

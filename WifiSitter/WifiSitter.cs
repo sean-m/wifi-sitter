@@ -181,8 +181,6 @@ namespace WifiSitter
                 foreach (var n in nics) {
                     n.UpdateState(netsh?.Where(x => x.InterfaceName == n.Name).FirstOrDefault());
                 }
-
-                return nics;
             }
 
             // Detected no disabled nics, so update accordingly.
@@ -307,23 +305,22 @@ namespace WifiSitter
 
                     netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
 
-                    var wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                    var connected_wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
                                             .Where(x => x.IsConnected)
                                             .ToArray();
 
-                    if (netstate.NetworkAvailable) { // Network available
-                        if (netstate.IsEthernetUp) { // Ethernet is up
-                            if (wifi != null) {
-                                foreach (var adapter in wifi) {
-                                    WriteLog (LogType.warn, "Disable adaptor: {0,18}  {1}", adapter.Name, adapter.Description);
-                                    adapter.Disconnect();
-                                }
+                    if (netstate.NetworkAvailable &&
+                       netstate.IsEthernetUp) { // Ethernet is up
+                        if (connected_wifi != null) {
+                            foreach (var adapter in connected_wifi) {
+                                WriteLog (LogType.warn, "Disconnect adaptor: {0}  {1}", adapter.Name, adapter.Description);
+                                adapter.Disconnect();
                             }
                         }
                     }
                     else { // Network unavailable, enable wifi adapters
                         Console.ForegroundColor = ConsoleColor.Yellow;
-                        bool enablingWifi = false;
+                        
                         foreach (var nic in netstate.Nics.Where(x => !x.IsEnabled
                                                                  && x.Nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet
                                                                  && x.Nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet3Megabit
@@ -333,12 +330,15 @@ namespace WifiSitter
 
                             bool enableResult = nic.Enable();
                             if (!enableResult) LogLine(ConsoleColor.Red, "Failed to enable NIC {0}", nic.Name);
-                            if (enableResult && !enablingWifi) enablingWifi = true; // indicate that a wifi adapter has been successfully enabled
                         }
 
-                        if (enablingWifi) {
-                            Thread.Sleep(2 * 1000);
+                        
+                        foreach (var adapter in netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211))
+                        {
+                            WriteLog(LogType.warn, "Reconnect adaptor: {0}  {1}", adapter.Name, adapter.Description);
+                            adapter.Connect();
                         }
+                        
                     }
 
 
@@ -625,6 +625,7 @@ namespace WifiSitter
                     sitterConfigKey.SetValue("0", "Microsoft Wi-Fi Direct", RegistryValueKind.String);
                     sitterConfigKey.SetValue("1", "VirtualBox Host", RegistryValueKind.String);
                     sitterConfigKey.SetValue("2", "VMware Network Adapter", RegistryValueKind.String);
+                    sitterConfigKey.SetValue("3", "Hyper-V Virtual", RegistryValueKind.String);
                 }
             }
             catch {

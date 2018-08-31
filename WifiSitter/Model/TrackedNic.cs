@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
-
+using System.Threading.Tasks;
 using WifiSitter.Helpers;
 
 namespace WifiSitter
@@ -19,6 +21,7 @@ namespace WifiSitter
         private bool _isEnabled;
         private bool _isConnected;
         private string _connectedSSID;
+        private NativeWifi.Wlan.WlanConnectionAttributes _lastConnection;
 
         #endregion  // fields
 
@@ -77,16 +80,54 @@ namespace WifiSitter
 
         #region methods
 
-        public void UpdateState(List<NetshInterface> NetshIfs) {
+        public async void CheckYourself()
+        {
+            WifiSitter.LogLine(LogType.info, $"Checking myself: {Name}");
+            // We don't care about interfaces that are self assigned
+            if (!_nic.GetIPProperties().GetIPv4Properties().IsAutomaticPrivateAddressingActive
+                && IsEnabled)
+            {
+                IPAddress source = _nic.GetIPProperties().AnycastAddresses.FirstOrDefault()?.Address;
+                var gways = _nic.GetIPProperties().GatewayAddresses;
+                foreach (var ip in gways)
+                {
+                    var destination = ip.Address;
+                    var pingResult = await Task.Run(() => { return IcmpPing.Send(source, destination); });
+                    if (pingResult.Status == IPStatus.Success)
+                    {
+                        WifiSitter.LogLine(ConsoleColor.Green, new string[] { "NIC: {0}  IP status: {1}", Nic.Name, pingResult.Status.ToString() });
+                        this.IsConnected = true;
+                    }
+                    else
+                    {
+                        WifiSitter.LogLine(ConsoleColor.Red, new string[] { "NIC: {0}  IP status: {1}", Nic.Name, pingResult.Status.ToString() });
+                        this.IsConnected = false;
+                    }
+                }
+            }
+            else
+            {
+                // If you're using a self assigned IP, you're not as connected as you think you are.
+                this.IsConnected = false;
+            }
+        }
+
+        public async void UpdateState(List<NetshInterface> NetshIfs) {
             this.UpdateState(NetshIfs.Where(x => x.InterfaceName == Nic.Name).FirstOrDefault());
         }
 
-        public void UpdateState(NetshInterface NetshIf) {
+        public async void UpdateState(NetshInterface NetshIf) {
             if (NetshIf == null) return;
 
             if (Nic.Name == NetshIf.InterfaceName) {
                 this._isEnabled = NetshIf.AdminState == "Enabled";
                 this._isConnected = NetshIf.State == "Connected";
+            }
+
+            //Double Check
+            if (IsConnected)
+            {
+                CheckYourself();
             }
         }
 
@@ -127,15 +168,31 @@ namespace WifiSitter
         }
 
         public void Disconnect() {
+            Debug.Assert(Nic?.NetworkInterfaceType == NetworkInterfaceType.Wireless80211);
             if (Nic?.NetworkInterfaceType != NetworkInterfaceType.Wireless80211) return;
+
             var wclient = new NativeWifi.WlanClient();
             var adapter = wclient.Interfaces.Where(x => Nic.Id.Contains(x.InterfaceGuid.ToString().ToUpper())).FirstOrDefault();
-            _connectedSSID = adapter?.CurrentConnection.profileName;
+            if (adapter == null) return;
+
+            // Store connection info and disconnect
+            // * note: Connection info is stored as struct so incurs a copy
+            _lastConnection = adapter.CurrentConnection;
             adapter?.Disconnect();
         }
 
         public void Connect() {
-            //TODO reimplement connection logic
+            Debug.Assert(Nic?.NetworkInterfaceType == NetworkInterfaceType.Wireless80211);
+            if (Nic?.NetworkInterfaceType != NetworkInterfaceType.Wireless80211) return;
+
+            if (!_lastConnection.Equals(default(NativeWifi.Wlan.WlanConnectionAttributes)))
+            {
+
+                var wclient = new NativeWifi.WlanClient();
+                var adapter = wclient.Interfaces.Where(x => Nic.Id.Contains(x.InterfaceGuid.ToString().ToUpper())).FirstOrDefault();
+
+                adapter.ConnectSynchronously(_lastConnection.wlanConnectionMode, _lastConnection.wlanAssociationAttributes.dot11BssType, _lastConnection.profileName, 10);
+            }
         }
 
         private int EnableDisableInterface(bool Enable) {

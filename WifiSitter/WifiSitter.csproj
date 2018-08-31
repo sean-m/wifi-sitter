@@ -118,11 +118,13 @@
     <Compile Include="Helpers\AbstractService.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Helpers\IcmpPing.cs" />
     <Compile Include="Helpers\Interop.cs" />
     <Compile Include="Helpers\NativeWifi.cs" />
     <Compile Include="Helpers\NetshHelper.cs" />
     <Compile Include="Helpers\Options.cs" />
     <Compile Include="Configuration.cs" />
+    <Compile Include="Helpers\PingTest.cs" />
     <Compile Include="Model\NetworkState.cs" />
     <Compile Include="Model\SimpleNetworkState.cs" />
     <Compile Include="Program.cs" />
@@ -178,11 +180,10 @@
     <None Include="FodyWeavers.xml" />
     <Content Include="wifisitter-icon.ico" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties BuildVersion_StartDate="2000/1/1" BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_UpdateFileVersion="False" />
+      <UserProperties BuildVersion_UpdateFileVersion="False" BuildVersion_BuildVersioningStyle="None.None.None.Increment" BuildVersion_StartDate="2000/1/1" />
     </VisualStudio>
   </ProjectExtensions>
   <PropertyGroup>
