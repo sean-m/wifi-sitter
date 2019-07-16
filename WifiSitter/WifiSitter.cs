@@ -13,6 +13,7 @@ using System.Text;
 using WifiSitter.Helpers;
 
 // 3rd party deps
+using NLog;
 using NetMQ;
 using NetMQ.Sockets;
 
@@ -22,7 +23,7 @@ namespace WifiSitter
     {
         #region fields
 
-        internal volatile static NetworkState netstate;
+        internal static volatile NetworkState netstate;
         private const string _serviceName = "WifiSitter";
         private Guid _uninstGuid;
         private Task _mainLoopTask;
@@ -32,6 +33,7 @@ namespace WifiSitter
         private SynchronizationContext _sync;
         private static string _myChannel = String.Format("{0}-{1}", Process.GetCurrentProcess().Id, Process.GetCurrentProcess().ProcessName);
         private static Object _consoleLock = new Object();
+        private static Logger LOG = LogManager.GetCurrentClassLogger();
 
         #endregion // fields
 
@@ -55,24 +57,24 @@ namespace WifiSitter
                 Console.WindowWidth = 120;
             }
             catch {
-                LogLine(ConsoleColor.Red, "Failed to resize console window.");
+                LOG.Log(LogLevel.Error, "Failed to resize console window.");
             }
 
             //Show Version
             Assembly asm = GetType().Assembly;
             Version v = asm.GetName().Version;
-            LogLine("Version: {0}", v.ToString());
+            LOG.Log(LogLevel.Info, "Version: {0}", v.ToString());
             
 
             // Check if there are any interfaces not detected by GetAllNetworkInterfaces()
             // That method will not show disabled interfaces
             var _ignoreNics = ReadNicWhitelist();
             if (_ignoreNics.Count() < 1) {
-                WriteLog(LogType.info, "No network adapter whitelist configured.");
+                LOG.Log(LogLevel.Info, "No network adapter whitelist configured.");
             }
             netstate = new NetworkState();
             netstate.UpdateWhitelist(_ignoreNics);
-            LogLine("Initialized basic state...");
+            LOG.Log(LogLevel.Info, "Initialized basic state...");
         }
 
 
@@ -105,7 +107,7 @@ namespace WifiSitter
 
         #region methods
 
-        private string[] ReadNicWhitelist() {
+        private List<string> ReadNicWhitelist() {
             List<string> results = new List<string>();
 
             try {
@@ -118,27 +120,27 @@ namespace WifiSitter
                 }
             }
             catch (Exception e) {
-                WriteLog(LogType.error, String.Concat("Failed reading NIC whitelist from registry. \n", e.Message));
+                LOG.Log(LogLevel.Error, $"Failed reading NIC whitelist from registry. \n{e.Message}");
             }
 
-            return results.ToArray();
+            return results;
         }
 
         public static List<TrackedNic> DiscoverAllNetworkDevices(List<TrackedNic> CurrentAdapters=null, bool quiet=false) {
 
             // TODO completely rip this out and redo the logic consume events on a queue
 
-            if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering all devices.");
+            if (!quiet) LOG.Log(LogLevel.Info, "Discovering all devices.");
 
 
             List<TrackedNic> nics;
             if (CurrentAdapters == null) {
-                string[] whiteList;
+                IEnumerable<string> whiteList;
                 if (netstate != null) {
-                    whiteList = netstate.IgnoreAdapters ?? new string[] { };
+                    whiteList = netstate.IgnoreAdapters ?? new List<string>();
                 }
                 else {
-                    whiteList = new string[] { };
+                    whiteList = new List<string>();
                 }
 
                 nics = NetworkState.QueryNetworkAdapters(whiteList); }
@@ -158,7 +160,7 @@ namespace WifiSitter
 
 
             if (notInNetstate.Count > 0) {
-                if (!quiet) LogLine(ConsoleColor.Yellow, "Discovering disabled devices.");
+                if (!quiet) LOG.Log(LogLevel.Info, "Discovering disabled devices.");
                 var disabledInterfaces = notInNetstate.Where(x => x.AdminState == "Disabled")
                                                       .Where(x => !nics.Any(y => y.Name == x.InterfaceName)) // Ignore nics we already know about
                                                       .ToArray();
@@ -204,94 +206,6 @@ namespace WifiSitter
             return nics;
         }
 
-        public static void LogLine(params string[] msg) {
-            LogLine(ConsoleColor.White, msg);
-        }
-
-        public static void LogLine(LogType type, params string[] msg) {
-            ConsoleColor color = Console.ForegroundColor;
-            switch (type) {
-                case LogType.error:
-                    color = ConsoleColor.Red;
-                    break;
-                case LogType.warn:
-                    color = ConsoleColor.Yellow;
-                    break;
-                case LogType.success:
-                    color = ConsoleColor.Green;
-                    break;
-                default:
-                    // Do nothing
-                    break;
-            }
-
-            LogLine(color, msg);
-        }
-
-        public static void LogLine(ConsoleColor color, params string[] msg) {
-            if (msg.Length == 0) return;
-            
-            lock (_consoleLock) {
-                string log = msg.Length > 0 ? String.Format(msg[0], msg.Skip(1).ToArray()) : msg[0];
-                Console.Write(DateTime.Now.ToString());
-                Console.ForegroundColor = color;
-                Console.WriteLine("  {0}", log);
-                Console.ResetColor();
-            }
-        }
-        
-        public void WriteLog(LogType type, params string[] msg) {
-
-            if (this.ServiceExecutionMode == ServiceExecutionMode.Console) {
-                // Log to console
-                ConsoleColor color = Console.ForegroundColor;
-                switch (type) {
-                    case LogType.error:
-                        color = ConsoleColor.Red;
-                        break;
-                    case LogType.warn:
-                        color = ConsoleColor.Yellow;
-                        break;
-                    case LogType.success:
-                        color = ConsoleColor.Green;
-                        break;
-                    default:
-                        // Do nothing
-                        break;
-                }
-
-                LogLine(color, msg);
-                return;
-            }
-            else {
-                // Running as service
-                // Log to Event Viewer
-                int eventId = 1142;
-                EventLogEntryType eventType = EventLogEntryType.Information;
-                switch (type) {
-                    case LogType.error:
-                        eventType = EventLogEntryType.Error;
-                        eventId = 1143;
-                        break;
-                    case LogType.warn:
-                        eventType = EventLogEntryType.Warning;
-                        eventId = 1144;
-                        break;
-                    case LogType.success:
-                        eventType = EventLogEntryType.SuccessAudit;
-                        eventId = 1145;
-                        break;
-                    default:
-                        // Do nothing
-                        break;
-                }
-
-                string message = msg.Length > 0 ? String.Format(msg[0], msg.Skip(1).ToArray()) : msg[0];
-
-                EventLog.WriteEntry(message, eventType, eventId);
-            }
-        }
-
         private void WorkerThreadFunc() {
 
             // TODO completely rip this out and redo the logic consume events on a queue
@@ -322,14 +236,14 @@ namespace WifiSitter
                             bool wait_after = false;  // If changes are made you kinda need to wait since this isn't a true event based system
 
                             foreach (var adapter in connected_wifi) {
-                                WriteLog (LogType.warn, "Disconnect adaptor: {0}  {1}", adapter.Name, adapter.Description);
+                                LOG.Log(LogLevel.Warn, "Disconnect adaptor: {0}  {1}", adapter.Name, adapter.Description);
                                 adapter.Disconnect();
                                 wait_after = true;
                             }
 
                             if (wait_after)
                             {
-                                LogLine(LogType.info, "Waiting 3 seconds for all this to shake out.");
+                                LOG.Log(LogLevel.Info, "Waiting 3 seconds for all this to shake out.");
                                 Thread.Sleep(3 * 1000);
                             }
                         }
@@ -349,10 +263,10 @@ namespace WifiSitter
                                                                  && x.Nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet3Megabit
                                                                  && x.Nic.NetworkInterfaceType != NetworkInterfaceType.FastEthernetT)) {
 
-                            WriteLog (LogType.warn, "Enable adaptor: {0,18}  {1}", nic.Name, nic.Description);
+                            LOG.Log(LogLevel.Warn, "Enable adaptor: {0,18}  {1}", nic.Name, nic.Description);
 
                             bool enableResult = nic.Enable();
-                            if (!enableResult) LogLine(ConsoleColor.Red, "Failed to enable NIC {0}", nic.Name);
+                            if (!enableResult) LOG.Log(LogLevel.Error, "Failed to enable NIC {0}", nic.Name);
                         }
 
                         // Attempt to reconnect to last tracked SSID
@@ -364,17 +278,15 @@ namespace WifiSitter
 
                         if (wait_after)
                         {
-                            LogLine(LogType.info, "Waiting 3 seconds for all this to shake out.");
+                            LOG.Log(LogLevel.Info, "Waiting 3 seconds for all this to shake out.");
                             Thread.Sleep(3 * 1000);
                         }
                     }
 
 
                     // Show network availability
-                    var color = netstate.NetworkAvailable ? ConsoleColor.Green : ConsoleColor.Red;
                     var stat = netstate.NetworkAvailable ? "is" : "not";
-
-                    LogLine(color, "Connection {0} available", stat);
+                    LOG.Log(stat == "is" ? LogLevel.Info : LogLevel.Warn, "Connection {0} available", stat);
 
                     // List adapters
                     Console.Write("\n");
@@ -410,13 +322,13 @@ namespace WifiSitter
                 if (now != null) {
                     if (state.ToLower() != now.IsEnabled.ToString().ToLower()) {
                         if (state == true.ToString()) {
-                            WriteLog(LogType.info, "Restoring adapter state, enabling adapter: {0} - {1}", now.Name, now.Description);
+                            LOG.Log(LogLevel.Info, "Restoring adapter state, enabling adapter: {0} - {1}", now.Name, now.Description);
                             var enableTask = new Task(() => { now.Enable(); });
                             enableTask.Start();
                             taskList.Add(enableTask);
                         }
                         else {
-                            WriteLog(LogType.info, "Restoring adapter state, disabling adapter: {0} - {1}", now.Name, now.Description);
+                            LOG.Log(LogLevel.Info, "Restoring adapter state, disabling adapter: {0} - {1}", now.Name, now.Description);
                             var disableTask = new Task(() => { now.Disable(); });
                             disableTask.Start();
                             taskList.Add(disableTask); }
@@ -427,7 +339,7 @@ namespace WifiSitter
                 Task.WaitAll(taskList.ToArray());
             }
             catch (Exception e) {
-                WriteLog(LogType.error, "Exception when resetting nic state\n", e.InnerException.Message);
+                LOG.Log(LogLevel.Info, "Exception when resetting nic state\n", e.InnerException.Message);
             }
         }
 
@@ -448,7 +360,7 @@ namespace WifiSitter
                 Task.WaitAll(taskList.ToArray());
             }
             catch (Exception e) {
-                WriteLog(LogType.error, "Exception when waking wifi,\n", e.InnerException.Message);
+                LOG.Log(LogLevel.Info, "Exception when waking wifi,\n", e.InnerException.Message);
             }
         }
 
@@ -473,15 +385,15 @@ namespace WifiSitter
                     var msgString = String.Concat(clientMessage.Skip(2).ToList().Select(x => x.ConvertToString()));
                     try { _msg = Newtonsoft.Json.JsonConvert.DeserializeObject<WifiSitterIpcMessage>(msgString); }
                     catch {
-                        LogLine("Deserialize to WifiSitterIpcMessage failed.");
+                        LOG.Log(LogLevel.Error, "Deserialize to WifiSitterIpcMessage failed.");
                         // TODO respond with failure
                     }
 
                     if (_msg != null) {
-                        LogLine("Received netmq message: {0}", _msg.Request);
+                        LOG.Log(LogLevel.Debug, "Received netmq message: {0}", _msg.Request);
                         switch (_msg.Request) {
                             case "get_netstate":
-                                LogLine("Sending netstate to: {0}", clientAddress.ConvertToString());
+                                LOG.Log(LogLevel.Debug, "Sending netstate to: {0}", clientAddress.ConvertToString());
                                 if (_paused && netstate.CheckNet) {
                                     netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
                                     netstate.StateChecked();
@@ -504,13 +416,13 @@ namespace WifiSitter
                                         minutes = 1;  // I'm impatient while debugging
 #endif
 
-                                        WriteLog(LogType.info, "Taking {0} minute break and restoring interfaces to initial state.", minutes.ToString());
+                                        LOG.Log(LogLevel.Info, "Taking {0} minute break and restoring interfaces to initial state.", minutes.ToString());
 
                                         OnPause();
                                         WakeWifi(netstate);
 
                                         Task.Delay(minutes * 60 * 1000).ContinueWith((task) => {
-                                            WriteLog(LogType.info, "Break elapsed. Resuming operation.");
+                                            LOG.Log(LogLevel.Info, "Break's over! Not gettin paid to just stand around.");
                                             netstate.ShouldCheckState();   // Main loop should check state again when resuming from paused state
                                             OnContinue();
                                             // prefixing t_ to differentiate from outer scope
@@ -531,7 +443,7 @@ namespace WifiSitter
                                                                             "pausing").ToJsonString();
                                     }
                                 }
-                                catch { WriteLog(LogType.error, "Failed to enter paused state after 'take_five' request received."); }
+                                catch { LOG.Log(LogLevel.Error, "Failed to enter paused state after 'take_five' request received."); }
                                 break;
                             case "reload_whitelist":
                                 var list = ReadNicWhitelist();
@@ -576,11 +488,11 @@ namespace WifiSitter
                     : TaskScheduler.Current;
 
                 // Setup background thread for running main loop
-                LogLine("Spawning main thread...");
+                LOG.Log(LogLevel.Info, "Spawning main thread...");
                 _mainLoopTask = new Task(WorkerThreadFunc);
                 _mainLoopTask.ContinueWith((worker) => {
                     if (worker.IsFaulted) {
-                        WriteLog(LogType.error, 
+                        LOG.Log(LogLevel.Error,
                             "Error in main main worker:\n{0}", 
                             String.Join("\n", worker?.Exception?.InnerExceptions?.Select(
                                 x => String.Format("{0} : {1}", x.TargetSite, x.Message))) ?? "Cannot get exception.");
@@ -593,28 +505,28 @@ namespace WifiSitter
                     _mainLoopTask.Start();
                 }
                 catch (Exception e) {
-                    WriteLog(LogType.error, "Exception in main task:\n{0}", _mainLoopTask.Exception.Message);
+                    LOG.Log(LogLevel.Error, "Exception in main task:\n{0}", _mainLoopTask.Exception.Message);
                 }
                 
                 
                 // Setup 0mq message router task
                 if (Properties.Settings.Default.enable_ipc) {
-                    LogLine(LogType.info, "Initializing IPC worker thread...");
+                    LOG.Log(LogLevel.Error, "Initializing IPC worker thread...");
                     _mqServerTask = new Task(ZeroMQRouterRun);
                     _mqServerTask.ContinueWith((worker) => {
                         if (worker.IsFaulted) {
-                            WriteLog(LogType.error, "Error in main 0mq router:\n\t{1} : {0}", 
+                            LOG.Log(LogLevel.Error, "Error in main 0mq router:\n\t{1} : {0}", 
                                 String.Join("\n", worker?.Exception?.InnerExceptions?.Select(
                                     x => String.Format("{0} : {1}", x.TargetSite, x.Message))) ?? "Cannot get exception.");
                         }
                     }, syncContext);
                     _mqServerTask.Start();
                 }
-                else { WriteLog(LogType.warn, "IPC not initialized. May not communicate with GUI agent."); }
+                else { LOG.Log(LogLevel.Warn, "IPC not initialized. May not communicate with GUI agent."); }
 
             }
             catch (Exception e) {
-                WriteLog(LogType.error, e.Source + " {0}", e.Message);
+                LOG.Log(LogLevel.Error, e);
             }
         }
 
@@ -628,7 +540,7 @@ namespace WifiSitter
         }
 
         protected override void OnStopImpl() {
-            LogLine("Stopping now...");
+            LOG.Log(LogLevel.Debug, "Stopping now...");
             _shutdownEvent.Set();
             ResetNicState(netstate);
         }
@@ -656,8 +568,8 @@ namespace WifiSitter
                     sitterConfigKey.SetValue("3", "Hyper-V Virtual", RegistryValueKind.String);
                 }
             }
-            catch {
-                WriteLog(LogType.error, "Could not create configuration registry values!");
+            catch (Exception ex) {
+                LOG.Log(LogLevel.Error, ex);
             }
         }
 
@@ -666,8 +578,9 @@ namespace WifiSitter
             try {
                 Registry.LocalMachine.DeleteSubKeyTree(String.Format(@"SYSTEM\CurrentControlSet\services\{0}\NicWhiteList", ServiceName));
             }
-            catch {
-                WriteLog(LogType.error, "Could not remove configuration registry values!");
+            catch (Exception ex)
+            {
+                LOG.Log(LogLevel.Error, ex);
             }
         }
 

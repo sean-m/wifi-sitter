@@ -16,6 +16,7 @@ using WifiSitterGui.Helpers;
 using WifiSitterGui.ViewModel.Events;
 
 // 3rd party usings
+using NLog;
 using NetMQ;
 using NetMQ.Sockets;
 using Prism.Events;
@@ -37,6 +38,7 @@ namespace WifiSitterGui.ViewModel
         private static DealerSocket _mqClient;
         private static NetMQPoller _poller;
         private IEventAggregator _eventAggregator;
+        private NLog.Logger LOG = NLog.LogManager.GetCurrentClassLogger();
 
         #endregion  // fields
 
@@ -285,7 +287,7 @@ namespace WifiSitterGui.ViewModel
                         try {
                             _netstateTimer.Stop(); _netstateTimer.Start();
                             WindowVM.NetState = Newtonsoft.Json.JsonConvert.DeserializeObject<SimpleNetworkState>(Encoding.UTF8.GetString(_sr.Payload)); }
-                        catch { WifiSitter.WifiSitter.LogLine("Failed to deserialize netstate, payload."); }
+                        catch { LOG.Log(LogLevel.Error, "Failed to deserialize netstate, payload."); }
                         break;
                     case "taking_five":
                         Trace.WriteLine(String.Format("Responded 'taking_five' : {0}", Encoding.UTF8.GetString(_sr.Payload)));

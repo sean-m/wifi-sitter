@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace WifiSitter.Helpers
 {
-    class NetshHelper
+    public class NetshHelper
     {
         public static List<NetshInterface> GetInterfaces()
         {

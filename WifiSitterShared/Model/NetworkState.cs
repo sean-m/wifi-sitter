@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
@@ -12,12 +13,15 @@ namespace WifiSitter
     /// </summary>
     public class NetworkState {
         #region fields
+
         private List<TrackedNic> _nics;
         private bool _checkNet;
         private bool _processingState;
-        private string[] _ignoreAdapters;  // List of Nic descriptions to ignore during normal operation
+        private List<string> _ignoreAdapters;  // List of Nic descriptions to ignore during normal operation
         private List<string[]> _originalNicState = new List<string[]>();
         private Timer _checkTimer;
+        private NLog.Logger LOG = NLog.LogManager.GetCurrentClassLogger();
+
         #endregion // fields
 
 
@@ -35,7 +39,7 @@ namespace WifiSitter
             Nics.Where(x => !NicWhitelist.Any(y => x.Description.StartsWith(y))).ToList()
                 .ForEach(x => _originalNicState.Add(new string[] { x.Id, x.IsEnabled.ToString() }));
 
-            _ignoreAdapters = NicWhitelist;
+            _ignoreAdapters = NicWhitelist.ToList();
 
             Initialize();
         }
@@ -46,7 +50,7 @@ namespace WifiSitter
             // Loop through nics and add id:state to _originalNicState list
             Nics.ForEach(x => _originalNicState.Add(new string[] { x.Id, x.IsEnabled.ToString() }));
 
-            _ignoreAdapters = NicWhitelist;
+            _ignoreAdapters = NicWhitelist.ToList();
             Initialize();
         }
 
@@ -72,7 +76,7 @@ namespace WifiSitter
                 NetworkAvailable = NetworkInterface.GetIsNetworkAvailable() && _nics.Any(x => x.IsConnected);
 
                 if (!NetworkAvailable) {
-                    WifiSitter.LogLine(ConsoleColor.Red, "Intermittent check failed, network connection unavailable.");
+                    LOG.Log(LogLevel.Warn, "Intermittent check failed, network connection unavailable.");
                     this.CheckNet = true;
                 }
             };
@@ -94,7 +98,7 @@ namespace WifiSitter
             this.ProcessingState = false;
         }
 
-        internal void ShouldCheckState() {
+        public void ShouldCheckState() {
             this.CheckNet = true;
         }
 
@@ -106,14 +110,14 @@ namespace WifiSitter
             this.Nics = Nics;
         }
 
-        public void UpdateWhitelist(string[] Whitelist) {
+        public void UpdateWhitelist(List<string> Whitelist) {
             _ignoreAdapters = Whitelist;
             _checkNet = true;
         }
 
-        internal static List<TrackedNic> QueryNetworkAdapters(string[] WhiteList) {
+        public static List<TrackedNic> QueryNetworkAdapters(IEnumerable<string> WhiteList) {
             List<TrackedNic> result = new List<TrackedNic>();
-            if (WhiteList == null) WhiteList = new string[] { };
+            if (WhiteList == null) WhiteList = new List<string>();
             foreach (var n in NetworkInterface.GetAllNetworkInterfaces()
                 .Where(x => (x.NetworkInterfaceType != NetworkInterfaceType.Loopback
                     && x.NetworkInterfaceType != NetworkInterfaceType.Tunnel
@@ -150,9 +154,9 @@ namespace WifiSitter
             }
         }
 
-        internal string[] IgnoreAdapters {
+        public List<string> IgnoreAdapters {
             get {
-                if (_ignoreAdapters == null) _ignoreAdapters = new string[] { };
+                if (_ignoreAdapters == null) _ignoreAdapters = new List<string>();
                 return _ignoreAdapters; }
         }
         
@@ -188,13 +192,13 @@ namespace WifiSitter
         #region eventhandlers
 
         private void NetworkChange_NetworkAvailabilityChanged(object sender, NetworkAvailabilityEventArgs e) {
-            WifiSitter.LogLine(ConsoleColor.Cyan, "Event: Network availability changed.");
+            LOG.Log(LogLevel.Info, "Event: Network availability changed.");
             NetworkAvailable = NetworkInterface.GetIsNetworkAvailable() && _nics.Any(x => x.IsConnected);
             _checkNet = true;
         }
 
         private void NetworkChange_NetworkAddressChanged(object sender, EventArgs e) {
-            WifiSitter.LogLine(ConsoleColor.Cyan, "Event: Network address changed.");
+            LOG.Log(LogLevel.Info, "Event: Network address changed.");
             NetworkAvailable = NetworkInterface.GetIsNetworkAvailable() && _nics.Any(x => x.IsConnected);
             _checkNet = true;
         }
