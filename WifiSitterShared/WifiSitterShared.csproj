@@ -99,10 +99,6 @@
     <Reference Include="Vanara.PInvoke.Kernel32, Version=2.3.11.0, Culture=neutral, PublicKeyToken=c37e4080322237fa, processorArchitecture=MSIL">
       <HintPath>..\packages\Vanara.PInvoke.Kernel32.2.3.11\lib\net45\Vanara.PInvoke.Kernel32.dll</HintPath>
     </Reference>
-    <Reference Include="Vanara.PInvoke.NetListMgr, Version=2.3.11.0, Culture=neutral, PublicKeyToken=c37e4080322237fa, processorArchitecture=MSIL">
-      <HintPath>..\packages\Vanara.PInvoke.NetListMgr.2.3.11\lib\net45\Vanara.PInvoke.NetListMgr.dll</HintPath>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </Reference>
     <Reference Include="Vanara.PInvoke.Ole, Version=2.3.11.0, Culture=neutral, PublicKeyToken=c37e4080322237fa, processorArchitecture=MSIL">
       <HintPath>..\packages\Vanara.PInvoke.Ole.2.3.11\lib\net45\Vanara.PInvoke.Ole.dll</HintPath>
     </Reference>
