@@ -45,8 +45,8 @@ namespace WifiSitter.Model
             IsConnected = nic.IsConnected;
             Name = nic.Name;
             Description = nic.Description;
-            Id = nic.Id;
-            InterfaceType = nic.Nic.NetworkInterfaceType.ToString();
+            Id = nic.Id.ToString();
+            InterfaceType = nic.InterfaceType.ToString();
         }
     }
 }

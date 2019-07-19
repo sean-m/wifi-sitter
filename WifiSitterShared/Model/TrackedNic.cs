@@ -6,11 +6,13 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 
+using WifiSitter;
 using WifiSitter.Helpers;
 
 using NLog;
 
 using static NativeWifi.Wlan;
+using static Vanara.PInvoke.IpHlpApi;
 
 namespace WifiSitter
 {
@@ -26,178 +28,137 @@ namespace WifiSitter
         private bool _isEnabled;
         private bool _isConnected;
         private NativeWifi.Wlan.WlanConnectionAttributes _lastConnection;
-        private NLog.Logger LOG = NLog.LogManager.GetCurrentClassLogger();
+        private Logger LOG = NLog.LogManager.GetCurrentClassLogger();
 
         #endregion  // fields
 
         #region constructor
 
-        public TrackedNic() {
+        public TrackedNic()
+        {
 
         }
 
-        public TrackedNic(NetworkInterface Nic) {
-            this._nic = Nic;
-            _isEnabled = false;
-        }
-
-        public TrackedNic(NetworkInterface Nic, bool IsEnabled) {
-            _nic = Nic;
-            _isEnabled = IsEnabled;
+        internal TrackedNic(IfRow Nic)
+        {
+            Luid = Nic.InterfaceLuid;
+            Name = Nic.Alias;
+            Description = Nic.Description;
+            Id = Nic.InterfaceGuid.ToString();
+            InterfaceType = (Nic.Type == IFTYPE.IF_TYPE_ETHERNET_CSMACD) ? NetworkInterfaceType.Ethernet
+                : (Nic.Type == IFTYPE.IF_TYPE_SOFTWARE_LOOPBACK) ? NetworkInterfaceType.Loopback
+                : (Nic.Type == IFTYPE.IF_TYPE_IEEE80211) ? NetworkInterfaceType.Wireless80211 : NetworkInterfaceType.Unknown;
+            IsEnabled = Nic.OperStatus == IF_OPER_STATUS.IfOperStatusUp;
+            IsConnected = Nic.MediaConnectState.HasFlag(NET_IF_MEDIA_CONNECT_STATE.MediaConnectStateConnected);
         }
 
         #endregion // constructor
 
         #region properties
 
-        public NetworkInterface Nic {
-            get { return _nic; }
-            set { _nic = value; }
-        }
 
-        public bool IsEnabled {
-            get { return _isEnabled; }
-            set { _isEnabled = value; }
-        }
+        public NET_LUID Luid { get; private set; }
 
+        public bool IsEnabled { get; set; }
 
-        public bool IsConnected {
-            get { return _isConnected; }
-            set { _isConnected = value; }
-        }
+        public bool IsConnected { get; set; } = false;
 
+        public bool IsConnectedToInternet { get; set; } = false;
 
-        public string Name {
-            get { return Nic.Name; }
-        }
+        public string Name { get; private set; }
 
+        public string Description { get; private set; }
 
-        public string Description {
-            get { return Nic.Description; }
-        }
+        public Guid Id { get; private set; }
 
+        public NetworkInterfaceType InterfaceType { get; private set; }
 
-        public string Id {
-            get { return Nic.Id; }
-        }
 
         #endregion // properties
 
         #region methods
 
         public async void CheckYourself()
-        {  
-            // We don't care about interfaces that are self assigned
-            if (!_nic.GetIPProperties().GetIPv4Properties().IsAutomaticPrivateAddressingActive
-                && IsEnabled)
-            {
-                LOG.Log(LogLevel.Info, $"Checking myself: {Name}");
-                
-                // If it's a wireless adapter get status with wclient
-                if (Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
-                {
-                    var wclient = new NativeWifi.WlanClient();
-                    var adapter = wclient.Interfaces.Where(x => Nic.Id.Contains(x.InterfaceGuid.ToString().ToUpper())).FirstOrDefault();
-                    if (adapter == null) return;
-                    if (adapter.InterfaceState == WlanInterfaceState.Connected)
-                    {
-                        IsConnected = true;
-                        _lastConnection = adapter.CurrentConnection;  // save for later
-                    }
-                    else
-                    {
-                        IsConnected = false;
-                    }
-                }
-                else
-                {
-                    IPAddress source = _nic.GetIPProperties().AnycastAddresses.FirstOrDefault()?.Address;
-                    var gways = _nic.GetIPProperties().GatewayAddresses;
+        {
+            //TODO make this work again
+            LOG.Log(LogLevel.Warn, $"Can't check myself {Name} : {Id}");
+            return;
 
-                    foreach (var ip in gways)
-                    {
-                        var destination = ip.Address;
-                        var pingResult = await Task.Run(() => { return IcmpPing.Send(source, destination); });
-                        if (pingResult.Status == IPStatus.Success)
-                        {   
-                            LOG.Log(LogLevel.Info, new string[] { "NIC: {0}  IP status: {1}", Nic.Name, pingResult.Status.ToString() });
-                            this.IsConnected = true;
-                        }
-                        else
-                        {
-                            LOG.Log(LogLevel.Warn, new string[] { "NIC: {0}  IP status: {1}", Nic.Name, pingResult.Status.ToString() });
-                            this.IsConnected = false;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // If you're using a self assigned IP, you're not as connected as you think you are.
-                this.IsConnected = false;
-            }
+            //// We don't care about interfaces that are self assigned
+            //if (!_nic.GetIPProperties().GetIPv4Properties().IsAutomaticPrivateAddressingActive
+            //    && IsEnabled)
+            //{
+            //    LOG.Log(LogLevel.Info, $"Checking myself: {Name}");
+
+            //    // If it's a wireless adapter get status with wclient
+            //    if (InterfaceType == NetworkInterfaceType.Wireless80211)
+            //    {
+            //        var wclient = new NativeWifi.WlanClient();
+            //        var adapter = wclient.Interfaces.Where(x => Id.Contains(x.InterfaceGuid.ToString().ToUpper())).FirstOrDefault();
+            //        if (adapter == null) return;
+            //        if (adapter.InterfaceState == WlanInterfaceState.Connected)
+            //        {
+            //            IsConnected = true;
+            //            _lastConnection = adapter.CurrentConnection;  // save for later
+            //        }
+            //        else
+            //        {
+            //            IsConnected = false;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        IPAddress source = _nic.GetIPProperties().AnycastAddresses.FirstOrDefault()?.Address;
+            //        var gways = _nic.GetIPProperties().GatewayAddresses;
+
+            //        foreach (var ip in gways)
+            //        {
+            //            var destination = ip.Address;
+            //            //TODO fix all this 
+            //            //var pingResult = await Task.Run(() => { return IcmpPing.Send(source, destination); });
+            //            //if (pingResult.Status == IPStatus.Success)
+            //            //{
+            //            //    WifiSitter.LogLine(ConsoleColor.Green, new string[] { "NIC: {0}  IP status: {1}", Nic.Name, pingResult.Status.ToString() });
+            //            //    this.IsConnected = true;
+            //            //}
+            //            //else
+            //            //{
+            //            //    WifiSitter.LogLine(ConsoleColor.Red, new string[] { "NIC: {0}  IP status: {1}", Nic.Name, pingResult.Status.ToString() });
+            //            //    this.IsConnected = false;
+            //            //}
+            //        }
+            //    }
+            //}
+            //else
+            //{
+            //    // If you're using a self assigned IP, you're not as connected as you think you are.
+            //    this.IsConnected = false;
+            //}
         }
 
-        public async void UpdateState(List<NetshInterface> NetshIfs) {
-            this.UpdateState(NetshIfs.Where(x => x.InterfaceName == Nic.Name).FirstOrDefault());
-        }
-
-        public async void UpdateState(NetshInterface NetshIf) {
-            if (NetshIf == null) return;
-
-            if (Nic.Name == NetshIf.InterfaceName) {
-                this._isEnabled = NetshIf.AdminState == "Enabled";
-                this._isConnected = NetshIf.State == "Connected";
-            }
-
-            //Double Check
-            if (IsConnected)
-            {
-                CheckYourself();
-            }
-        }
-
-        public bool Disable() {
+        public bool Disable()
+        {
             // Release IP first and update NIC inforamtion so OperationalState reflects this
+            throw new NotImplementedException("Disabling NIC not implemented!");
+            // TODO release IP without ipconfig subprocess
             this.ReleaseIp();
 
-            // Disable interface
-            int exitCode = EnableDisableInterface(false);
-
-            var netsh = GetNetshInterface();
-
-            if (netsh != null) {
-                this.UpdateState(netsh);
-            }
-            else {
-                this._isEnabled = false;
-                this._isConnected = false;
-            }
-
-            return !IsEnabled;
+            return false;
         }
 
-        public bool Enable() {
-            int exitCode = EnableDisableInterface(true);
+        public bool Enable()
+        {
+            throw new NotImplementedException("Disabling NIC not implemented!");
 
-            var netsh = GetNetshInterface();
-
-            if (netsh != null) {
-                this.UpdateState(netsh);
-            }
-            else {
-                this._isEnabled = false;
-                this._isConnected = false;
-            }
-
-            return IsEnabled;
+            return false;
         }
 
-        public void Disconnect() {
-            if (Nic?.NetworkInterfaceType != NetworkInterfaceType.Wireless80211) return;
+        public void Disconnect()
+        {
+            if (InterfaceType != NetworkInterfaceType.Wireless80211) return;
 
             var wclient = new NativeWifi.WlanClient();
-            var adapter = wclient.Interfaces.Where(x => Nic.Id.Contains(x.InterfaceGuid.ToString().ToUpper())).FirstOrDefault();
+            var adapter = wclient.Interfaces.Where(x => Id.ToString().Contains(x.InterfaceGuid.ToString().ToUpper())).FirstOrDefault();
             if (adapter == null) return;
 
             // Store connection info and disconnect
@@ -207,20 +168,22 @@ namespace WifiSitter
             adapter?.Disconnect();
         }
 
-        public void ConnectToLastSsid() {
-            if (Nic?.NetworkInterfaceType != NetworkInterfaceType.Wireless80211) return;  // Shouldn't happen but still..
+        public void ConnectToLastSsid()
+        {
+            if (InterfaceType != NetworkInterfaceType.Wireless80211) return;  // Shouldn't happen but still..
 
             if (!_lastConnection.Equals(default(WlanConnectionAttributes)))
             {
                 LOG.Log(LogLevel.Info, $"{Name}  reconnecting to: {_lastConnection.profileName}");
                 var wclient = new NativeWifi.WlanClient();
-                var adapter = wclient.Interfaces.Where(x => Nic.Id.Contains(x.InterfaceGuid.ToString().ToUpper())).FirstOrDefault();
+                var adapter = wclient.Interfaces.Where(x => Id.Equals(x.InterfaceGuid)).FirstOrDefault();
                 adapter.SetProfile(WlanProfileFlags.AllUser, adapter.GetProfileXml(_lastConnection.profileName), true);
                 adapter.ConnectSynchronously(WlanConnectionMode.Profile, Dot11BssType.Any, _lastConnection.profileName, 30);
             }
         }
 
-        private int EnableDisableInterface(bool Enable) {
+        private int EnableDisableInterface(bool Enable)
+        {
             string state = Enable ? "ENABLED" : "DISABLED";
 
             var proc = new System.Diagnostics.Process();
@@ -237,7 +200,8 @@ namespace WifiSitter
             return proc.ExitCode;
         }
 
-        private bool ReleaseIp() {
+        private bool ReleaseIp()
+        {
             //ipconfig /release "Ethernet"
 
             if (String.IsNullOrEmpty(this.Name)) { throw new ArgumentException("InterfaceName cannot be null or empty"); }
@@ -257,7 +221,8 @@ namespace WifiSitter
             return proc.ExitCode == 0;
         }
 
-        private NetshInterface GetNetshInterface() {
+        private NetshInterface GetNetshInterface()
+        {
             List<NetshInterface> _netsh;
             NetshInterface netsh = null;
             if ((_netsh = NetshHelper.GetInterfaces()) != null)

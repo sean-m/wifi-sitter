@@ -16,6 +16,7 @@ using WifiSitter.Helpers;
 using NLog;
 using NetMQ;
 using NetMQ.Sockets;
+using ConsoleTableExt;
 
 namespace WifiSitter
 {
@@ -134,78 +135,22 @@ namespace WifiSitter
 
 
             List<TrackedNic> nics;
-            if (CurrentAdapters == null) {
-                IEnumerable<string> whiteList;
-                if (netstate != null) {
-                    whiteList = netstate.IgnoreAdapters ?? new List<string>();
-                }
-                else {
-                    whiteList = new List<string>();
-                }
 
-                nics = NetworkState.QueryNetworkAdapters(whiteList); }
-            else { nics = CurrentAdapters; }
-
-            List<TrackedNic> nicsPost;
-            var netsh = NetshHelper.GetInterfaces();
-
-            List<NetshInterface> notInNetstate = new List<NetshInterface>();
-
-            // Only check disabled adapters we don't already know about
-            foreach (var n in netsh) {
-                if (!nics.Any(x => x.Name == n.InterfaceName)) {
-                    notInNetstate.Add(n);
-                }
+            IEnumerable<string> whiteList;
+            if (netstate != null) {
+                whiteList = netstate.IgnoreAdapters ?? new List<string>();
+            }
+            else {
+                whiteList = new List<string>();
             }
 
+            nics = netstate.QueryNetworkAdapters(whiteList); 
 
-            if (notInNetstate.Count > 0) {
-                if (!quiet) LOG.Log(LogLevel.Info, "Discovering disabled devices.");
-                var disabledInterfaces = notInNetstate.Where(x => x.AdminState == "Disabled")
-                                                      .Where(x => !nics.Any(y => y.Name == x.InterfaceName)) // Ignore nics we already know about
-                                                      .ToArray();
-                
-                // Turn on disabled interfaces
-                foreach (var nic in disabledInterfaces) {
-                    if (!netstate.IgnoreAdapters.Any(x => nic.InterfaceName.StartsWith(x)))
-                        NetshHelper.EnableInterface(nic.InterfaceName);
-                }
-
-                // Query for network interfaces again
-                nicsPost = NetworkState.QueryNetworkAdapters(netstate.IgnoreAdapters);
-
-                // Disable nics again
-                foreach (var nic in disabledInterfaces) {
-                    NetshHelper.DisableInterface(nic.InterfaceName);
-                }
-                
-                nics?.AddRange(nicsPost.Where(x => !nics.Any(y => y.Name == x.Name)));
-
-                // Update the state on SitterNic objects
-                foreach (var n in nics) {
-                    n.UpdateState(netsh?.Where(x => x.InterfaceName == n.Name).FirstOrDefault());
-                }
-            }
-
-            // Detected no disabled nics, so update accordingly.
-            foreach (var nic in nics) {
-                nic.UpdateState(netsh?.Where(x => x.InterfaceName == nic.Nic.Name).FirstOrDefault());
-            }
-
-            // Detect nics that are no longer available
-            if (netsh != null) {
-                var missingNics = nics.Where(x => !netsh.Any(y => y.InterfaceName == x.Name));
-                foreach (var n in missingNics) {
-                    nics.Where(x => x.Name == n.Name).ToList().ForEach(x => {
-                        x.IsConnected = false;
-                        x.IsEnabled = false;
-                    });
-                }
-            }
 
             return nics;
         }
 
+        static string[] header = new string[] { "Name", "Description", "Type", "Connected", "Enabled" };
         private void WorkerThreadFunc() {
 
             // TODO completely rip this out and redo the logic consume events on a queue
@@ -217,91 +162,94 @@ namespace WifiSitter
                     continue;
                 }
 
-                if (netstate.CheckNet) {
 
-                    netstate.ProcessingState = true;
+                //if (netstate.CheckNet)
+                //{
 
-                    netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
+                //    netstate.ProcessingState = true;
 
-                    if (netstate.NetworkAvailable
-                       && netstate.IsEthernetUp 
-                       && netstate.IsWirelessUp) { // Ethernet and wireless are both up, disconnect wireless
+                //    netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
 
-                        var connected_wifi = netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
-                                            .Where(x => x.IsConnected)
-                                            .ToArray();
+                //    if (netstate.NetworkAvailable
+                //       && netstate.IsEthernetUp
+                //       && netstate.IsWirelessUp)
+                //    { // Ethernet and wireless are both up, disconnect wireless
 
-                        if (connected_wifi != null) {
+                //        var connected_wifi = netstate.Nics.Where(x => x.InterfaceType == NetworkInterfaceType.Wireless80211)
+                //                            .Where(x => x.IsConnected)
+                //                            .ToArray();
 
-                            bool wait_after = false;  // If changes are made you kinda need to wait since this isn't a true event based system
+                //        if (connected_wifi != null)
+                //        {
 
-                            foreach (var adapter in connected_wifi) {
-                                LOG.Log(LogLevel.Warn, "Disconnect adaptor: {0}  {1}", adapter.Name, adapter.Description);
-                                adapter.Disconnect();
-                                wait_after = true;
-                            }
+                //            bool wait_after = false;  // If changes are made you kinda need to wait since this isn't a true event based system
 
-                            if (wait_after)
-                            {
-                                LOG.Log(LogLevel.Info, "Waiting 3 seconds for all this to shake out.");
-                                Thread.Sleep(3 * 1000);
-                            }
-                        }
-                    }
-                    else if (netstate.NetworkAvailable &&
-                        netstate.IsWirelessUp) 
-                    {
-                        // Network available and connected over wifi, this is fine so there's nothing to change
-                    }
-                    else if (!netstate.NetworkAvailable) { // Network unavailable, enable wifi adapters
+                //            foreach (var adapter in connected_wifi)
+                //            {
+                //                LOG.Log(LogLevel.Warn, "Disconnect adaptor: {0}  {1}", adapter.Name, adapter.Description);
+                //                //adapter.Disconnect();
+                //                wait_after = true;
+                //            }
 
-                        bool wait_after = false;  // If changes are made you kinda need to wait since this isn't a true event based system
+                //            if (wait_after)
+                //            {
+                //                LOG.Log(LogLevel.Info, "Waiting 3 seconds for all this to shake out.");
+                //                Thread.Sleep(3 * 1000);
+                //            }
+                //        }
+                //    }
+                //    else if (netstate.NetworkAvailable &&
+                //        netstate.IsWirelessUp)
+                //    {
+                //        // Network available and connected over wifi, this is fine so there's nothing to change
+                //    }
+                //    else if (!netstate.NetworkAvailable)
+                //    { // Network unavailable, enable wifi adapters
 
-                        // Re-enable disabled adapters
-                        foreach (var nic in netstate.Nics.Where(x => !x.IsEnabled
-                                                                 && x.Nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet
-                                                                 && x.Nic.NetworkInterfaceType != NetworkInterfaceType.Ethernet3Megabit
-                                                                 && x.Nic.NetworkInterfaceType != NetworkInterfaceType.FastEthernetT)) {
+                //        bool wait_after = false;  // If changes are made you kinda need to wait since this isn't a true event based system
 
-                            LOG.Log(LogLevel.Warn, "Enable adaptor: {0,18}  {1}", nic.Name, nic.Description);
+                //        // Re-enable disabled adapters
+                //        foreach (var nic in netstate.Nics.Where(x => !x.IsEnabled
+                //                                                 && x.InterfaceType != NetworkInterfaceType.Ethernet
+                //                                                 && x.InterfaceType != NetworkInterfaceType.Ethernet3Megabit
+                //                                                 && x.InterfaceType != NetworkInterfaceType.FastEthernetT))
+                //        {
 
-                            bool enableResult = nic.Enable();
-                            if (!enableResult) LOG.Log(LogLevel.Error, "Failed to enable NIC {0}", nic.Name);
-                        }
+                //            LOG.Log(LogLevel.Warn, "Enable adaptor: {0,18}  {1}", nic.Name, nic.Description);
 
-                        // Attempt to reconnect to last tracked SSID
-                        foreach (var nic in netstate.Nics.Where(x => x.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211))
-                        {
-                            nic.ConnectToLastSsid();
-                            wait_after = true;
-                        }
+                //            bool enableResult = nic.Enable();
+                //            if (!enableResult) LOG.Log(LogLevel.Error, "Failed to enable NIC {0}", nic.Name);
+                //        }
 
-                        if (wait_after)
-                        {
-                            LOG.Log(LogLevel.Info, "Waiting 3 seconds for all this to shake out.");
-                            Thread.Sleep(3 * 1000);
-                        }
-                    }
+                //        // Attempt to reconnect to last tracked SSID
+                //        foreach (var nic in netstate.Nics.Where(x => x.InterfaceType == NetworkInterfaceType.Wireless80211))
+                //        {
+                //            //nic.ConnectToLastSsid();
+                //            wait_after = true;
+                //        }
+
+                //        if (wait_after)
+                //        {
+                //            LOG.Log(LogLevel.Info, "Waiting 3 seconds for all this to shake out.");
+                //            Thread.Sleep(3 * 1000);
+                //        }
+                //    }
 
 
-                    // Show network availability
-                    var stat = netstate.NetworkAvailable ? "is" : "not";
-                    LOG.Log(stat == "is" ? LogLevel.Info : LogLevel.Warn, "Connection {0} available", stat);
+                //    // Show network availability
+                //    var stat = netstate.NetworkAvailable ? "is" : "not";
+                //    LOG.Log(stat == "is" ? LogLevel.Info : LogLevel.Warn, "Connection {0} available", stat);
 
-                    // List adapters
-                    Console.Write("\n");
-                    Console.WriteLine("{0,32} {1,48}  {2,16}  {3}  {4}\n", "Name", "Description", "Type", "Connected", "Enabled");
-                    foreach (var adapter in netstate.Nics) {
-                        Console.WriteLine("{0,32} {1,48}  {2,16}  {3,7}  {4,7}", adapter.Name,
-                                                                                 adapter.Description.Substring(0, Math.Min(adapter.Description.Length, 46)),
-                                                                                 adapter.Nic.NetworkInterfaceType,
-                                                                                 adapter.IsConnected,
-                                                                                 adapter.IsEnabled);
-                    }
-                    Console.WriteLine("\n");
+                //    // List adapters
+                //    Console.Write("\n");
 
-                    netstate.StateChecked();
-                }
+                //    var tableBuilder = ConsoleTableBuilder.From(netstate.Nics)
+                //        .WithFormat(ConsoleTableBuilderFormat.Alternative);
+                //    tableBuilder.ExportAndWriteLine();
+                    
+
+                //    netstate.StateChecked();
+                //}
 
                 Thread.Sleep(500);
             }
@@ -318,7 +266,7 @@ namespace WifiSitter
             foreach (var n in netstate.OriginalNicState) {
                 var id    = n[0];
                 var state = n[1];
-                TrackedNic now = netstate.Nics.Where(x => x.Id == id).FirstOrDefault();
+                TrackedNic now = netstate.Nics.Where(x => x.Id.ToString() == id).FirstOrDefault();
                 if (now != null) {
                     if (state.ToLower() != now.IsEnabled.ToString().ToLower()) {
                         if (state == true.ToString()) {
@@ -348,7 +296,7 @@ namespace WifiSitter
             List<Task> taskList = new List<Task>();
 
             foreach (var n in netstate.Nics) {
-                if (n.Nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211
+                if (n.InterfaceType == NetworkInterfaceType.Wireless80211
                     && !n.IsEnabled) {
                     var enableTask = new Task(() => { n.Enable(); });
                     enableTask.Start();
