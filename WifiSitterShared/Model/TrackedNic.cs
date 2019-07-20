@@ -40,7 +40,7 @@ namespace WifiSitter
         }
 
         internal TrackedNic(IfRow Nic)
-        {
+        {   
             Luid = Nic.InterfaceLuid;
             Name = Nic.Alias;
             Description = Nic.Description;
@@ -61,10 +61,6 @@ namespace WifiSitter
 
         public bool IsEnabled { get; set; }
 
-        public bool IsConnected { get; set; } = false;
-
-        public bool IsConnectedToInternet { get; set; } = false;
-
         public string Name { get; private set; }
 
         public string Description { get; private set; }
@@ -73,6 +69,11 @@ namespace WifiSitter
 
         public NetworkInterfaceType InterfaceType { get; private set; }
 
+        public ConnectionState ConnectionStatus { get; set; }
+
+        public bool IsConnected { get => ConnectionStatus.HasFlag(ConnectionState.Connected) || ConnectionStatus.HasFlag(ConnectionState.InternetConnected); }
+
+        public bool IsInternetConnected { get => ConnectionStatus.HasFlag(ConnectionState.InternetConnected); }
 
         #endregion // properties
 

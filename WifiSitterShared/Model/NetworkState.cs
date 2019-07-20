@@ -24,7 +24,7 @@ namespace WifiSitter
         private bool _checkNet;
         private bool _processingState;
         private List<string> _ignoreAdapters;  // List of Nic descriptions to ignore during normal operation
-        private List<string[]> _originalNicState = new List<string[]>();
+        private List<(Guid, bool)> _originalNicState = new List<(Guid, bool)>();
         private Timer _checkTimer;
         private static Logger LOG = LogManager.GetCurrentClassLogger();
         private NetworkListManager netManager = new NetworkListManager();
@@ -37,25 +37,23 @@ namespace WifiSitter
             Initialize();
         }
 
-        public NetworkState(string[] NicWhitelist) {
-            if (NicWhitelist == null)
-                NicWhitelist = new string[] { };
-            this.Nics = QueryNetworkAdapters(NicWhitelist);
+        public NetworkState(IEnumerable<string> NicWhitelist) {
+
+            _ignoreAdapters = NicWhitelist.ToList() ?? new List<string>();
+            this.Nics = QueryNetworkAdapters();
 
             // Loop through nics and add id:state to _originalNicState list
             Nics.Where(x => !NicWhitelist.Any(y => x.Description.StartsWith(y))).ToList()
-                .ForEach(x => _originalNicState.Add(new string[] { x.Id.ToString(), x.IsEnabled.ToString() }));
-
-            _ignoreAdapters = NicWhitelist.ToList();
+                .ForEach(x => _originalNicState.Add( (x.Id, x.IsEnabled) ));
 
             Initialize();
         }
 
-        public NetworkState(List<TrackedNic> Nics, string[] NicWhitelist) {
+        public NetworkState(List<TrackedNic> Nics, IEnumerable<string> NicWhitelist) {
             this.Nics = Nics;
 
             // Loop through nics and add id:state to _originalNicState list
-            Nics.ForEach(x => _originalNicState.Add(new string[] { x.Id.ToString(), x.IsEnabled.ToString() }));
+            Nics.ForEach(x => _originalNicState.Add( (x.Id, x.IsEnabled) ));
 
             _ignoreAdapters = NicWhitelist.ToList();
             Initialize();
@@ -113,9 +111,13 @@ namespace WifiSitter
             this.CheckNet = true;
         }
 
+        /// <summary>
+        /// Update internal Nic list.
+        /// </summary>
+        /// <param name="Nics"></param>
         public void UpdateNics(List<TrackedNic> Nics) {
             foreach (var n in Nics) {
-                if (!_originalNicState.Any(x => Guid.Parse(x[0]) == n.Id)) _originalNicState.Add(new string[] { n.Id.ToString(), n.IsEnabled.ToString() });
+                if (!_originalNicState.Any(x => x.Item1 == n.Id)) _originalNicState.Add( (n.Id, n.IsEnabled) );
             }
 
             this.Nics = Nics;
@@ -126,9 +128,39 @@ namespace WifiSitter
             _checkNet = true;
         }
 
-        public List<TrackedNic> QueryNetworkAdapters(IEnumerable<string> WhiteList) {
+        /// <summary>
+        /// Query NetworkListManager for connection status for specified adapter.
+        /// </summary>
+        /// <param name="AdapterId"></param>
+        /// <returns></returns>
+        public bool QueryNetworkAdapter(Guid AdapterId)
+        {
+            var tnic = Nics.Where(x => x.Id == AdapterId).FirstOrDefault();
+            if (tnic == null) return false;
+
+            try
+            {
+                var connection = netManager.GetNetworkConnection(AdapterId);
+                if (connection == null)
+                {
+                    tnic.ConnectionStatus = ConnectionState.Unknown;
+                }
+                else
+                {
+                    if (connection.IsConnected) tnic.ConnectionStatus = tnic.ConnectionStatus | ConnectionState.Connected;
+                    if (connection.IsConnectedToInternet) tnic.ConnectionStatus = tnic.ConnectionStatus | ConnectionState.InternetConnected;
+                }
+                return true;
+            }
+            catch (Exception e)
+            {
+
+            }
+            return false;
+        }
+
+        public List<TrackedNic> QueryNetworkAdapters() {
             List<TrackedNic> result = new List<TrackedNic>();
-            if (WhiteList == null) WhiteList = new List<string>();
 
             var nicInfo = new Dictionary<string, IfRow>();
             try
@@ -137,7 +169,7 @@ namespace WifiSitter
 
                 foreach (var n in nicInfo.Values)
                 {
-                    if (WhiteList.Any(y => n.Description.StartsWith(y))) { continue; }
+                    if (_ignoreAdapters?.Any(y => n.Description.StartsWith(y)) ?? false) { continue; }
                     result.Add(new TrackedNic(n));
                 }
             }
@@ -145,8 +177,6 @@ namespace WifiSitter
             {
                 LOG.Log(LogLevel.Error, e);
             }
-            
-            foreach (var i in result) i.CheckYourself();
 
             return result;
         }
@@ -194,8 +224,7 @@ namespace WifiSitter
                     var row = new IfRow();
                     CopyMibPropertiesTo(f, row);
                     row.InterfaceLuid = f.InterfaceLuid.ToString();
-                    row.IsConnected = false;
-                    row.IsConnectedToInternet = false;
+                    row.ConnectionStatus = ConnectionState.Unknown;
 
                     foreach (INetworkConnection n in nets)
                     {
@@ -203,8 +232,8 @@ namespace WifiSitter
                         {
                             if (row.InterfaceGuid == n.GetAdapterId())
                             {
-                                row.IsConnected = n.IsConnected;
-                                row.IsConnectedToInternet = n.IsConnectedToInternet;
+                                if (n.IsConnected) row.ConnectionStatus = row.ConnectionStatus | ConnectionState.Connected;
+                                if (n.IsConnectedToInternet) row.ConnectionStatus = row.ConnectionStatus | ConnectionState.InternetConnected;
                             }
                         }
 
@@ -225,21 +254,25 @@ namespace WifiSitter
         #region properties
 
         // * Note, only applies to adapters that aren't ignored by whitelist
-        public bool IsEthernetUp {
+        public bool IsEthernetInternetConnected {
             get {
                 if (Nics == null) return false;
-                return Nics.Any(x => x.InterfaceType == NetworkInterfaceType.Ethernet && x.IsConnected && (bool)!_ignoreAdapters?.Any(y => x.Description.StartsWith(y)));
+                return Nics.Where(x => (bool)!_ignoreAdapters?.Any(y => x.Description.StartsWith(y)))
+                    .Any(nic => nic.InterfaceType == NetworkInterfaceType.Ethernet && nic.IsConnectedToInternet);
             }
         }
 
         // * Note, only applies to adapters that aren't ignored by whitelist
-        public bool IsWirelessUp {
+        public bool IsWirelessInternetConnected {
             get {
                 if (Nics == null) return false;
-                return Nics.Any(x => x.InterfaceType == NetworkInterfaceType.Wireless80211 
-                    && x.IsConnected 
-                    && (bool)!_ignoreAdapters?.Any(y => x.Description.StartsWith(y)));
+                return Nics.Where(x => (bool)!_ignoreAdapters?.Any(y => x.Description.StartsWith(y)))
+                    .Any(nic => nic.InterfaceType == NetworkInterfaceType.Wireless80211 && nic.IsConnectedToInternet);
             }
+        }
+
+        public bool IsInternetConnected {
+            get => Nics.Where(x => (bool)!_ignoreAdapters?.Any(y => x.Description.StartsWith(y))).Any(nic => nic.IsConnectedToInternet);
         }
 
         public List<string> IgnoreAdapters {
@@ -256,7 +289,7 @@ namespace WifiSitter
             private set { _nics = value; }
         }
 
-        public List<string[]> OriginalNicState {
+        public List<(Guid, bool)> OriginalNicState {
             get { return _originalNicState; }
         }
 
@@ -289,10 +322,12 @@ namespace WifiSitter
         private void NetworkState_NetworkStateChanged(object sender, WSNetworkChangeEventArgs e)
         {
             LOG.Log(LogLevel.Info, $"Network change detected, ID {e.Id}  { Enum.GetName(e.ChangeType.GetType(), e.ChangeType) }");
+            
+            // Pend interface query to update information
         }
 
 
-        /*=====   These all feed events to the handler above, bound in the Initialize method.       =====*/
+        /*=====   These all feed events to the handler above, bound in the Initialize method.   =====*/
         private void Netevent_NetworkAdded(Guid networkId) => OnNetworkChanged(new WSNetworkChangeEventArgs(networkId, NetworkChanges.Added));
         private void Netevent_NetworkDeleted(Guid networkId) => OnNetworkChanged(new WSNetworkChangeEventArgs(networkId, NetworkChanges.Deleted));
         private void Netevent_NetworkPropertyChanged(Guid networkId, NLM_NETWORK_PROPERTY_CHANGE Flags) => OnNetworkChanged(new WSNetworkChangeEventArgs(networkId, NetworkChanges.PropertyChanged));
@@ -323,6 +358,13 @@ namespace WifiSitter
         ConnectivityChanged
     }
 
+    public enum ConnectionState
+    {
+        Unknown = 0,
+        Connected = 1,
+        InternetConnected = 2,
+    }
+
     internal class IfRow
     {
         public dynamic InterfaceLuid { get; set; }
@@ -341,7 +383,10 @@ namespace WifiSitter
         public NET_IF_MEDIA_CONNECT_STATE MediaConnectState { get; set; }
         public Guid NetworkGuid { get; set; }
         public NET_IF_CONNECTION_TYPE ConnectionType { get; set; }
-        public bool IsConnected { get; set; }
-        public bool IsConnectedToInternet { get; set; }
+        public ConnectionState ConnectionStatus { get; set; } = 0;
+
+        public bool IsConnected { get => ConnectionStatus.HasFlag(ConnectionState.Connected) || ConnectionStatus.HasFlag(ConnectionState.InternetConnected); }
+
+        public bool IsInternetConnected { get => ConnectionStatus.HasFlag(ConnectionState.InternetConnected); }
     }
 }

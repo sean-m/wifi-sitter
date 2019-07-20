@@ -71,7 +71,7 @@ namespace WifiSitter
             // That method will not show disabled interfaces
             var _ignoreNics = ReadNicWhitelist();
             if (_ignoreNics.Count() < 1) {
-                LOG.Log(LogLevel.Info, "No network adapter whitelist configured.");
+                LOG.Log(LogLevel.Warn, "No network adapter whitelist configured.");
             }
             netstate = new NetworkState();
             netstate.UpdateWhitelist(_ignoreNics);
@@ -125,29 +125,6 @@ namespace WifiSitter
             }
 
             return results;
-        }
-
-        public static List<TrackedNic> DiscoverAllNetworkDevices(List<TrackedNic> CurrentAdapters=null, bool quiet=false) {
-
-            // TODO completely rip this out and redo the logic consume events on a queue
-
-            if (!quiet) LOG.Log(LogLevel.Info, "Discovering all devices.");
-
-
-            List<TrackedNic> nics;
-
-            IEnumerable<string> whiteList;
-            if (netstate != null) {
-                whiteList = netstate.IgnoreAdapters ?? new List<string>();
-            }
-            else {
-                whiteList = new List<string>();
-            }
-
-            nics = netstate.QueryNetworkAdapters(whiteList); 
-
-
-            return nics;
         }
 
         static string[] header = new string[] { "Name", "Description", "Type", "Connected", "Enabled" };
@@ -264,12 +241,12 @@ namespace WifiSitter
 
             var taskList = new List<Task>();
             foreach (var n in netstate.OriginalNicState) {
-                var id    = n[0];
-                var state = n[1];
-                TrackedNic now = netstate.Nics.Where(x => x.Id.ToString() == id).FirstOrDefault();
+                var id    = n.Item1;
+                var ur_state = n.Item2;
+                TrackedNic now = netstate.Nics.Where(x => x.Id == id).FirstOrDefault();
                 if (now != null) {
-                    if (state.ToLower() != now.IsEnabled.ToString().ToLower()) {
-                        if (state == true.ToString()) {
+                    if (ur_state != now.IsEnabled) {
+                        if (ur_state) {
                             LOG.Log(LogLevel.Info, "Restoring adapter state, enabling adapter: {0} - {1}", now.Name, now.Description);
                             var enableTask = new Task(() => { now.Enable(); });
                             enableTask.Start();
@@ -343,7 +320,7 @@ namespace WifiSitter
                             case "get_netstate":
                                 LOG.Log(LogLevel.Debug, "Sending netstate to: {0}", clientAddress.ConvertToString());
                                 if (_paused && netstate.CheckNet) {
-                                    netstate.UpdateNics(DiscoverAllNetworkDevices(netstate.Nics));
+                                    netstate.QueryNetworkAdapters();
                                     netstate.StateChecked();
                                 }
                                 // form response
