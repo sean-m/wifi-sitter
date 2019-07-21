@@ -20,9 +20,10 @@ namespace WifiSitter.Model
         public SimpleNetworkState() { }
 
         public SimpleNetworkState(NetworkState netstate) {
+            // TODO communicate clearer connected information, too simplified here
             NetworkAvailable = netstate.NetworkAvailable;
             ProcessingState = netstate.ProcessingState;
-            EthernetUp = netstate.IsEthernetUp;
+            EthernetUp = netstate.IsInternetConnected;
             CheckNet = netstate.CheckNet;
             Nics = netstate.Nics.Select(x => new SimpleNic(x)).ToList();
             IgnoreAdapters = netstate.IgnoreAdapters.ToList();
