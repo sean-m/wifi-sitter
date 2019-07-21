@@ -226,10 +226,7 @@ namespace WifiSitter
                         switch (_msg.Request) {
                             case "get_netstate":
                                 LOG.Log(LogLevel.Debug, "Sending netstate to: {0}", clientAddress.ConvertToString());
-                                if (_paused && netstate.CheckNet) {
-                                    netstate.QueryNetworkAdapters();
-                                    netstate.StateChecked();
-                                }
+                                
                                 // form response
                                 response = new WifiSitterIpcMessage("give_netstate",
                                                                     server.Options.Identity.ToString(),

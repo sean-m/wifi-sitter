@@ -151,27 +151,8 @@ namespace WifiSitter
                     {
                         LOG.Log(LogLevel.Info, "We can get to the internet, nothing to see here.");
                     }
-                    
                 });
-
-
-            //Nics = QueryNetworkAdapters();
-
-            // TODO find a better way to do this
-            // Check network state every 10 seconds, fixing issue where device is unplugged while laptop is asleep
-            //_checkTimer = new Timer();
-            //_checkTimer.AutoReset = true;
-            //_checkTimer.Interval = 10 * 1000;
-            //_checkTimer.Elapsed += async (obj, snd) => {
-            //    if (!NetworkInterface.GetIsNetworkAvailable())
-            //    {
-            //        _nics.ForEach(x => x.CheckYourself());
-            //        await Task.Delay(1000);
-            //    }
-            //};
-            //_checkTimer.Start();
         }
-
 
         ~NetworkState() {
             netChangeObservable.Dispose();
@@ -221,31 +202,31 @@ namespace WifiSitter
         /// <returns></returns>
         public bool QueryNetworkAdapter(Guid AdapterId)
         {
-            var tnic = Nics.Where(x => x.Id == AdapterId).FirstOrDefault();
-            if (tnic == null) return false;
+            var nic = Nics.Where(x => x.Id == AdapterId).FirstOrDefault();
+            if (nic == null) return false;
 
             try
             {
                 var connection = netManager.GetNetworkConnection(AdapterId);
                 if (connection == null)
                 {
-                    tnic.ConnectionStatus = ConnectionState.Unknown;
+                    nic.ConnectionStatus = ConnectionState.Unknown;
                 }
                 else
                 {
-                    if (connection.IsConnected) tnic.ConnectionStatus = tnic.ConnectionStatus | ConnectionState.Connected;
-                    if (connection.IsConnectedToInternet) tnic.ConnectionStatus = tnic.ConnectionStatus | ConnectionState.InternetConnected;
+                    if (connection.IsConnected) nic.ConnectionStatus = nic.ConnectionStatus | ConnectionState.Connected;
+                    if (connection.IsConnectedToInternet) nic.ConnectionStatus = nic.ConnectionStatus | ConnectionState.InternetConnected;
                 }
                 return true;
             }
             catch (Exception e)
             {
-
+                LOG.Log(LogLevel.Error, e);
             }
             return false;
         }
 
-        public List<TrackedNic> QueryNetworkAdapters() {
+        private List<TrackedNic> QueryNetworkAdapters() {
             List<TrackedNic> result = new List<TrackedNic>();
 
             var nicInfo = new Dictionary<string, IfRow>();
