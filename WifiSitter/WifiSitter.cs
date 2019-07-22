@@ -149,28 +149,40 @@ namespace WifiSitter
         }
 
         /// <summary>
-        /// Main application loop
+        /// Main application loop of sorts.
         /// </summary>
         private void WorkerThreadFunc() {
 
-            // TODO completely rip this out and redo the logic consume events on a queue
+            var reccentlyModifiedInterfaces = new List<(Guid, DateTime)>();
 
-            netstate.OnNetworkChanged(new WSNetworkChangeEventArgs(Guid.Empty, NetworkChanges.ConnectivityChanged));
-
-            // TODO refactor all of this into main loop in WifiSitter.cs
             netChangeObservable = Observable.FromEventPattern<WSNetworkChangeEventArgs>(netstate, nameof(NetworkState.NetworkStateChanged))
+                .Delay(x => Observable.Timer(TimeSpan.FromMilliseconds(x.EventArgs.DeferInterval)))
                 .Select(x => { lock (netstate.eventLock) { netstate.reccentEvents.Add(x.EventArgs); } return x; })
-                .Throttle(TimeSpan.FromSeconds(4))
+                .Throttle(TimeSpan.FromSeconds(2))
                 .Subscribe(
                 (_) =>
                 {
+                    // TODO defer checking interfaces that have just been modified for 5 seconds
+
                     LOG.Log(LogLevel.Info, "Throttle started");
                     List<WSNetworkChangeEventArgs> _events;
                     lock (netstate.eventLock)
                     {
                         _events = netstate.reccentEvents;
                         netstate.reccentEvents = new List<WSNetworkChangeEventArgs>();
+
+                        // Only grab events that were initiated by interfaces not modifed in the last 4 seconds.
+                        // When actions are taken on an interface they tend to the event queue so we ignore those
+                        // here but a deffered event is fired when the modifying action was taken so we
+                        // handle deferred events as well.
+                        var _reccentlyModifiedInterfaces = reccentlyModifiedInterfaces.Where(x => x.Item2 > DateTime.Now.AddSeconds(-5));
+                        _events = _events.Where(x => !_reccentlyModifiedInterfaces.Where(z => z.Item2 > DateTime.Now.AddSeconds(-5)).Any(y => y.Item1 == x.Id)
+                            || x.ChangeType == NetworkChanges.DeferredEvent).ToList();
+
+                        reccentlyModifiedInterfaces = _reccentlyModifiedInterfaces.ToList();
                     }
+
+                    if (_events.Count < 1) return;
 
                     foreach (var e in _events)
                     {
@@ -183,6 +195,7 @@ namespace WifiSitter
                         {
                             var matching_nic = netstate.Nics.Where(n => n.Id == _nic.Id).FirstOrDefault();
 
+                            // No previous interface identified, skip it
                             if (matching_nic == null) return _nic;
 
                             // TODO Refactor this when we start using preferred network lists
@@ -247,6 +260,8 @@ namespace WifiSitter
                             }
 
                             netstate.ConnectToLastSsid(n);
+                            reccentlyModifiedInterfaces.Add((n.Id, DateTime.Now));
+                            netstate.OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 6000 });
                         }
                     }
                     else
@@ -254,6 +269,14 @@ namespace WifiSitter
                         LOG.Info("We can get to the internet, nothing to see here.");
                     }
                 });
+
+
+            // Defer network event to invoke initial status check
+            netstate.OnNetworkChanged(new WSNetworkChangeEventArgs() {
+                Id = Guid.Empty,
+                ChangeType = NetworkChanges.DeferredEvent,
+                DeferInterval = 2000
+            });
 
             _shutdownEvent.WaitOne();
             LOG.Debug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} returning.");
