@@ -183,6 +183,8 @@ namespace WifiSitter
                         {
                             var matching_nic = netstate.Nics.Where(n => n.Id == _nic.Id).FirstOrDefault();
 
+                            if (matching_nic == null) return _nic;
+
                             // TODO Refactor this when we start using preferred network lists
                             if (!(matching_nic.LastWirelessConnection.Equals(default(WlanConnectionAttributes)) && _nic.Equals(default(WlanConnectionAttributes))))
                             {
@@ -459,6 +461,12 @@ namespace WifiSitter
                     sitterConfigKey.SetValue("1", "VirtualBox Host", RegistryValueKind.String);
                     sitterConfigKey.SetValue("2", "VMware Network Adapter", RegistryValueKind.String);
                     sitterConfigKey.SetValue("3", "Hyper-V Virtual", RegistryValueKind.String);
+                    sitterConfigKey.SetValue("4", "Microsoft Kernel", RegistryValueKind.String);
+                    sitterConfigKey.SetValue("5", "Bluetooth Device", RegistryValueKind.String);
+                    sitterConfigKey.SetValue("6", "Microsoft Teredo", RegistryValueKind.String);
+                    sitterConfigKey.SetValue("7", "Microsoft IP-HTTPS", RegistryValueKind.String);
+                    sitterConfigKey.SetValue("8", "Microsoft 6to4", RegistryValueKind.String);
+                    sitterConfigKey.SetValue("9", "WAN Miniport", RegistryValueKind.String);
                 }
             }
             catch (Exception ex) {
