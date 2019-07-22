@@ -393,11 +393,25 @@ namespace WifiSitter
 
     public class WSNetworkChangeEventArgs : EventArgs
     {
+        /// <summary>
+        /// Guid Id where event originated.
+        /// </summary>
         public Guid Id { get; set; }
 
+        /// <summary>
+        /// Invoking change time.
+        /// </summary>
         public NetworkChanges ChangeType { get; set; }
 
+        /// <summary>
+        /// Time the event was fired.
+        /// </summary>
         public DateTime EventTime { get; set; } = DateTime.Now;
+
+        /// <summary>
+        /// How long from EventTime to wait before handling this event
+        /// </summary>
+        public int DeferInterval { get; set; } = 0;
 
         public WSNetworkChangeEventArgs() { }
 
