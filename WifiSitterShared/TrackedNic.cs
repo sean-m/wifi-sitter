@@ -25,7 +25,6 @@ namespace WifiSitterShared
         #region fields
 
         private Logger LOG = LogManager.GetCurrentClassLogger();
-        private WlanConnectionAttributes _lastConnectionAttributes;
 
         #endregion  // fields
 
@@ -76,6 +75,8 @@ namespace WifiSitterShared
         public bool IsInternetConnected { get => ConnectionStatus.HasFlag(ConnectionState.InternetConnected); }
 
         public WlanConnectionAttributes LastWirelessConnection { get; set; }
+
+        public DateTime LastReconnectAttempt { get; set; } = default(DateTime);
 
         #endregion // properties
     }

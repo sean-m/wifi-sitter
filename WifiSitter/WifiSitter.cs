@@ -18,6 +18,8 @@ using NetMQ;
 using NetMQ.Sockets;
 using ConsoleTableExt;
 using WifiSitterShared;
+using System.Reactive.Linq;
+using static NativeWifi.Wlan;
 
 namespace WifiSitter
 {
@@ -36,6 +38,7 @@ namespace WifiSitter
         private static string _myChannel = String.Format("{0}-{1}", Process.GetCurrentProcess().Id, Process.GetCurrentProcess().ProcessName);
         private static Object _consoleLock = new Object();
         private static Logger LOG = LogManager.GetCurrentClassLogger();
+        private IDisposable netChangeObservable;
 
         #endregion // fields
 
@@ -92,6 +95,11 @@ namespace WifiSitter
         }
 
 
+        ~WifiSitter()
+        {
+            netChangeObservable?.Dispose();
+        }
+
         #endregion // constructor
 
 
@@ -147,19 +155,108 @@ namespace WifiSitter
 
             // TODO completely rip this out and redo the logic consume events on a queue
 
-            Thread.Sleep(2000);
             netstate.OnNetworkChanged(new WSNetworkChangeEventArgs(Guid.Empty, NetworkChanges.ConnectivityChanged));
 
-            while (!_shutdownEvent.WaitOne(0)) {
+            // TODO refactor all of this into main loop in WifiSitter.cs
+            netChangeObservable = Observable.FromEventPattern<WSNetworkChangeEventArgs>(netstate, nameof(NetworkState.NetworkStateChanged))
+                .Select(x => { lock (netstate.eventLock) { netstate.reccentEvents.Add(x.EventArgs); } return x; })
+                .Throttle(TimeSpan.FromSeconds(4))
+                .Subscribe(
+                (_) =>
+                {
+                    LOG.Log(LogLevel.Info, "Throttle started");
+                    List<WSNetworkChangeEventArgs> _events;
+                    lock (netstate.eventLock)
+                    {
+                        _events = netstate.reccentEvents;
+                        netstate.reccentEvents = new List<WSNetworkChangeEventArgs>();
+                    }
 
-                if (_paused) {
-                    Thread.Sleep(1000);
-                    continue;
-                }
+                    foreach (var e in _events)
+                    {
+                        LOG.Log(LogLevel.Info, $">> {e.EventTime.Ticks}  {e.Id}  {e.ChangeType.ToString()} ");
+                    }
 
-                Thread.Sleep(500);
-            }
+                    // Update connection status and wlan profile info
+                    var _nic_list = netstate.QueryNetworkAdapters().Select(
+                        _nic =>
+                        {
+                            var matching_nic = netstate.Nics.Where(n => n.Id == _nic.Id).FirstOrDefault();
+
+                            // TODO Refactor this when we start using preferred network lists
+                            if (!(matching_nic.LastWirelessConnection.Equals(default(WlanConnectionAttributes)) && _nic.Equals(default(WlanConnectionAttributes))))
+                            {
+                                _nic.LastWirelessConnection = matching_nic.LastWirelessConnection;
+                            }
+                            else if (!(_nic.Equals(default(WlanConnectionAttributes))))
+                            {
+                                _nic.LastWirelessConnection = matching_nic.LastWirelessConnection;
+                            }
+
+                            _nic.LastReconnectAttempt = matching_nic.LastReconnectAttempt;
+                            return _nic;
+                        })
+                    .ToList();
+
+                    netstate.Nics = _nic_list;
+
+                    var table = ConsoleTableBuilder
+                       .From(netstate.ManagedNics)
+                       .WithFormat(ConsoleTableBuilderFormat.Default)
+                       .Export();
+
+                    LOG.Log(LogLevel.Debug, $"\n{table.ToString()}");
+
+                    // TODO Track when actions were last taken to avoid nic flapping
+                    if (netstate.IsEthernetInternetConnected && netstate.IsWirelessInternetConnected)
+                    {
+                        LOG.Log(LogLevel.Warn, "Both Wired and Wireless connections are internet routable, assume proper dual homing, kick wireless.");
+                        var wnics = netstate.ManagedNics
+                            .Where(x => x.InterfaceType == NetworkInterfaceType.Wireless80211 && x.IsInternetConnected);
+
+                        foreach (var n in wnics)
+                        {
+                            try
+                            {
+                                LOG.Log(LogLevel.Info, $"Releasing IP on adapter: {n.Id}");
+                                netstate.ReleaseIp(n);
+                                netstate.WlanDisconnect(n);
+                            }
+                            catch (Exception ex)
+                            {
+                                LOG.Log(LogLevel.Error, ex);
+                            }
+                        }
+                    }
+                    else if (!netstate.IsInternetConnected)
+                    {
+                        LOG.Log(LogLevel.Warn, "No internet connection available, light 'em up!");
+                        var wnics = netstate.ManagedNics
+                            .Where(x => x.InterfaceType == NetworkInterfaceType.Wireless80211 && (!x.IsConnected));
+
+                        foreach (var n in wnics)
+                        {
+                            // Skip interface if a re-connect was attempted reccently
+                            if (n.LastReconnectAttempt > DateTime.Now.AddSeconds(-30))
+                            {
+                                // TODO need method for deferring actions/events
+                                LOG.Debug($"Attempted reconnect on that interface {n.Id} < 30 seconds ago, skipping.");
+                                continue;
+                            }
+
+                            netstate.ConnectToLastSsid(n);
+                        }
+                    }
+                    else
+                    {
+                        LOG.Info("We can get to the internet, nothing to see here.");
+                    }
+                });
+
+            _shutdownEvent.WaitOne();
+            LOG.Debug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} returning.");
         }
+
 
         /// <summary>
         /// IPC handling loop
@@ -268,6 +365,7 @@ namespace WifiSitter
                     }
                 }
             }
+            LOG.Debug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} returning.");
         }
 
         #endregion // methods
@@ -295,7 +393,6 @@ namespace WifiSitter
                             "Error in main main worker:\n{0}", 
                             String.Join("\n", worker?.Exception?.InnerExceptions?.Select(
                                 x => String.Format("{0} : {1}", x.TargetSite, x.Message))) ?? "Cannot get exception.");
-                        _shutdownEvent.Set();
                         Stop();
                     }
                 }, syncContext);
@@ -327,15 +424,13 @@ namespace WifiSitter
             catch (Exception e) {
                 LOG.Log(LogLevel.Error, e);
             }
+            LOG.Debug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} returning.");
         }
 
         protected override void OnStartCommandLine() {
-            Console.WriteLine("Service is running...  Hit CTRL+C to break.");
-            bool run = true;
-            Console.CancelKeyPress += (o, e) => { run = false; };
-            while (run) {
-                if ((bool)_shutdownEvent?.WaitOne(10)) { run = false; }
-            };
+            Console.WriteLine("Service is running...  Press ENTER to quit.");
+            Console.ReadLine();
+            LOG.Debug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} returning.");
         }
 
         protected override void OnStopImpl() {

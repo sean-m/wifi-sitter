@@ -38,7 +38,8 @@ namespace WifiSitterShared
         Added,
         Deleted,
         PropertyChanged,
-        ConnectivityChanged
+        ConnectivityChanged,
+        DeferredEvent,
     }
 
     public enum ConnectionState

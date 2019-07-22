@@ -27,17 +27,16 @@ namespace WifiSitter
     public class NetworkState {
         #region fields
 
-        private List<TrackedNic> _nics;
         private bool _checkNet;
-        private bool _processingState;
-        private List<string> _ignoreAdapters;  // List of Nic descriptions to ignore during normal operation
-        private List<(Guid, bool)> _originalNicState = new List<(Guid, bool)>();
         private Timer _checkTimer;
+        private bool _processingState;
+        private List<TrackedNic> _nics;
+        private List<string> _ignoreAdapters;  // List of Nic descriptions to ignore during normal operation
         private static Logger LOG = LogManager.GetCurrentClassLogger();
         private NetworkListManager netManager = new NetworkListManager();
-        private IDisposable netChangeObservable;
-        private List<WSNetworkChangeEventArgs> reccentEvents = new List<WSNetworkChangeEventArgs>();
-        private object eventLock = new object();
+        private List<(Guid, bool)> _originalNicState = new List<(Guid, bool)>();
+        internal List<WSNetworkChangeEventArgs> reccentEvents = new List<WSNetworkChangeEventArgs>();
+        internal object eventLock = new object();
 
         #endregion // fields
 
@@ -71,96 +70,9 @@ namespace WifiSitter
             netManager.NetworkPropertyChanged += Netevent_NetworkPropertyChanged;
             netManager.NetworkConnectivityChanged += Netevent_NetworkConnectivityChanged;
 
-            // TODO refactor all of this into main loop in WifiSitter.cs
-            netChangeObservable = Observable.FromEventPattern<WSNetworkChangeEventArgs>(this, nameof(NetworkStateChanged))
-                .Select(x => { lock (eventLock) { reccentEvents.Add(x.EventArgs); } return x; })
-                .Throttle(TimeSpan.FromSeconds(4))
-                .Subscribe(
-                (_) =>
-                {
-                LOG.Log(LogLevel.Info, "Throttle started");
-                List<WSNetworkChangeEventArgs> _events;
-                lock (eventLock)
-                {
-                    _events = reccentEvents;
-                    reccentEvents = new List<WSNetworkChangeEventArgs>();
-                }
-
-                foreach (var e in _events)
-                {
-                    LOG.Log(LogLevel.Info, $">> {e.EventTime.Ticks}  {e.Id}  {e.ChangeType.ToString()} ");
-                }
-
-                    // Update connection status and wlan profile info
-                    var _nic_list = QueryNetworkAdapters().Select(
-                        _nic =>
-                        {
-                            var matching_nic = Nics.Where(n => n.Id == _nic.Id).FirstOrDefault();
-                            if (!(matching_nic.LastWirelessConnection.Equals(default(WlanConnectionAttributes)) && _nic.Equals(default(WlanConnectionAttributes)))) {
-                                _nic.LastWirelessConnection = matching_nic.LastWirelessConnection;
-                            }
-                            else if (!(_nic.Equals(default(WlanConnectionAttributes))))
-                            {
-                                _nic.LastWirelessConnection = matching_nic.LastWirelessConnection;
-                            }
-                            return _nic;
-                        })
-                    .ToList();
-
-                    Nics = _nic_list;
-
-                    var table = ConsoleTableBuilder
-                       .From(Nics.Where(x => !_ignoreAdapters.Any(y => x.Description.StartsWith(y))).ToList())
-                       .WithFormat(ConsoleTableBuilderFormat.Default)
-                       .Export();
-
-                    LOG.Log(LogLevel.Debug, $"\n{table.ToString()}");
-
-                    // TODO Track when actions were last taken to avoid nic flapping
-                    if (IsEthernetInternetConnected && IsWirelessInternetConnected)
-                    {
-                        LOG.Log(LogLevel.Warn, "Both Wired and Wireless connections are internet routable, assume proper dual homing, kick wireless.");
-                        var wnics = Nics.Where(x => !_ignoreAdapters.Any(y => x.Description.StartsWith(y)))
-                            .Where(x => x.InterfaceType == NetworkInterfaceType.Wireless80211 && x.IsInternetConnected);
-
-                        foreach (var n in wnics)
-                        {
-                            try
-                            {
-                                LOG.Log(LogLevel.Info, $"Releasing IP on adapter: {n.Id}");
-                                ReleaseIp(n);
-                                WlanDisconnect(n);
-                            }
-                            catch (Exception ex)
-                            {
-                                LOG.Log(LogLevel.Error, ex);
-                            }
-                        }
-                    }
-                    else if (!IsInternetConnected)
-                    {
-                        LOG.Log(LogLevel.Warn, "No internet connection available, light 'em up!");
-                        var wnics = Nics.Where(x => !_ignoreAdapters.Any(y => x.Description.StartsWith(y)))
-                            .Where(x => x.InterfaceType == NetworkInterfaceType.Wireless80211 && (!x.IsConnected));
-
-                        foreach (var n in wnics)
-                        {
-                            ConnectToLastSsid(n);
-                        }
-                    }
-                    else
-                    {
-                        LOG.Log(LogLevel.Info, "We can get to the internet, nothing to see here.");
-                    }
-                });
         }
 
         ~NetworkState() {
-            netChangeObservable.Dispose();
-            netManager.NetworkAdded -= Netevent_NetworkAdded;
-            netManager.NetworkDeleted -= Netevent_NetworkDeleted;
-            netManager.NetworkPropertyChanged -= Netevent_NetworkPropertyChanged;
-            netManager.NetworkConnectivityChanged -= Netevent_NetworkConnectivityChanged;
             netManager = null;
         }
 
@@ -176,18 +88,6 @@ namespace WifiSitter
 
         public void ShouldCheckState() {
             this.CheckNet = true;
-        }
-
-        /// <summary>
-        /// Update internal Nic list.
-        /// </summary>
-        /// <param name="Nics"></param>
-        public void UpdateNics(List<TrackedNic> Nics) {
-            foreach (var n in Nics) {
-                if (!_originalNicState.Any(x => x.Item1 == n.Id)) _originalNicState.Add( (n.Id, n.IsEnabled) );
-            }
-
-            this.Nics = Nics;
         }
 
         public void UpdateWhitelist(List<string> Whitelist) {
@@ -227,7 +127,7 @@ namespace WifiSitter
             return false;
         }
 
-        private List<TrackedNic> QueryNetworkAdapters() {
+        internal List<TrackedNic> QueryNetworkAdapters() {
             List<TrackedNic> result = new List<TrackedNic>();
 
             var nicInfo = new Dictionary<string, IfRow>();
@@ -348,7 +248,7 @@ namespace WifiSitter
         /// Releases any IPv4 address associated with the adapter. Throws on error.
         /// </summary>
         /// <param name="Nic"></param>
-        private void ReleaseIp(TrackedNic Nic)
+        internal void ReleaseIp(TrackedNic Nic)
         {
             Debug.Assert(Nic.InterfaceIndex != default(uint));
             using (var ifInfo = GetInterfaceInfo()) {
@@ -362,7 +262,7 @@ namespace WifiSitter
         /// Disconnects from any currently connected WiFi network. Throws on error.
         /// </summary>
         /// <param name="Nic"></param>
-        public void WlanDisconnect(TrackedNic Nic)
+        internal void WlanDisconnect(TrackedNic Nic)
         {
             if (Nic.InterfaceType != NetworkInterfaceType.Wireless80211) return;
 
@@ -400,7 +300,10 @@ namespace WifiSitter
             var wclient = new NativeWifi.WlanClient();
             var adapter = wclient.Interfaces.Where(x => x.InterfaceGuid == Nic.Id).FirstOrDefault();
             adapter.SetProfile(WlanProfileFlags.AllUser, adapter.GetProfileXml(Nic.LastWirelessConnection.profileName), true);
-            adapter.ConnectSynchronously(WlanConnectionMode.Profile, Dot11BssType.Any, Nic.LastWirelessConnection.profileName, 30);
+            adapter.Connect(WlanConnectionMode.Profile, Dot11BssType.Any, Nic.LastWirelessConnection.profileName);
+
+            // Update timestamp, won't attempt connect on this interface again for some period of time.
+            Nic.LastReconnectAttempt = DateTime.Now;
         }
 
         #endregion // methods
@@ -441,7 +344,14 @@ namespace WifiSitter
                 if (_nics == null) return new List<TrackedNic>();
                 return _nics;
             }
-            private set { _nics = value; }
+            internal set { _nics = value; }
+        }
+
+        public List<TrackedNic> ManagedNics {
+            get {
+                if (_nics == null) return new List<TrackedNic>();
+                return _nics.Where(x => !_ignoreAdapters.Any(y => x.Description.StartsWith(y))).ToList();
+            }
         }
 
         public List<(Guid, bool)> OriginalNicState {
