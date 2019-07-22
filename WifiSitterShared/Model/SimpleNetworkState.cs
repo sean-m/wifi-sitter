@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WifiSitter;
+using WifiSitterShared;
 
 namespace WifiSitter.Model
 {
@@ -18,16 +19,6 @@ namespace WifiSitter.Model
         public List<string> IgnoreAdapters { get; set; }
 
         public SimpleNetworkState() { }
-
-        public SimpleNetworkState(NetworkState netstate) {
-            // TODO communicate clearer connected information, too simplified here
-            NetworkAvailable = netstate.NetworkAvailable;
-            ProcessingState = netstate.ProcessingState;
-            EthernetUp = netstate.IsInternetConnected;
-            CheckNet = netstate.CheckNet;
-            Nics = netstate.Nics.Select(x => new SimpleNic(x)).ToList();
-            IgnoreAdapters = netstate.IgnoreAdapters.ToList();
-        }
     }
 
     [Serializable]

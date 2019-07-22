@@ -17,6 +17,7 @@ using NLog;
 using NetMQ;
 using NetMQ.Sockets;
 using ConsoleTableExt;
+using WifiSitterShared;
 
 namespace WifiSitter
 {
@@ -139,7 +140,9 @@ namespace WifiSitter
             return results;
         }
 
-        static string[] header = new string[] { "Name", "Description", "Type", "Connected", "Enabled" };
+        /// <summary>
+        /// Main application loop
+        /// </summary>
         private void WorkerThreadFunc() {
 
             // TODO completely rip this out and redo the logic consume events on a queue
@@ -158,44 +161,9 @@ namespace WifiSitter
             }
         }
 
-        private volatile bool _nics_reset = false;
-        private void ResetNicState (NetworkState netstate) {
-            if (_nics_reset) return;
-
-            if (netstate == null)
-                return;
-
-            var taskList = new List<Task>();
-            // TODO fix this
-            //foreach (var n in netstate.OriginalNicState) {
-            //    var id    = n.Item1;
-            //    var ur_state = n.Item2;
-            //    TrackedNic now = netstate.Nics.Where(x => x.Id == id).FirstOrDefault();
-            //    if (now != null) {
-            //        if (ur_state != now.IsEnabled) {
-            //            if (ur_state) {
-            //                LOG.Log(LogLevel.Info, "Restoring adapter state, enabling adapter: {0} - {1}", now.Name, now.Description);
-            //                var enableTask = new Task(() => { now.Enable(); });
-            //                enableTask.Start();
-            //                taskList.Add(enableTask);
-            //            }
-            //            else {
-            //                LOG.Log(LogLevel.Info, "Restoring adapter state, disabling adapter: {0} - {1}", now.Name, now.Description);
-            //                var disableTask = new Task(() => { now.Disable(); });
-            //                disableTask.Start();
-            //                taskList.Add(disableTask); }
-            //        }
-            //    }
-            //}
-            try {
-                Task.WaitAll(taskList.ToArray());
-            }
-            catch (Exception e) {
-                LOG.Log(LogLevel.Info, "Exception when resetting nic state\n", e.InnerException.Message);
-            }
-        }
-
-
+        /// <summary>
+        /// IPC handling loop
+        /// </summary>
         private void ZeroMQRouterRun() {
             // TODO handle port bind failure, increment port and try again, quit after 3 tries
             int port = 37247;
@@ -205,6 +173,7 @@ namespace WifiSitter
             var server = new RouterSocket(connString);
             server.Options.Identity = Encoding.UTF8.GetBytes(_myChannel);
 
+            // TODO refactor into event -> queue based
             while (!_shutdownEvent.WaitOne(0)) {
 
                 var clientMessage = server.ReceiveMultipartMessage();
@@ -228,9 +197,10 @@ namespace WifiSitter
                                 LOG.Log(LogLevel.Debug, "Sending netstate to: {0}", clientAddress.ConvertToString());
                                 
                                 // form response
-                                response = new WifiSitterIpcMessage("give_netstate",
-                                                                    server.Options.Identity.ToString(),
-                                                                    Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate))).ToJsonString();
+                                // TODO refactor IPC
+                                //response = new WifiSitterIpcMessage("give_netstate",
+                                //                                    server.Options.Identity.ToString(),
+                                //                                    Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate))).ToJsonString();
                                 break;
                             case "take_five":
                                 try {
@@ -277,9 +247,10 @@ namespace WifiSitter
                                 var list = ReadNicWhitelist();
                                 netstate.UpdateWhitelist(list);
                                 // Respond with updated network state
-                                response = new WifiSitterIpcMessage("give_netstate",
-                                                                    server.Options.Identity.ToString(),
-                                                                    Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate))).ToJsonString();
+                                // TODO fix this
+                                //response = new WifiSitterIpcMessage("give_netstate",
+                                //                                    server.Options.Identity.ToString(),
+                                //                                    Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate))).ToJsonString();
                                 break;
                             default:
                                 break;
@@ -370,7 +341,6 @@ namespace WifiSitter
         protected override void OnStopImpl() {
             LOG.Log(LogLevel.Debug, "Stopping now...");
             _shutdownEvent.Set();
-            ResetNicState(netstate);
         }
 
         protected override void OnPause() {

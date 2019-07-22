@@ -14,7 +14,7 @@ using NLog;
 using static NativeWifi.Wlan;
 using static Vanara.PInvoke.IpHlpApi;
 
-namespace WifiSitter
+namespace WifiSitterShared
 {
     /// <summary>
     /// Object that contains information from NetworkInterface objects
@@ -36,7 +36,7 @@ namespace WifiSitter
 
         }
 
-        internal TrackedNic(IfRow Nic)
+        public TrackedNic(IfRow Nic)
         {   
             Luid = Nic.InterfaceLuid;
             Name = Nic.Alias;
