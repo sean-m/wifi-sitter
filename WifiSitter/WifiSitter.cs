@@ -20,6 +20,7 @@ using ConsoleTableExt;
 using WifiSitterShared;
 using System.Reactive.Linq;
 using static NativeWifi.Wlan;
+using System.Collections.Concurrent;
 
 namespace WifiSitter
 {
@@ -153,7 +154,7 @@ namespace WifiSitter
         /// </summary>
         private void WorkerThreadFunc() {
 
-            var reccentlyModifiedInterfaces = new List<(Guid, DateTime)>();
+            var reccentlyModifiedInterfaces = new ConcurrentBag<(Guid, DateTime)>();
 
             netChangeObservable = Observable.FromEventPattern<WSNetworkChangeEventArgs>(netstate, nameof(NetworkState.NetworkStateChanged))
                 .Delay(x => Observable.Timer(TimeSpan.FromMilliseconds(x.EventArgs.DeferInterval)))
@@ -162,6 +163,8 @@ namespace WifiSitter
                 .Subscribe(
                 (_) =>
                 {
+                    if (_paused) return;
+
                     // TODO defer checking interfaces that have just been modified for 5 seconds
 
                     LOG.Log(LogLevel.Info, "Throttle started");
@@ -179,7 +182,7 @@ namespace WifiSitter
                         _events = _events.Where(x => !_reccentlyModifiedInterfaces.Where(z => z.Item2 > DateTime.Now.AddSeconds(-5)).Any(y => y.Item1 == x.Id)
                             || x.ChangeType == NetworkChanges.DeferredEvent).ToList();
 
-                        reccentlyModifiedInterfaces = _reccentlyModifiedInterfaces.ToList();
+                        reccentlyModifiedInterfaces = new ConcurrentBag<(Guid, DateTime)>(_reccentlyModifiedInterfaces);
                     }
 
                     if (_events.Count < 1) return;
