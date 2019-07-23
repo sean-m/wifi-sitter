@@ -17,50 +17,61 @@ using Vanara.PInvoke;
 using static Vanara.PInvoke.IpHlpApi;
 using ConsoleTableExt;
 using static NativeWifi.Wlan;
-
+using NativeWifi;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace WifiSitter
 {
     /// <summary>
     /// Class used to track state of detected network adapters
     /// </summary>
-    public class NetworkState {
+    public class NetworkState
+    {
         #region fields
 
         private bool _checkNet;
-        private Timer _checkTimer;
         private bool _processingState;
+        private volatile bool _paused = false;
         private List<TrackedNic> _nics;
         private List<string> _ignoreAdapters;  // List of Nic descriptions to ignore during normal operation
         private static Logger LOG = LogManager.GetCurrentClassLogger();
         private NetworkListManager netManager = new NetworkListManager();
         private List<(Guid, bool)> _originalNicState = new List<(Guid, bool)>();
         internal List<WSNetworkChangeEventArgs> reccentEvents = new List<WSNetworkChangeEventArgs>();
+        WlanClient wclient = new WlanClient();
         internal object eventLock = new object();
+        internal Task workerTask;
+        private CancellationTokenSource tokenSource = new CancellationTokenSource();
+        internal BlockingCollection<IEnumerable<WSNetworkChangeEventArgs>> eventQueue = new BlockingCollection<IEnumerable<WSNetworkChangeEventArgs>>();
+        IDisposable netChangeObservable;
 
         #endregion // fields
 
 
         #region constructor
-        public NetworkState() {
+        public NetworkState()
+        {
             Initialize();
         }
 
-        public NetworkState(IEnumerable<string> NicWhitelist) {
+        public NetworkState(IEnumerable<string> NicWhitelist)
+        {
 
             _ignoreAdapters = NicWhitelist.ToList() ?? new List<string>();
             this.Nics = QueryNetworkAdapters();
 
             // Loop through nics and add id:state to _originalNicState list
             Nics.Where(x => !NicWhitelist.Any(y => x.Description.StartsWith(y))).ToList()
-                .ForEach(x => _originalNicState.Add( (x.Id, x.IsEnabled) ));
+                .ForEach(x => _originalNicState.Add((x.Id, x.IsEnabled)));
 
             Initialize();
         }
 
-        internal void Initialize() {
+        internal void Initialize()
+        {
             CheckNet = true;
-            
+
             _processingState = true;
 
             // Register for network change events
@@ -70,9 +81,22 @@ namespace WifiSitter
             netManager.NetworkPropertyChanged += Netevent_NetworkPropertyChanged;
             netManager.NetworkConnectivityChanged += Netevent_NetworkConnectivityChanged;
 
+            netChangeObservable = Observable.FromEventPattern<WSNetworkChangeEventArgs>(this, nameof(NetworkState.NetworkStateChanged))
+                .Delay(x => Observable.Timer(TimeSpan.FromMilliseconds(x.EventArgs.DeferInterval)))
+                .Select(x => { lock (this.eventLock) { this.reccentEvents.Add(x.EventArgs); } return x; })
+                .Throttle(TimeSpan.FromSeconds(4))
+                .Subscribe(
+                (_) =>
+                {
+                    List<WSNetworkChangeEventArgs> _events;
+                    _events = this.reccentEvents;
+                    this.reccentEvents = new List<WSNetworkChangeEventArgs>();
+                    eventQueue.Add(_events);
+                });
         }
 
-        ~NetworkState() {
+        ~NetworkState()
+        {
             netManager = null;
         }
 
@@ -81,16 +105,19 @@ namespace WifiSitter
 
         #region methods
 
-        public void StateChecked() {
+        public void StateChecked()
+        {
             this.CheckNet = false;
             this.ProcessingState = false;
         }
 
-        public void ShouldCheckState() {
+        public void ShouldCheckState()
+        {
             this.CheckNet = true;
         }
 
-        public void UpdateWhitelist(List<string> Whitelist) {
+        public void UpdateWhitelist(List<string> Whitelist)
+        {
             _ignoreAdapters = Whitelist;
             _checkNet = true;
         }
@@ -101,7 +128,7 @@ namespace WifiSitter
         /// </summary>
         /// <param name="AdapterId"></param>
         /// <returns></returns>
-        public bool QueryNetworkAdapter(Guid AdapterId)
+        internal bool QueryNetworkAdapter(Guid AdapterId)
         {
             var nic = Nics.Where(x => x.Id == AdapterId).FirstOrDefault();
             if (nic == null) return false;
@@ -111,12 +138,12 @@ namespace WifiSitter
                 var connection = netManager.GetNetworkConnection(AdapterId);
                 if (connection == null)
                 {
-                    nic.ConnectionStatus = ConnectionState.Unknown;
+                    nic.ConnectionStatus = WifiSitterShared.ConnectionState.Unknown;
                 }
                 else
                 {
-                    if (connection.IsConnected) nic.ConnectionStatus = nic.ConnectionStatus | ConnectionState.Connected;
-                    if (connection.IsConnectedToInternet) nic.ConnectionStatus = nic.ConnectionStatus | ConnectionState.InternetConnected;
+                    if (connection.IsConnected) nic.ConnectionStatus = nic.ConnectionStatus | WifiSitterShared.ConnectionState.Connected;
+                    if (connection.IsConnectedToInternet) nic.ConnectionStatus = nic.ConnectionStatus | WifiSitterShared.ConnectionState.InternetConnected;
                 }
                 return true;
             }
@@ -127,7 +154,12 @@ namespace WifiSitter
             return false;
         }
 
-        internal List<TrackedNic> QueryNetworkAdapters() {
+        /// <summary>
+        /// Get network information and return list of TrackedNic objects.
+        /// </summary>
+        /// <returns></returns>
+        internal List<TrackedNic> QueryNetworkAdapters()
+        {
             List<TrackedNic> result = new List<TrackedNic>();
 
             var nicInfo = new Dictionary<string, IfRow>();
@@ -163,7 +195,6 @@ namespace WifiSitter
 
             return result;
         }
-
 
         /// <summary>
         /// Uses iphlpapi.dll and COM NetworkListManager to query for network interface information
@@ -216,7 +247,7 @@ namespace WifiSitter
                     row.ConnectionStatus = ConnectionState.Unknown;
 
                     foreach (INetworkConnection n in nets)
-                    {   
+                    {
                         if (row.InterfaceGuid is Guid)
                         {
                             if (row.InterfaceGuid == n.GetAdapterId())
@@ -236,14 +267,6 @@ namespace WifiSitter
             }
         }
 
-
-        private void NetworkState_NetworkStateChanged(object sender, WSNetworkChangeEventArgs e)
-        {
-            LOG.Log(LogLevel.Info, $"Network change detected at: {e.EventTime.Ticks}  ID {e.Id}  { Enum.GetName(e.ChangeType.GetType(), e.ChangeType) }");
-
-            // Pend interface query to update information
-        }
-
         /// <summary>
         /// Releases any IPv4 address associated with the adapter. Throws on error.
         /// </summary>
@@ -251,7 +274,8 @@ namespace WifiSitter
         internal void ReleaseIp(TrackedNic Nic)
         {
             Debug.Assert(Nic.InterfaceIndex != default(uint));
-            using (var ifInfo = GetInterfaceInfo()) {
+            using (var ifInfo = GetInterfaceInfo())
+            {
                 var interface_map = ifInfo.Adapter.Where(x => x.Index == Nic.InterfaceIndex).FirstOrDefault();
                 Win32Error err = IpReleaseAddress(ref interface_map);
                 err.ThrowIfFailed();
@@ -286,7 +310,7 @@ namespace WifiSitter
         /// be in range and doesn't persist across service restarts.
         /// </summary>
         /// <param name="Nic"></param>
-        public void ConnectToLastSsid(TrackedNic Nic)
+        internal void ConnectToLastSsid(TrackedNic Nic)
         {
             if (Nic.InterfaceType != NetworkInterfaceType.Wireless80211) return;  // Shouldn't happen but still..
 
@@ -297,13 +321,193 @@ namespace WifiSitter
             }
 
             LOG.Log(LogLevel.Info, $"{Nic.Name} attempting reconnect to: {Nic.LastWirelessConnection.profileName}");
-            var wclient = new NativeWifi.WlanClient();
+            var adapter = wclient.Interfaces.Where(x => x.InterfaceGuid == Nic.Id).FirstOrDefault();
+
+            adapter.Connect(WlanConnectionMode.Profile, Dot11BssType.Any, Nic.LastWirelessConnection.profileName);
+        }
+
+        /// <summary>
+        /// Attempts to set Wifi Profile configuration for an interface. This isn't strictly required to reconnect
+        /// to a wireless network unless the network's configuration has changed since the last connection attempt.
+        /// </summary>
+        /// <param name="Nic"></param>
+        internal void SetWirelessProfile(TrackedNic Nic)
+        {
             var adapter = wclient.Interfaces.Where(x => x.InterfaceGuid == Nic.Id).FirstOrDefault();
             adapter.SetProfile(WlanProfileFlags.AllUser, adapter.GetProfileXml(Nic.LastWirelessConnection.profileName), true);
-            adapter.Connect(WlanConnectionMode.Profile, Dot11BssType.Any, Nic.LastWirelessConnection.profileName);
+        }
 
-            // Update timestamp, won't attempt connect on this interface again for some period of time.
-            Nic.LastReconnectAttempt = DateTime.Now;
+        /// <summary>
+        /// Invokes worker task.
+        /// </summary>
+        public void StartWorker()
+        {            
+            if (workerTask == null) workerTask = new Task(() => SausageFactory(tokenSource.Token));
+            workerTask.Start();
+            LOG.Debug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} returning.");
+        }
+
+        /// <summary>
+        /// Stops worker task via cancellation token and waits for it to complete.
+        /// </summary>
+        public void StopWorker()
+        {
+            tokenSource.Cancel();
+            eventQueue.Add(null);
+            workerTask.Wait(3 * 1000);
+            LOG.Debug($"{System.Reflection.MethodBase.GetCurrentMethod().Name} returning.");
+        }
+
+        /// <summary>
+        /// Worker function that consumes event queue and manages state.
+        /// </summary>
+        /// <param name="Token"></param>
+        private void SausageFactory(CancellationToken Token)
+        {
+
+            var reccentlyModifiedInterfaces = new ConcurrentBag<(Guid, DateTime)>();
+
+            var header = new string[] { "Luid", "Name", "Id", "Index", "InterfaceType", "ConnectionStatus", "IsEnabled", "IsConnected", "IsInternetConnected", "LastReconnectAttempt" };
+            var dt = new System.Data.DataTable();
+            foreach (var t in header)
+            {
+                dt.Columns.Add(t);
+            }
+
+            // Defer network event to invoke initial status check
+            this.OnNetworkChanged(new WSNetworkChangeEventArgs()
+            {
+                Id = Guid.Empty,
+                ChangeType = NetworkChanges.DeferredEvent,
+                DeferInterval = 2000
+            });
+
+            try
+            {
+                foreach (var eventBatch in eventQueue.GetConsumingEnumerable())
+                {
+                    if (Token.IsCancellationRequested) break;
+                    if (eventBatch.Where(x => x != null).Count() < 1) continue;
+                    if (_paused) continue;
+
+                    // TODO defer checking interfaces that have just been modified for 5 seconds
+
+                    LOG.Log(LogLevel.Info, "Throttle started");
+
+
+
+                    foreach (var e in eventBatch)
+                    {
+                        LOG.Log(LogLevel.Info, $">> {e.EventTime.Ticks}  {e.Id}  {e.ChangeType.ToString()} ");
+                    }
+
+                    // Update connection status and wlan profile info
+                    var _nic_list = this.QueryNetworkAdapters().Select(
+                        _nic =>
+                        {
+                            var matching_nic = this.Nics.Where(n => n.Id == _nic.Id).FirstOrDefault();
+
+                        // No previous interface identified, skip it
+                        if (matching_nic == null) return _nic;
+
+                        // TODO Refactor this when we start using preferred network lists
+                        if (!(matching_nic.LastWirelessConnection.Equals(default(WlanConnectionAttributes)) && _nic.Equals(default(WlanConnectionAttributes))))
+                            {
+                                _nic.LastWirelessConnection = matching_nic.LastWirelessConnection;
+                            }
+                            else if (!(_nic.Equals(default(WlanConnectionAttributes))))
+                            {
+                                _nic.LastWirelessConnection = matching_nic.LastWirelessConnection;
+                            }
+
+                            _nic.LastReconnectAttempt = matching_nic.LastReconnectAttempt;
+                            return _nic;
+                        })
+                    .ToList();
+
+                    this.Nics = _nic_list;
+
+                    dt.Rows.Clear();
+
+                    foreach (var x in this.ManagedNics)
+                    {
+                        dt.Rows.Add(new object[] { x.Luid, x.Name, x.Id, x.InterfaceIndex, x.InterfaceType, x.ConnectionStatus, x.IsEnabled, x.IsConnected, x.IsInternetConnected, x.LastReconnectAttempt });
+                    }
+
+                    var table = ConsoleTableBuilder
+                       .From(dt)
+                       .WithColumn(header)
+                       .WithFormat(ConsoleTableBuilderFormat.Default)
+                       .Export();
+
+                    LOG.Log(LogLevel.Debug, $"\n{table.ToString()}");
+
+
+                    // TODO Track when actions were last taken to avoid nic flapping
+                    if (this.IsEthernetInternetConnected && this.IsWirelessInternetConnected)
+                    {
+                        LOG.Log(LogLevel.Warn, "Both Wired and Wireless connections are internet routable, assume proper dual homing, kick wireless.");
+                        var wnics = this.ManagedNics
+                            .Where(x => x.InterfaceType == NetworkInterfaceType.Wireless80211 && x.IsInternetConnected);
+
+                        foreach (var n in wnics)
+                        {
+                            try
+                            {
+                                LOG.Log(LogLevel.Info, $"Releasing IP on adapter: {n.Id}");
+                                this.ReleaseIp(n);
+                                this.WlanDisconnect(n);
+                            }
+                            catch (Exception ex)
+                            {
+                                LOG.Log(LogLevel.Error, ex);
+                            }
+                        }
+                    }
+                    else if (!this.IsInternetConnected)
+                    {
+                        LOG.Log(LogLevel.Warn, "No internet connection available, light 'em up!");
+                        var wnics = this.ManagedNics
+                            .Where(x => x.InterfaceType == NetworkInterfaceType.Wireless80211 && (!x.IsConnected));
+
+                        foreach (var n in wnics)
+                        {
+                            if (String.IsNullOrEmpty(n.LastWirelessConnection.profileName))
+                            {
+                                LOG.Warn("No previous connection profile logged. I can't reconnect to nothing...");
+                                continue;
+                            }
+
+                            // Skip interface if a re-connect was attempted reccently
+                            if (n.LastReconnectAttempt > DateTime.Now.AddSeconds(-30))
+                            {
+                                // TODO need method for deferring actions/events
+                                LOG.Debug($"Attempted reconnect on that interface {n.Id} < 30 seconds ago, skipping.");
+                                continue;
+                            }
+
+                            try { this.SetWirelessProfile(n); }
+                            catch (Exception e) { LOG.Log(LogLevel.Error, e, $"Error setting wireless profile on interface: {n.Id}"); }
+
+                            try
+                            {
+                                n.LastReconnectAttempt = DateTime.Now;
+                                this.ConnectToLastSsid(n);
+                                this.OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 6000 });
+                            }
+                            catch(Exception e) { LOG.Log(LogLevel.Error, e, $"Error reconnecting adapter: {n.Id}  to network: {n.LastWirelessConnection.profileName}"); }
+                        }
+                    }
+                    else
+                    {
+                        LOG.Info("We can get to the internet, nothing to see here.");
+                    }
+                }
+            }
+            finally
+            {
+                netChangeObservable.Dispose();
+            }
         }
 
         #endregion // methods
@@ -336,9 +540,10 @@ namespace WifiSitter
         public List<string> IgnoreAdapters {
             get {
                 if (_ignoreAdapters == null) _ignoreAdapters = new List<string>();
-                return _ignoreAdapters; }
+                return _ignoreAdapters;
+            }
         }
-        
+
         public List<TrackedNic> Nics {
             get {
                 if (_nics == null) return new List<TrackedNic>();
@@ -372,15 +577,20 @@ namespace WifiSitter
             set { _processingState = value; }
         }
 
+        public bool Paused {
+            get => _paused;
+            set => _paused = value;
+        }
+
         #endregion // properties
 
 
         #region events
-        
+
         public event EventHandler<WSNetworkChangeEventArgs> NetworkStateChanged;
 
         public void OnNetworkChanged(WSNetworkChangeEventArgs e) => NetworkStateChanged?.Invoke(this, e);
-        
+
         /*=====   These all feed events to the handler above, bound in the Initialize method.   =====*/
         private void Netevent_NetworkAdded(Guid networkId) => OnNetworkChanged(new WSNetworkChangeEventArgs(networkId, NetworkChanges.Added));
         private void Netevent_NetworkDeleted(Guid networkId) => OnNetworkChanged(new WSNetworkChangeEventArgs(networkId, NetworkChanges.Deleted));
