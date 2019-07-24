@@ -35,9 +35,7 @@ namespace WifiSitter
         private Task _mainLoopTask;
         private Task _mqServerTask;
         private ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
-        private SynchronizationContext _sync;
         private static string _myChannel = String.Format("{0}-{1}", Process.GetCurrentProcess().Id, Process.GetCurrentProcess().ProcessName);
-        private static Object _consoleLock = new Object();
         private static Logger LOG = LogManager.GetCurrentClassLogger();
 
         #endregion // fields
@@ -204,10 +202,9 @@ namespace WifiSitter
                                 LOG.Log(LogLevel.Debug, "Sending netstate to: {0}", clientAddress.ConvertToString());
 
                                 // form response
-                                // TODO refactor IPC
-                                //response = new WifiSitterIpcMessage("give_netstate",
-                                //                                    server.Options.Identity.ToString(),
-                                //                                    Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate))).ToJsonString();
+                                response = new WifiSitterIpcMessage("give_netstate",
+                                                                    server.Options.Identity.ToString(),
+                                                                    Newtonsoft.Json.JsonConvert.SerializeObject(netstate.SimpleState)).ToJsonString();
                                 break;
                             case "take_five":
                                 try
@@ -232,7 +229,7 @@ namespace WifiSitter
                                         Task.Delay(minutes * 60 * 1000).ContinueWith((task) =>
                                         {
                                             LOG.Log(LogLevel.Info, "Break's over! Not gettin paid to just stand around.");
-                                            netstate.ShouldCheckState();   // Main loop should check state again when resuming from paused state
+                                            netstate.OnNetworkChanged(new WSNetworkChangeEventArgs(Guid.Empty, NetworkChanges.DeferredEvent));   // Main loop should check state again when resuming from paused state
                                             OnContinue();
                                             // prefixing t_ to differentiate from outer scope
                                             string t_response = new WifiSitterIpcMessage("taking_five",
@@ -258,10 +255,9 @@ namespace WifiSitter
                                 var list = ReadNicWhitelist();
                                 netstate.UpdateWhitelist(list);
                                 // Respond with updated network state
-                                // TODO fix this
-                                //response = new WifiSitterIpcMessage("give_netstate",
-                                //                                    server.Options.Identity.ToString(),
-                                //                                    Newtonsoft.Json.JsonConvert.SerializeObject(new Model.SimpleNetworkState(netstate))).ToJsonString();
+                                response = new WifiSitterIpcMessage("give_netstate",
+                                                                    server.Options.Identity.ToString(),
+                                                                    Newtonsoft.Json.JsonConvert.SerializeObject(netstate.SimpleState)).ToJsonString();
                                 break;
                             default:
                                 break;

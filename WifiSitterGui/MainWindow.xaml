@@ -214,6 +214,7 @@
                             <DataGrid.Columns>
                                 <DataGridCheckBoxColumn Binding="{Binding IsEnabled}" Header="Enabled"/>
                                 <DataGridCheckBoxColumn Binding="{Binding IsConnected}" Header="Connected"/>
+                                <DataGridCheckBoxColumn Binding="{Binding IsInternetConnected}" Header="Internet"/>
                                 <DataGridTextColumn Binding="{Binding Name}" Header="Name"/>
                                 <DataGridTextColumn Binding="{Binding Description}" Header="Description"/>
                             </DataGrid.Columns>
@@ -233,6 +234,7 @@
                             <DataGrid.Columns>
                                 <DataGridCheckBoxColumn Binding="{Binding IsEnabled}" Header="Enabled"/>
                                 <DataGridCheckBoxColumn Binding="{Binding IsConnected}" Header="Connected"/>
+                                <DataGridCheckBoxColumn Binding="{Binding IsInternetConnected}" Header="Internet"/>
                                 <DataGridTextColumn Binding="{Binding Name}" Header="Name"/>
                                 <DataGridTextColumn Binding="{Binding Description}" Header="Description"/>
                             </DataGrid.Columns>

@@ -76,8 +76,27 @@ namespace WifiSitterShared
 
         public WlanConnectionAttributes LastWirelessConnection { get; set; }
 
-        public DateTime LastReconnectAttempt { get; set; } = default(DateTime);
+        public List<NetworkStateChangeLogEntry> LastActionTaken { get; set; } = new List<NetworkStateChangeLogEntry>();
 
         #endregion // properties
+    }
+
+
+    public class NetworkStateChangeLogEntry
+    {
+        public DateTime ChangeTime { get; set; } = DateTime.Now;
+
+        public NetworkStateChangeAction ActionTaken { get; private set; }
+
+        public NetworkStateChangeLogEntry(NetworkStateChangeAction action)
+        {
+            ActionTaken = action;
+        }
+    }
+
+    public enum NetworkStateChangeAction
+    {
+        disconnect,
+        reconnect
     }
 }

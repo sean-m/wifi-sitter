@@ -20,6 +20,7 @@ using static NativeWifi.Wlan;
 using NativeWifi;
 using System.Collections.Concurrent;
 using System.Threading;
+using WifiSitter.Model;
 
 namespace WifiSitter
 {
@@ -72,14 +73,11 @@ namespace WifiSitter
         {
             CheckNet = true;
 
-            _processingState = true;
-
             // Register for network change events
-            // TODO clean all this up, probably with Rx
-            netManager.NetworkAdded += Netevent_NetworkAdded;
-            netManager.NetworkDeleted += Netevent_NetworkDeleted;
-            netManager.NetworkPropertyChanged += Netevent_NetworkPropertyChanged;
-            netManager.NetworkConnectivityChanged += Netevent_NetworkConnectivityChanged;
+            netManager.NetworkAdded += (netId) => OnNetworkChanged(new WSNetworkChangeEventArgs(netId, NetworkChanges.Added));
+            netManager.NetworkDeleted += (netId) => OnNetworkChanged(new WSNetworkChangeEventArgs(netId, NetworkChanges.Deleted));
+            netManager.NetworkPropertyChanged += (netId, flags) => OnNetworkChanged(new WSNetworkChangeEventArgs(netId, NetworkChanges.PropertyChanged) { AdditionalInfo = flags });
+            netManager.NetworkConnectivityChanged += (netId, flags) => OnNetworkChanged(new WSNetworkChangeEventArgs(netId, NetworkChanges.ConnectivityChanged) { AdditionalInfo = flags });
 
             netChangeObservable = Observable.FromEventPattern<WSNetworkChangeEventArgs>(this, nameof(NetworkState.NetworkStateChanged))
                 .Delay(x => Observable.Timer(TimeSpan.FromMilliseconds(x.EventArgs.DeferInterval)))
@@ -104,17 +102,6 @@ namespace WifiSitter
 
 
         #region methods
-
-        public void StateChecked()
-        {
-            this.CheckNet = false;
-            this.ProcessingState = false;
-        }
-
-        public void ShouldCheckState()
-        {
-            this.CheckNet = true;
-        }
 
         public void UpdateWhitelist(List<string> Whitelist)
         {
@@ -391,15 +378,16 @@ namespace WifiSitter
                     if (_paused) continue;
 
                     // TODO defer checking interfaces that have just been modified for 5 seconds
-
-                    LOG.Log(LogLevel.Info, "Throttle started");
-
-
+                    var recent = DateTime.Now.AddSeconds(-5);
+                    // Take any events where the correlating Id does not match that of a TrackedNic that has had recent actions taken
+                    var realEvents = eventBatch.Where(e => ! ManagedNics.Where(x => (bool)(x.LastActionTaken?.Any(y => y.ChangeTime > recent))).Any(z => e.Id == z.Id ));
 
                     foreach (var e in eventBatch)
                     {
-                        LOG.Log(LogLevel.Info, $">> {e.EventTime.Ticks}  {e.Id}  {e.ChangeType.ToString()} ");
+                        LOG.Log(LogLevel.Info, $">> {e.EventTime.Ticks}  {e.Id}  {e.ChangeType.ToString()}  {(realEvents.Any(x => x.Id == e.Id) ? " : Recent Match" : String.Empty)}");
                     }
+
+                    if (realEvents.Count() < 1) continue;
 
                     // Update connection status and wlan profile info
                     var _nic_list = this.QueryNetworkAdapters().Select(
@@ -420,7 +408,7 @@ namespace WifiSitter
                                 _nic.LastWirelessConnection = matching_nic.LastWirelessConnection;
                             }
 
-                            _nic.LastReconnectAttempt = matching_nic.LastReconnectAttempt;
+                            _nic.LastActionTaken = matching_nic.LastActionTaken.Where(x => x.ChangeTime > DateTime.Now.AddMinutes(-5)).ToList();
                             return _nic;
                         })
                     .ToList();
@@ -431,7 +419,7 @@ namespace WifiSitter
 
                     foreach (var x in this.ManagedNics)
                     {
-                        dt.Rows.Add(new object[] { x.Luid, x.Name, x.Id, x.InterfaceIndex, x.InterfaceType, x.ConnectionStatus, x.IsEnabled, x.IsConnected, x.IsInternetConnected, x.LastReconnectAttempt });
+                        dt.Rows.Add(new object[] { x.Luid, x.Name, x.Id, x.InterfaceIndex, x.InterfaceType, x.ConnectionStatus, x.IsEnabled, x.IsConnected, x.IsInternetConnected, x.LastActionTaken });
                     }
 
                     var table = ConsoleTableBuilder
@@ -455,8 +443,9 @@ namespace WifiSitter
                             try
                             {
                                 LOG.Log(LogLevel.Info, $"Releasing IP on adapter: {n.Id}");
-                                this.ReleaseIp(n);
-                                this.WlanDisconnect(n);
+                                ReleaseIp(n);
+                                WlanDisconnect(n);
+                                n.LastActionTaken.Add(new NetworkStateChangeLogEntry(NetworkStateChangeAction.disconnect));
                             }
                             catch (Exception ex)
                             {
@@ -479,9 +468,8 @@ namespace WifiSitter
                             }
 
                             // Skip interface if a re-connect was attempted reccently
-                            if (n.LastReconnectAttempt > DateTime.Now.AddSeconds(-30))
+                            if (n.LastActionTaken.Any(x => x.ActionTaken == NetworkStateChangeAction.reconnect && x.ChangeTime > DateTime.Now.AddSeconds(-30)))
                             {
-                                // TODO need method for deferring actions/events
                                 LOG.Debug($"Attempted reconnect on that interface {n.Id} < 30 seconds ago, skipping.");
                                 continue;
                             }
@@ -491,9 +479,10 @@ namespace WifiSitter
 
                             try
                             {
-                                n.LastReconnectAttempt = DateTime.Now;
-                                this.ConnectToLastSsid(n);
-                                this.OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 6000 });
+                                n.LastActionTaken.Add(new NetworkStateChangeLogEntry(NetworkStateChangeAction.reconnect));
+                                ConnectToLastSsid(n);
+                                OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 6000 });
+                                OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 30 * 1000 });
                             }
                             catch(Exception e) { LOG.Log(LogLevel.Error, e, $"Error reconnecting adapter: {n.Id}  to network: {n.LastWirelessConnection.profileName}"); }
                         }
@@ -519,8 +508,7 @@ namespace WifiSitter
         public bool IsEthernetInternetConnected {
             get {
                 if (Nics == null) return false;
-                return Nics.Where(x => (bool)!_ignoreAdapters?.Any(y => x.Description.StartsWith(y)))
-                    .Any(nic => nic.InterfaceType == NetworkInterfaceType.Ethernet && nic.IsInternetConnected);
+                return ManagedNics.Any(nic => nic.InterfaceType == NetworkInterfaceType.Ethernet && nic.IsInternetConnected);
             }
         }
 
@@ -528,8 +516,7 @@ namespace WifiSitter
         public bool IsWirelessInternetConnected {
             get {
                 if (Nics == null) return false;
-                return Nics.Where(x => (bool)!_ignoreAdapters?.Any(y => x.Description.StartsWith(y)))
-                    .Any(nic => nic.InterfaceType == NetworkInterfaceType.Wireless80211 && nic.IsInternetConnected);
+                return ManagedNics.Any(nic => nic.InterfaceType == NetworkInterfaceType.Wireless80211 && nic.IsInternetConnected);
             }
         }
 
@@ -552,14 +539,26 @@ namespace WifiSitter
             internal set { _nics = value; }
         }
 
-        public List<TrackedNic> ManagedNics {
+        public IEnumerable<TrackedNic> ManagedNics {
             get {
                 if (_nics == null) return new List<TrackedNic>();
-                return _nics.Where(x => !_ignoreAdapters.Any(y => x.Description.StartsWith(y))).ToList();
+                return _nics.Where(x => !_ignoreAdapters.Any(y => x.Description.StartsWith(y)));
             }
         }
 
-        public List<(Guid, bool)> OriginalNicState {
+        public SimpleNetworkState SimpleState { get => new SimpleNetworkState()
+                {
+                    CheckNet = this.CheckNet,
+                    EthernetUp = this.IsEthernetInternetConnected,
+                    InternetConnected = this.IsInternetConnected,
+                    NetworkAvailable = this.NetworkAvailable,
+                    IgnoreAdapters = this.IgnoreAdapters,
+                    ProcessingState = this.ProcessingState,
+                    Nics = this.ManagedNics.Select(x => new SimpleNic(x)).ToList()
+                };
+        }
+
+    public List<(Guid, bool)> OriginalNicState {
             get { return _originalNicState; }
         }
 
@@ -572,10 +571,7 @@ namespace WifiSitter
         public bool NetworkAvailable { get; private set; }
 
 
-        public bool ProcessingState {
-            get { return _processingState; }
-            set { _processingState = value; }
-        }
+        public bool ProcessingState { get => workerTask.Status == TaskStatus.Running; }
 
         public bool Paused {
             get => _paused;
@@ -590,12 +586,6 @@ namespace WifiSitter
         public event EventHandler<WSNetworkChangeEventArgs> NetworkStateChanged;
 
         public void OnNetworkChanged(WSNetworkChangeEventArgs e) => NetworkStateChanged?.Invoke(this, e);
-
-        /*=====   These all feed events to the handler above, bound in the Initialize method.   =====*/
-        private void Netevent_NetworkAdded(Guid networkId) => OnNetworkChanged(new WSNetworkChangeEventArgs(networkId, NetworkChanges.Added));
-        private void Netevent_NetworkDeleted(Guid networkId) => OnNetworkChanged(new WSNetworkChangeEventArgs(networkId, NetworkChanges.Deleted));
-        private void Netevent_NetworkPropertyChanged(Guid networkId, NLM_NETWORK_PROPERTY_CHANGE Flags) => OnNetworkChanged(new WSNetworkChangeEventArgs(networkId, NetworkChanges.PropertyChanged));
-        private void Netevent_NetworkConnectivityChanged(Guid networkId, NLM_CONNECTIVITY newConnectivity) => OnNetworkChanged(new WSNetworkChangeEventArgs(networkId, NetworkChanges.ConnectivityChanged));
 
         #endregion // events
     }
@@ -618,8 +608,10 @@ namespace WifiSitter
         /// </summary>
         public DateTime EventTime { get; set; } = DateTime.Now;
 
+        public dynamic AdditionalInfo { get; set; }
+
         /// <summary>
-        /// How long from EventTime to wait before handling this event
+        /// How long in milliseconds from EventTime to wait before handling this event
         /// </summary>
         public int DeferInterval { get; set; } = 0;
 
