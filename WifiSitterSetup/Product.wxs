@@ -40,6 +40,12 @@
           <RegistryValue Type="string" Name="1" Value="VirtualBox Host" />
           <RegistryValue Type="string" Name="2" Value="VMware Network Adapter" />
           <RegistryValue Type="string" Name="3" Value="Hyper-V Virtual" />
+          <RegistryValue Type="string" Name="4" Value="Microsoft Kernel"/>
+          <RegistryValue Type="string" Name="5" Value="Bluetooth Device"/>
+          <RegistryValue Type="string" Name="6" Value="Microsoft Teredo"/>
+          <RegistryValue Type="string" Name="7" Value="Microsoft IP-HTTP"/>
+          <RegistryValue Type="string" Name="8" Value="Microsoft 6to4"/>
+          <RegistryValue Type="string" Name="9" Value="WAN Miniport"/>
         </RegistryKey>
       </Component>
 
