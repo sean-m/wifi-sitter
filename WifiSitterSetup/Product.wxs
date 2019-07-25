@@ -7,8 +7,7 @@
   <?define WifiSitterGui_TargetDir=$(var.WifiSitterGui.TargetDir)?>
   <?define WifiSitterGui_ResourceDir=$(var.WifiSitterGui.ProjectDir)Resources/?>
   <Product Id="*" Name="WifiSitter" Language="1033" Version="2.0.0.0" Manufacturer="mcardletech.com" UpgradeCode="23a42c57-a16c-4b93-a5cb-60cff20c1f7a">
-    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
-
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated"/>
     <Icon Id="icon.ico" SourceFile="$(var.WifiSitter.ProjectDir)wifisitter-icon.ico" />
     <Property Id="ARPPRODUCTICON" Value="icon.ico" />
     <Property Id='ARPREADME'></Property>
@@ -47,32 +46,34 @@
       <!--Mapped Application Files-->
       <Component Id="WifiSitter.exe" Guid="6d83eee4-3d4e-48fd-a534-1a278ae1c795">
         <File Id="WifiSitter.exe" Name="WifiSitter.exe" Source="$(var.WifiSitter_TargetDir)WifiSitter.exe" />
+        <ServiceInstall
+            Id="WifiSitter.exe"
+            Type="ownProcess"
+            Name="wifisitter"
+            DisplayName="WifiSitter"
+            Description="Manages WiFi adapters based on wired ethernet connectivity."
+            Arguments="/service"
+            Start="auto"
+            Account="NT AUTHORITY\LocalService"
+            ErrorControl="normal"
+            Vital="yes">
+            <ServiceDependency Id="netprofm"/>
+            <util:ServiceConfig ServiceName="wifisitter"
+                                FirstFailureActionType="restart"
+                                SecondFailureActionType="restart"
+                                ThirdFailureActionType="restart"
+                                RestartServiceDelayInSeconds="10"
+                                ResetPeriodInDays="1"/>
+          </ServiceInstall>
+          <ServiceControl Id="WifiSitter.exe_install" Start="install" Name="wifisitter" Wait="no" />
+          <ServiceControl Id="WifiSitter.exe_uninstall" Stop="uninstall" Remove="uninstall" Name="wifisitter" Wait="yes" />
+        
       </Component>
       <Component Id="Interop.NETWORKLIST.dll" Guid="0ec68a32-c0e0-4e59-9301-d47cb5bee0d4">
         <File Id="Interop.NETWORKLIST.dll" Name="Interop.NETWORKLIST.dll" Source="$(var.WifiSitter_TargetDir)Interop.NETWORKLIST.dll" />
       </Component>
       <Component Id="WifiSitterGui.exe" Guid="74214fd0-798e-4bce-bc56-d519103c8f20">
         <File Id="WifiSitterGui.exe" Name="WifiSitterGui.exe" Source="$(var.WifiSitterGui_TargetDir)WifiSitterGui.exe" />
-        <ServiceInstall
-          Id="ServiceInstaller"
-          Type="ownProcess"
-          Name="wifisitter"
-          DisplayName="WifiSitter"
-          Description="Manages WiFi adapters based on wired ethernet connectivity."
-          Arguments="/service"
-          Start="auto"
-          Account="NT AUTHORITY\LocalService"
-          ErrorControl="normal"
-          Vital="yes">
-          <ServiceDependency Id="netprofm"/>
-          <util:ServiceConfig ServiceName="wifisitter"
-                              FirstFailureActionType="restart"
-                              SecondFailureActionType="restart"
-                              ThirdFailureActionType="restart"
-                              RestartServiceDelayInSeconds="10"
-                              ResetPeriodInDays="1"/>
-        </ServiceInstall>
-        <ServiceControl Id="StartService" Start="install" Stop="both" Remove="uninstall" Name="wifisitter" Wait="yes" />
       </Component>
 
       <!--Resource Files-->
