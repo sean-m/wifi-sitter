@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
+  >
   <?define WifiSitter_TargetDir=$(var.WifiSitter.TargetDir)?>
   <?define WifiSitterShared_TargetDir=$(var.WifiSitterShared.TargetDir)?>
   <?define WifiSitterGui_TargetDir=$(var.WifiSitterGui.TargetDir)?>
@@ -31,34 +33,17 @@
 
   <Fragment>
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+
       <Component Id="ProductComponent">
-
         <!--Registry Entries-->
-        <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Services\WifiSitter" Action="createAndRemoveOnUninstall">
-          <RegistryValue Type="integer" Name="Type" Value="16"/>
-          <RegistryValue Type="integer" Name="Start" Value="2"/>
-          <RegistryValue Type="integer" Name="ErrorControl" Value="1"/>
-          <RegistryValue Type="string" Name="ImagePath" Value="&quot;$(env.ProgramFiles(x86))\WifiSitter.exe&quot; /service" />
-          <RegistryValue Type="string" Name="DisplayName" Value="WifiSitter" />
-          <RegistryValue Type="string" Name="ObjectName" Value="LocalSystem" />
-          <RegistryValue Type="string" Name="Description" Value="Manages WiFi adapters based on wired ethernet connectivity." />
-          <RegistryValue Type="integer" Name="DelayedAutostart" Value="1" KeyPath="yes" />
-          <RegistryValue Type="multiString" Name="DependOnService" Action="write">
-            <MultiStringValue>netprofm</MultiStringValue>
-          </RegistryValue>
-          <RegistryValue Type="binary" Name="FailureActions" Value="00000000000000000000000003000000140000000100000060ea00000100000060ea00000100000060ea0000" />
-          <RegistryValue Type="string" Value="Default Value" />
-        </RegistryKey>
-
         <RegistryKey Root="HKLM" Key="SYSTEM\CurrentControlSet\Services\WifiSitter\NicWhiteList" Action="createAndRemoveOnUninstall">
           <RegistryValue Type="string" Name="0" Value="Microsoft Wi-Fi Direct" />
           <RegistryValue Type="string" Name="1" Value="VirtualBox Host" />
           <RegistryValue Type="string" Name="2" Value="VMware Network Adapter" />
           <RegistryValue Type="string" Name="3" Value="Hyper-V Virtual" />
         </RegistryKey>
-
       </Component>
-      
+
       <!--Mapped Application Files-->
       <Component Id="WifiSitter.exe" Guid="6d83eee4-3d4e-48fd-a534-1a278ae1c795">
         <File Id="WifiSitter.exe" Name="WifiSitter.exe" Source="$(var.WifiSitter_TargetDir)WifiSitter.exe" />
@@ -68,13 +53,33 @@
       </Component>
       <Component Id="WifiSitterGui.exe" Guid="74214fd0-798e-4bce-bc56-d519103c8f20">
         <File Id="WifiSitterGui.exe" Name="WifiSitterGui.exe" Source="$(var.WifiSitterGui_TargetDir)WifiSitterGui.exe" />
+        <ServiceInstall
+          Id="ServiceInstaller"
+          Type="ownProcess"
+          Name="wifisitter"
+          DisplayName="WifiSitter"
+          Description="Manages WiFi adapters based on wired ethernet connectivity."
+          Arguments="/service"
+          Start="auto"
+          Account="NT AUTHORITY\LocalService"
+          ErrorControl="normal"
+          Vital="yes">
+          <ServiceDependency Id="netprofm"/>
+          <util:ServiceConfig ServiceName="wifisitter"
+                              FirstFailureActionType="restart"
+                              SecondFailureActionType="restart"
+                              ThirdFailureActionType="restart"
+                              RestartServiceDelayInSeconds="10"
+                              ResetPeriodInDays="1"/>
+        </ServiceInstall>
+        <ServiceControl Id="StartService" Start="install" Stop="both" Remove="uninstall" Name="wifisitter" Wait="yes" />
       </Component>
-      
+
       <!--Resource Files-->
       <Component Id="readme" Guid="048EC0DF-F952-4820-B7BC-4D9D9F5DC995">
         <File Id="readme" Name="ReadMe.rtf" Source="$(var.WifiSitterGui_ResourceDir)ReadMe.rtf" />
       </Component>
-      
+
     </ComponentGroup>
   </Fragment>
 </Wix>
