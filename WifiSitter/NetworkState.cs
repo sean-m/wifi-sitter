@@ -384,7 +384,7 @@ namespace WifiSitter
 
                     foreach (var e in eventBatch)
                     {
-                        LOG.Log(LogLevel.Info, $">> {e.EventTime.Ticks}  {e.Id}  {e.ChangeType.ToString()}  {(realEvents.Any(x => x.Id == e.Id) ? " : Recent Match" : String.Empty)}");
+                        LOG.Log(LogLevel.Debug, $">> {e.EventTime.Ticks}  {e.Id}  {e.ChangeType.ToString()}  {(realEvents.Any(x => x.Id == e.Id) ? " : Recent Match" : String.Empty)}");
                     }
 
                     if (realEvents.Count() < 1) continue;

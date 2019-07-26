@@ -47,6 +47,13 @@
           <RegistryValue Type="string" Name="8" Value="Microsoft 6to4"/>
           <RegistryValue Type="string" Name="9" Value="WAN Miniport"/>
         </RegistryKey>
+
+        <!--Setup Event Source-->
+        <util:EventSource
+          Name="Wifi Sitter"
+          Log="Application"
+          EventMessageFile="[NETFRAMEWORK40FULLINSTALLROOTDIR]EventLogMessages.dll"
+          />
       </Component>
 
       <!--Mapped Application Files-->
@@ -72,12 +79,17 @@
                                 ResetPeriodInDays="1"/>
           </ServiceInstall>
           <ServiceControl Id="WifiSitter.exe_install" Start="install" Name="wifisitter" Wait="no" />
-          <ServiceControl Id="WifiSitter.exe_uninstall" Stop="uninstall" Remove="uninstall" Name="wifisitter" Wait="yes" />
-        
+          <ServiceControl Id="WifiSitter.exe_uninstall" Stop="both" Remove="uninstall" Name="wifisitter" Wait="yes" />
       </Component>
+
+      <Component Id="NLog.config" Guid="004def38-c3de-4c2e-9b84-c1e98d3b92f8">
+        <File Id="NLog.config" Name="NLog.config" Source="$(var.WifiSitter_TargetDir)NLog.config" />
+      </Component>
+      
       <Component Id="Interop.NETWORKLIST.dll" Guid="0ec68a32-c0e0-4e59-9301-d47cb5bee0d4">
         <File Id="Interop.NETWORKLIST.dll" Name="Interop.NETWORKLIST.dll" Source="$(var.WifiSitter_TargetDir)Interop.NETWORKLIST.dll" />
       </Component>
+      
       <Component Id="WifiSitterGui.exe" Guid="74214fd0-798e-4bce-bc56-d519103c8f20">
         <File Id="WifiSitterGui.exe" Name="WifiSitterGui.exe" Source="$(var.WifiSitterGui_TargetDir)WifiSitterGui.exe" />
       </Component>
