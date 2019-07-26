@@ -292,13 +292,47 @@ namespace WifiSitter
         }
 
         /// <summary>
-        /// Attempts to reconnect to the last network the given wireless adapter was connected to. This is a best
+        /// Attempts to connect to preferred networks in range in the preferred nets order. Failing that,
+        /// attempt to reconnection to the connected wireless network. This is a best
         /// effort thing and will only log a failure. It's about the best we can do since the last network may not
         /// be in range and doesn't persist across service restarts.
         /// </summary>
         /// <param name="Nic"></param>
-        internal void ConnectToLastSsid(TrackedNic Nic)
+        internal void ConnectToPreferredOrLastNetwork(TrackedNic Nic)
         {
+            var adapter = wclient.Interfaces.Where(x => x.InterfaceGuid == Nic.Id).FirstOrDefault();
+
+            var available_nets = adapter.GetAvailableNetworkList(0);
+            var wlan_profiles = adapter.GetProfiles();
+
+            if (available_nets != null && wlan_profiles != null) {
+                // Check for preferred networks that are in range
+                foreach (var wp in wlan_profiles)
+                {
+                    var ap = available_nets.Where(x => x.profileName == wp.profileName).FirstOrDefault();
+                    if (ap.Equals(default(WlanAvailableNetwork))) continue;  // Preferred network not in the list of available networks, skip it.
+
+
+                    // We shouldn't automatically connect to open wifi, that's just not safe.
+                    if (!ap.securityEnabled) { LOG.Debug($"Skipping insecure network: {ap.profileName}"); continue; }
+                    if (ap.dot11DefaultAuthAlgorithm == Dot11AuthAlgorithm.IEEE80211_Open) { LOG.Debug($"Skipping open network: {ap.profileName}"); continue; }
+
+
+                    // Preferred network available attempt connect. Return on success move to the next on failure.
+                    if (adapter.ConnectSynchronously(WlanConnectionMode.Profile, ap.dot11BssType, ap.profileName, (20 * 1000)))
+                    {
+                        LOG.Info($"{Nic.Name} connected to preferred network: '{ap.profileName}'");
+                        return;
+                    }
+                    else
+                    {
+                        LOG.Info($"{Nic.Name} connection to preferred network: '{ap.profileName}' failed or timed out");
+                    }
+                }
+                // No preferred networks in range or connections didn't succeed, fall through to the last connection and try that if you can
+            }
+
+            LOG.Log(LogLevel.Info, $"{Nic.Name} attempting connection to last netowrk: '{Nic.LastWirelessConnection.profileName}'");
             if (Nic.InterfaceType != NetworkInterfaceType.Wireless80211) return;  // Shouldn't happen but still..
 
             if (String.IsNullOrEmpty(Nic.LastWirelessConnection.profileName))
@@ -306,9 +340,6 @@ namespace WifiSitter
                 LOG.Warn("No previous connection profile logged. I can't reconnect to nothing...");
                 return;
             }
-
-            LOG.Log(LogLevel.Info, $"{Nic.Name} attempting reconnect to: {Nic.LastWirelessConnection.profileName}");
-            var adapter = wclient.Interfaces.Where(x => x.InterfaceGuid == Nic.Id).FirstOrDefault();
 
             adapter.Connect(WlanConnectionMode.Profile, Dot11BssType.Any, Nic.LastWirelessConnection.profileName);
         }
@@ -459,12 +490,6 @@ namespace WifiSitter
 
                         foreach (var n in wnics)
                         {
-                            if (String.IsNullOrEmpty(n.LastWirelessConnection.profileName))
-                            {
-                                LOG.Warn("No previous connection profile logged. I can't reconnect to nothing...");
-                                continue;
-                            }
-
                             // Skip interface if a re-connect was attempted reccently
                             if (n.LastActionTaken.Any(x => x.ActionTaken == NetworkStateChangeAction.reconnect && x.ChangeTime > DateTime.Now.AddSeconds(-30)))
                             {
@@ -478,7 +503,7 @@ namespace WifiSitter
                             try
                             {
                                 n.LastActionTaken.Add(new NetworkStateChangeLogEntry(NetworkStateChangeAction.reconnect));
-                                ConnectToLastSsid(n);
+                                ConnectToPreferredOrLastNetwork(n);
                                 OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 6000 });
                                 OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 30 * 1000 });
                             }
