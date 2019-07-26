@@ -81,14 +81,16 @@ namespace WifiSitter
 
             netChangeObservable = Observable.FromEventPattern<WSNetworkChangeEventArgs>(this, nameof(NetworkState.NetworkStateChanged))
                 .Delay(x => Observable.Timer(TimeSpan.FromMilliseconds(x.EventArgs.DeferInterval)))
-                .Select(x => { lock (this.eventLock) { this.reccentEvents.Add(x.EventArgs); } return x; })
+                .Select(x => { if (!Paused) { lock (this.eventLock) { this.reccentEvents.Add(x.EventArgs); } } return x; })
                 .Throttle(TimeSpan.FromSeconds(4))
                 .Subscribe(
                 (_) =>
                 {
+                    if (Paused) return;
+
                     List<WSNetworkChangeEventArgs> _events;
-                    _events = this.reccentEvents;
-                    this.reccentEvents = new List<WSNetworkChangeEventArgs>();
+                    _events = reccentEvents;
+                    reccentEvents = new List<WSNetworkChangeEventArgs>();
                     eventQueue.Add(_events);
                 });
         }
@@ -109,12 +111,12 @@ namespace WifiSitter
             _checkNet = true;
         }
 
-        // DEPRECATED remove later
         /// <summary>
         /// Query NetworkListManager for connection status for specified adapter.
         /// </summary>
         /// <param name="AdapterId"></param>
         /// <returns></returns>
+        [Obsolete("This isn't needed anymore. Stop using it.")]
         internal bool QueryNetworkAdapter(Guid AdapterId)
         {
             var nic = Nics.Where(x => x.Id == AdapterId).FirstOrDefault();

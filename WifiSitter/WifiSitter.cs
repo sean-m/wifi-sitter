@@ -366,6 +366,7 @@ namespace WifiSitter
         {
             base.OnContinue();
             netstate.Paused = false;
+            netstate.OnNetworkChanged(new WSNetworkChangeEventArgs(Guid.Empty, NetworkChanges.DeferredEvent));  // Could have been paused for a while so kick off another status check
         }
 
         internal override void CreateRegKeys()
