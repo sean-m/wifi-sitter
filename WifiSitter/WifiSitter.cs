@@ -3,25 +3,20 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.NetworkInformation;
-using System.Threading;
+using System.Reactive.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using System.Text;
-
-// Project deps
-using WifiSitter.Helpers;
+using System.Threading;
+using System.Threading.Tasks;
 
 // 3rd party deps
 using NLog;
 using NetMQ;
 using NetMQ.Sockets;
-using ConsoleTableExt;
+
+// Project deps
+using WifiSitter.Helpers;
 using WifiSitterShared;
-using System.Reactive.Linq;
-using static NativeWifi.Wlan;
-using System.Collections.Concurrent;
-using System.Data;
 
 namespace WifiSitter
 {

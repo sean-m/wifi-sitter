@@ -1,26 +1,26 @@
 ﻿using NETWORKLIST;
-using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
-using System.Reactive;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Diagnostics;
-using System.Timers;
-
-using WifiSitterShared;
-
-using Vanara.PInvoke;
-using static Vanara.PInvoke.IpHlpApi;
-using ConsoleTableExt;
-using static NativeWifi.Wlan;
-using NativeWifi;
 using System.Collections.Concurrent;
 using System.Threading;
+
+using WifiSitterShared;
 using WifiSitter.Model;
+
+using NLog;
+using NativeWifi;
+using Vanara.PInvoke;
+using ConsoleTableExt;
+
+using static NativeWifi.Wlan;
+using static Vanara.PInvoke.IpHlpApi;
+
 
 namespace WifiSitter
 {
@@ -377,7 +377,6 @@ namespace WifiSitter
                     if (eventBatch.Where(x => x != null).Count() < 1) continue;
                     if (_paused) continue;
 
-                    // TODO defer checking interfaces that have just been modified for 5 seconds
                     var recent = DateTime.Now.AddSeconds(-5);
                     // Take any events where the correlating Id does not match that of a TrackedNic that has had recent actions taken
                     var realEvents = eventBatch.Where(e => ! ManagedNics.Where(x => (bool)(x.LastActionTaken?.Any(y => y.ChangeTime > recent))).Any(z => e.Id == z.Id ));
@@ -429,7 +428,6 @@ namespace WifiSitter
                        .Export();
 
                     LOG.Log(LogLevel.Debug, $"\n{table.ToString()}");
-
 
                     // TODO Track when actions were last taken to avoid nic flapping
                     if (this.IsEthernetInternetConnected && this.IsWirelessInternetConnected)

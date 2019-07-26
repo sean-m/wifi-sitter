@@ -1,16 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
 using System.Net.NetworkInformation;
-using System.Threading.Tasks;
-
-using WifiSitter;
-using WifiSitter.Helpers;
 
 using NLog;
-
 using static NativeWifi.Wlan;
 using static Vanara.PInvoke.IpHlpApi;
 
