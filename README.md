@@ -29,19 +29,23 @@ Roadmap:
 
 ## Usage
 
-Wifi-Sitter can be installed from the command line. First place the exe where
+~~Wifi-Sitter can be installed from the command line. First place the exe where
 you'd like it to stay (if you move it, the service will break), then run like
-so from an admin shell:  
+so from an admin shell:~~  
   
 `WifiSitter.exe /install`  
   
-The service is configured to start automatically but will not be started after
+~~The service is configured to start automatically but will not be started after
 if you're automating a deployment, you'll need to run `net start wifisitter`
-or use your service starting command of choice. 
+or use your service starting command of choice.~~  
   
-Similarly, uninstall like so:  
+~~Similarly, uninstall like so:~~  
   
-`WifiSitter.exe /uninstall`  
+`WifiSitter.exe /uninstall`
+
+The command line install still works but doesn't setup service dependencies.
+I recommend installing from the MSI package. It does a good job cleaning up after
+itself.
   
 It can be run as a console application for debugging purposes by running:  
   
