@@ -14,11 +14,14 @@
     <Property Id='ARPCONTACT'>sean@mcardletech.com</Property>
     <Property Id='ARPURLINFOABOUT'>https://github.com/sean-m/wifi-sitter</Property>
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MajorUpgrade Schedule="afterInstallInitialize"
+                  DowngradeErrorMessage="A later version of [ProductName] is already installed"
+                  AllowSameVersionUpgrades="yes"/>
+    
     <MediaTemplate EmbedCab="yes"/>
-
-    <Feature Id="ProductFeature" Title="WifiSitterSetup" Level="1">
-      <ComponentGroupRef Id="ProductComponents" />
+      
+    <Feature Id="ProductFeature" Title="WifiSitterService" Level="1">
+      <ComponentGroupRef Id="WifiSitterServiceProductComponents" />
     </Feature>
   </Product>
 
@@ -31,7 +34,7 @@
   </Fragment>
 
   <Fragment>
-    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+    <ComponentGroup Id="WifiSitterServiceProductComponents" Directory="INSTALLFOLDER">
 
       <Component Id="ProductComponent">
         <!--Registry Entries-->
