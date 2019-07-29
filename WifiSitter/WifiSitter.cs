@@ -3,25 +3,20 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.NetworkInformation;
-using System.Threading;
+using System.Reactive.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using System.Text;
-
-// Project deps
-using WifiSitter.Helpers;
+using System.Threading;
+using System.Threading.Tasks;
 
 // 3rd party deps
 using NLog;
 using NetMQ;
 using NetMQ.Sockets;
-using ConsoleTableExt;
+
+// Project deps
+using WifiSitter.Helpers;
 using WifiSitterShared;
-using System.Reactive.Linq;
-using static NativeWifi.Wlan;
-using System.Collections.Concurrent;
-using System.Data;
 
 namespace WifiSitter
 {
@@ -325,7 +320,7 @@ namespace WifiSitter
                 // Setup 0mq message router task
                 if (Properties.Settings.Default.enable_ipc)
                 {
-                    LOG.Log(LogLevel.Error, "Initializing IPC worker thread...");
+                    LOG.Log(LogLevel.Info, "Initializing IPC worker thread...");
                     _mqServerTask = new Task(ZeroMQRouterRun);
                     _mqServerTask.ContinueWith((worker) =>
                     {
@@ -371,6 +366,7 @@ namespace WifiSitter
         {
             base.OnContinue();
             netstate.Paused = false;
+            netstate.OnNetworkChanged(new WSNetworkChangeEventArgs(Guid.Empty, NetworkChanges.DeferredEvent));  // Could have been paused for a while so kick off another status check
         }
 
         internal override void CreateRegKeys()

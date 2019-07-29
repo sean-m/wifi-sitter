@@ -291,6 +291,7 @@ namespace WifiSitterGui.ViewModel
                         break;
                     case "taking_five":
                         Trace.WriteLine(String.Format("Responded 'taking_five' : {0}", Encoding.UTF8.GetString(_sr.Payload)));
+                        WindowVM.NetState.Paused = true;
                         break;
                     case "service_status":
                         // TODO issue service status update
