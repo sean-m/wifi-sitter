@@ -579,6 +579,7 @@ namespace WifiSitter
                     NetworkAvailable = this.NetworkAvailable,
                     IgnoreAdapters = this.IgnoreAdapters,
                     ProcessingState = this.ProcessingState,
+                    Paused = this.Paused,
                     Nics = this.ManagedNics.Select(x => new SimpleNic(x)).ToList()
                 };
         }
