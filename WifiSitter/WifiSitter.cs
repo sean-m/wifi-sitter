@@ -320,7 +320,7 @@ namespace WifiSitter
                 // Setup 0mq message router task
                 if (Properties.Settings.Default.enable_ipc)
                 {
-                    LOG.Log(LogLevel.Error, "Initializing IPC worker thread...");
+                    LOG.Log(LogLevel.Info, "Initializing IPC worker thread...");
                     _mqServerTask = new Task(ZeroMQRouterRun);
                     _mqServerTask.ContinueWith((worker) =>
                     {
