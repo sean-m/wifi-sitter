@@ -315,10 +315,10 @@ namespace WifiSitter
                     if (ap.Equals(default(WlanAvailableNetwork))) continue;  // Preferred network not in the list of available networks, skip it.
 
 
-                    // We shouldn't automatically connect to open wifi, that's just not safe.
+                    // We shouldn't automatically connect to open wifi or unnamed networks, that's just not safe.
+                    if (String.IsNullOrEmpty(ap.profileName)) { LOG.Debug($"Skipping unnamed network"); continue; }
                     if (!ap.securityEnabled) { LOG.Debug($"Skipping insecure network: {ap.profileName}"); continue; }
                     if (ap.dot11DefaultAuthAlgorithm == Dot11AuthAlgorithm.IEEE80211_Open) { LOG.Debug($"Skipping open network: {ap.profileName}"); continue; }
-
 
                     // Preferred network available attempt connect. Return on success move to the next on failure.
                     if (adapter.ConnectSynchronously(WlanConnectionMode.Profile, ap.dot11BssType, ap.profileName, (20 * 1000)))
@@ -331,7 +331,6 @@ namespace WifiSitter
                         LOG.Info($"{Nic.Name} connection to preferred network: '{ap.profileName}' failed or timed out");
                     }
                 }
-                // No preferred networks in range or connections didn't succeed, fall through to the last connection and try that if you can
             }
 
             LOG.Log(LogLevel.Info, $"{Nic.Name} attempting connection to last netowrk: '{Nic.LastWirelessConnection.profileName}'");
@@ -339,7 +338,7 @@ namespace WifiSitter
 
             if (String.IsNullOrEmpty(Nic.LastWirelessConnection.profileName))
             {
-                LOG.Warn("No previous connection profile logged. I can't reconnect to nothing...");
+                LOG.Debug("No previous connection profile logged. I can't reconnect to nothing...");
                 return;
             }
 
