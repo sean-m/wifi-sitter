@@ -20,7 +20,8 @@ using ConsoleTableExt;
 
 using static NativeWifi.Wlan;
 using static Vanara.PInvoke.IpHlpApi;
-
+using System.Runtime.InteropServices;
+using System.Management;
 
 namespace WifiSitter
 {
@@ -34,8 +35,8 @@ namespace WifiSitter
         private bool _checkNet;
         private bool _processingState;
         private volatile bool _paused = false;
-        private List<TrackedNic> _nics;
-        private List<string> _ignoreAdapters;  // List of Nic descriptions to ignore during normal operation
+        private IEnumerable<TrackedNic> _nics;
+        private IEnumerable<string> _ignoreAdapters;  // List of Nic descriptions to ignore during normal operation
         private static Logger LOG = LogManager.GetCurrentClassLogger();
         private NetworkListManager netManager = new NetworkListManager();
         private List<(Guid, bool)> _originalNicState = new List<(Guid, bool)>();
@@ -220,7 +221,7 @@ namespace WifiSitter
                 }
             }
 
-
+            // Enumerate network adapters and parse connection status
             Vanara.PInvoke.Win32Error err = Vanara.PInvoke.Win32Error.ERROR_SUCCESS;
             err = GetIfTable2(out MIB_IF_TABLE2 ifTable);
             try
@@ -353,7 +354,24 @@ namespace WifiSitter
         internal void SetWirelessProfile(TrackedNic Nic)
         {
             var adapter = wclient.Interfaces.Where(x => x.InterfaceGuid == Nic.Id).FirstOrDefault();
-            adapter.SetProfile(WlanProfileFlags.AllUser, adapter.GetProfileXml(Nic.LastWirelessConnection.profileName), true);
+            adapter.SetProfile(WlanProfileFlags.AllUser, adapter.GetProfileXml(Nic.LastWirelessConnection.profileName), false);
+        }
+
+        /// <summary>
+        /// Enables disabled interface adapter.
+        /// </summary>
+        /// <param name="Nic"></param>
+        internal void EnableAdapter(TrackedNic Nic)
+        {
+            // TODO reimplement this with the Vanara / NativeWlan interfaces.
+            // They exist to eliminate the WMI dependency.
+            using (ManagementObjectSearcher searcher = new ManagementObjectSearcher($"SELECT * FROM Win32_NetworkAdapter Where GUID=\"{{{ Nic.Id.ToString() }}}\""))
+            {
+                foreach (ManagementObject nic in searcher.Get())
+                {   
+                    nic.InvokeMethod("Enable", null);
+                }
+            }
         }
 
         /// <summary>
@@ -424,13 +442,15 @@ namespace WifiSitter
                     var _nic_list = this.QueryNetworkAdapters().Select(
                         _nic =>
                         {
-                            var matching_nic = this.Nics.Where(n => n.Id == _nic.Id).FirstOrDefault();
+                            if (Nics == null) return _nic;
 
-                        // No previous interface identified, skip it
-                        if (matching_nic == null) return _nic;
+                            var matching_nic = Nics?.Where(n => n.Id == _nic.Id)?.FirstOrDefault();
 
-                        // TODO Refactor this when we start using preferred network lists
-                        if (!(matching_nic.LastWirelessConnection.Equals(default(WlanConnectionAttributes)) && _nic.Equals(default(WlanConnectionAttributes))))
+                            // No previous interface identified, skip it
+                            if (matching_nic == null) return _nic;
+
+                            // TODO Refactor this when we start using preferred network lists
+                            if (!(matching_nic.LastWirelessConnection.Equals(default(WlanConnectionAttributes)) && _nic.Equals(default(WlanConnectionAttributes))))
                             {
                                 _nic.LastWirelessConnection = matching_nic.LastWirelessConnection;
                             }
@@ -441,8 +461,7 @@ namespace WifiSitter
 
                             _nic.LastActionTaken = matching_nic.LastActionTaken.Where(x => x.ChangeTime > DateTime.Now.AddMinutes(-5)).ToList();
                             return _nic;
-                        })
-                    .ToList();
+                        }).ToList();
 
                     this.Nics = _nic_list;
 
@@ -450,7 +469,7 @@ namespace WifiSitter
 
                     foreach (var x in this.ManagedNics)
                     {
-                        dt.Rows.Add(new object[] { x.Luid, x.Name, x.Id, x.InterfaceIndex, x.InterfaceType, x.ConnectionStatus, x.IsEnabled, x.IsConnected, x.IsInternetConnected, x.LastActionTaken });
+                        dt.Rows.Add(new object[] { x.Luid, x.Name, x.Id, x.InterfaceIndex, x.InterfaceType, x.ConnectionStatus, x.IsEnabled, x.IsConnected, x.IsInternetConnected, x.LastActionTaken?.FirstOrDefault()?.ActionTaken.ToString() ?? "None" });
                     }
 
                     var table = ConsoleTableBuilder
@@ -491,8 +510,24 @@ namespace WifiSitter
 
                         foreach (var n in wnics)
                         {
+                            if (!n.IsEnabled)
+                            {
+                                EnableAdapter(n);
+                                n.LastActionTaken.Add(new NetworkStateChangeLogEntry(NetworkStateChangeAction.enable));
+                                OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 15 * 1000 });
+                            }
+
                             // Skip interface if a re-connect was attempted reccently
-                            if (n.LastActionTaken.Any(x => x.ActionTaken == NetworkStateChangeAction.reconnect && x.ChangeTime > DateTime.Now.AddSeconds(-30)))
+                            if (n.LastActionTaken.Any(x => (x.ActionTaken == NetworkStateChangeAction.reconnect) 
+                                && x.ChangeTime > DateTime.Now.AddSeconds(-30)))
+                            {
+                                LOG.Debug($"Attempted reconnect on that interface {n.Id} < 30 seconds ago, skipping.");
+                                continue;
+                            }
+
+                            // Skip interface if a re-enable was attempted reccently
+                            if (n.LastActionTaken.Any(x => (x.ActionTaken == NetworkStateChangeAction.enable)
+                                && x.ChangeTime > DateTime.Now.AddSeconds(-10)))
                             {
                                 LOG.Debug($"Attempted reconnect on that interface {n.Id} < 30 seconds ago, skipping.");
                                 continue;
@@ -505,7 +540,7 @@ namespace WifiSitter
                             {
                                 n.LastActionTaken.Add(new NetworkStateChangeLogEntry(NetworkStateChangeAction.reconnect));
                                 ConnectToPreferredOrLastNetwork(n);
-                                OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 6000 });
+                                OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 6 * 1000 });
                                 OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 30 * 1000 });
                             }
                             catch(Exception e) { LOG.Log(LogLevel.Error, e, $"Error reconnecting adapter: {n.Id}  to network: {n.LastWirelessConnection.profileName}"); }
@@ -548,14 +583,14 @@ namespace WifiSitter
             get => netManager.IsConnectedToInternet;
         }
 
-        public List<string> IgnoreAdapters {
+        public IEnumerable<string> IgnoreAdapters {
             get {
                 if (_ignoreAdapters == null) _ignoreAdapters = new List<string>();
                 return _ignoreAdapters;
             }
         }
 
-        public List<TrackedNic> Nics {
+        public IEnumerable<TrackedNic> Nics {
             get {
                 if (_nics == null) return new List<TrackedNic>();
                 return _nics;

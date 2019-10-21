@@ -11,11 +11,11 @@ namespace WifiSitter.Model
         public bool EthernetUp { get; set; }
         public bool InternetConnected { get; set; }
         public bool CheckNet { get; set; }
-        public List<SimpleNic> Nics { get; set; }
+        public IEnumerable<SimpleNic> Nics { get; set; }
         public bool NetworkAvailable { get; set; }
         public bool ProcessingState { get; set; }
         public bool Paused { get; set; }
-        public List<string> IgnoreAdapters { get; set; }
+        public IEnumerable<string> IgnoreAdapters { get; set; }
 
         public SimpleNetworkState() { }
     }

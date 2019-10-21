@@ -89,6 +89,8 @@ namespace WifiSitterShared
     public enum NetworkStateChangeAction
     {
         disconnect,
-        reconnect
+        reconnect,
+        disable,
+        enable,
     }
 }
