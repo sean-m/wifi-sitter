@@ -48,6 +48,7 @@ namespace NativeWifi
         public class WlanInterface
         {
             private readonly WlanClient client;
+            
             private Wlan.WlanInterfaceInfo info;
 
             #region Events
@@ -109,6 +110,7 @@ namespace NativeWifi
                 this.client = client;
                 this.info = info;
             }
+
 
             /// <summary>
             /// Sets a parameter of the interface whose data type is <see cref="int"/>.
@@ -604,6 +606,12 @@ namespace NativeWifi
         private uint negotiatedVersion;
         private readonly Wlan.WlanNotificationCallbackDelegate wlanNotificationCallback;
         private readonly Dictionary<Guid, WlanInterface> ifaces = new Dictionary<Guid, WlanInterface>();
+
+
+        /// <summary>
+        /// IntPtr handle to the client instance. Needed for calling WlanSetInterface directly.
+        /// </summary>
+        public IntPtr Handle { get { return clientHandle; } }
 
         /// <summary>
         /// Creates a new instance of a Native Wifi service client.
