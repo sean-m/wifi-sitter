@@ -536,17 +536,25 @@ namespace WifiSitter
                                 continue;
                             }
 
+                            // This doesn't seem to be strictly neccessary all the time.
                             try { this.SetWirelessProfile(n); }
                             catch (Exception e) { LOG.Log(LogLevel.Error, e, $"Error setting wireless profile on interface: {n.Id}"); }
 
+                            // Reconnect to known secure networks in range.
                             try
-                            {
-                                n.LastActionTaken.Add(new NetworkStateChangeLogEntry(NetworkStateChangeAction.reconnect));
+                            {   
                                 ConnectToPreferredOrLastNetwork(n);
+                                n.LastActionTaken.Add(new NetworkStateChangeLogEntry(NetworkStateChangeAction.reconnect));
                                 OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 6 * 1000 });
                                 OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 30 * 1000 });
                             }
                             catch(Exception e) { LOG.Log(LogLevel.Error, e, $"Error reconnecting adapter: {n.Id}  to network: {n.LastWirelessConnection.profileName}"); }
+
+                            // Only keep actions less than 3 minutes old. We don't operate on info tha told
+                            // and don't want to leak memory. If this is ever logged in the GUI it'll need
+                            // be tracked on that side.
+                            var reccent_actions = n.LastActionTaken.Where(x => x.ChangeTime > DateTime.Now.AddMinutes(-3))?.ToList();
+                            n.LastActionTaken = reccent_actions ?? new List<NetworkStateChangeLogEntry>();
                         }
                     }
                     else
