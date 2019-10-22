@@ -70,7 +70,7 @@
             Description="Manages WiFi adapters based on wired ethernet connectivity."
             Arguments="/service"
             Start="auto"
-            Account="NT AUTHORITY\LocalService"
+            Account="NT AUTHORITY\System"
             ErrorControl="normal"
             Vital="yes">
             <ServiceDependency Id="netprofm"/>
