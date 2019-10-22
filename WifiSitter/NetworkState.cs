@@ -512,9 +512,12 @@ namespace WifiSitter
                         {
                             if (!n.IsEnabled)
                             {
-                                EnableAdapter(n);
-                                n.LastActionTaken.Add(new NetworkStateChangeLogEntry(NetworkStateChangeAction.enable));
-                                OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 15 * 1000 });
+                                try { 
+                                    EnableAdapter(n);
+                                    n.LastActionTaken.Add(new NetworkStateChangeLogEntry(NetworkStateChangeAction.enable));
+                                    OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 15 * 1000 });
+                                }
+                                catch (Exception e) { LOG.Log(LogLevel.Error, e, $"Error enabling adapter: {n.Id}  {n.Description}"); }
                             }
 
                             // Skip interface if a re-connect was attempted reccently
