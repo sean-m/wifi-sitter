@@ -6,7 +6,7 @@
   <?define WifiSitterShared_TargetDir=$(var.WifiSitterShared.TargetDir)?>
   <?define WifiSitterGui_TargetDir=$(var.WifiSitterGui.TargetDir)?>
   <?define WifiSitterGui_ResourceDir=$(var.WifiSitterGui.ProjectDir)Resources/?>
-  <Product Id="*" Name="WifiSitter" Language="1033" Version="2.0.4.0" Manufacturer="mcardletech.com" UpgradeCode="23a42c57-a16c-4b93-a5cb-60cff20c1f7a">
+  <Product Id="*" Name="WifiSitter" Language="1033" Version="2.0.5.0" Manufacturer="mcardletech.com" UpgradeCode="23a42c57-a16c-4b93-a5cb-60cff20c1f7a">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated"/>
     <Icon Id="icon.ico" SourceFile="$(var.WifiSitter.ProjectDir)wifisitter-icon.ico" />
     <Property Id="ARPPRODUCTICON" Value="icon.ico" />
