@@ -33,7 +33,6 @@ namespace WifiSitter
         #region fields
 
         private bool _checkNet;
-        private bool _processingState;
         private volatile bool _paused = false;
         private IEnumerable<TrackedNic> _nics;
         private IEnumerable<string> _ignoreAdapters;  // List of Nic descriptions to ignore during normal operation
@@ -47,6 +46,7 @@ namespace WifiSitter
         private CancellationTokenSource tokenSource = new CancellationTokenSource();
         internal BlockingCollection<IEnumerable<WSNetworkChangeEventArgs>> eventQueue = new BlockingCollection<IEnumerable<WSNetworkChangeEventArgs>>();
         IDisposable netChangeObservable;
+        IDisposable periodicIntervalCheckObservable;
 
         #endregion // fields
 
@@ -80,6 +80,10 @@ namespace WifiSitter
             netManager.NetworkPropertyChanged += (netId, flags) => OnNetworkChanged(new WSNetworkChangeEventArgs(netId, NetworkChanges.PropertyChanged) { AdditionalInfo = flags });
             netManager.NetworkConnectivityChanged += (netId, flags) => OnNetworkChanged(new WSNetworkChangeEventArgs(netId, NetworkChanges.ConnectivityChanged) { AdditionalInfo = flags });
 
+            // Check network status every 30 seconds
+            periodicIntervalCheckObservable = Observable.Timer(new TimeSpan(0, 0, 30)).Subscribe(_ => { OnNetworkChanged(new WSNetworkChangeEventArgs(Guid.Empty, NetworkChanges.DeferredEvent)); });
+
+            // Observe the events that are fired above
             netChangeObservable = Observable.FromEventPattern<WSNetworkChangeEventArgs>(this, nameof(NetworkState.NetworkStateChanged))
                 .Delay(x => Observable.Timer(TimeSpan.FromMilliseconds(x.EventArgs.DeferInterval)))
                 .Select(x => { if (!Paused) { lock (this.eventLock) { this.reccentEvents.Add(x.EventArgs); } } return x; })
@@ -99,6 +103,8 @@ namespace WifiSitter
         ~NetworkState()
         {
             netManager = null;
+            netChangeObservable.Dispose();
+            periodicIntervalCheckObservable.Dispose();
         }
 
         #endregion // constructor
@@ -510,9 +516,19 @@ namespace WifiSitter
 
                         foreach (var n in wnics)
                         {
-                            if (!n.IsEnabled)
+                            // Skip interface if a re-enable was attempted reccently
+                            if (n.LastActionTaken.Any(x => (x.ActionTaken == NetworkStateChangeAction.enable)
+                                && x.ChangeTime > DateTime.Now.AddSeconds(-10)))
                             {
-                                try { 
+                                LOG.Debug($"Attempted re-enable on that interface {n.Id} < 10 seconds ago, skipping.");
+                                continue;
+                            }
+                            // If not enabled and didn't try to enable within the last minute, try to re-enable
+                            else if (!n.IsEnabled && n.LastActionTaken.Any(x => (x.ActionTaken == NetworkStateChangeAction.enable)
+                                && x.ChangeTime > DateTime.Now.AddSeconds(-60)))
+                            {
+                                try
+                                {
                                     EnableAdapter(n);
                                     n.LastActionTaken.Add(new NetworkStateChangeLogEntry(NetworkStateChangeAction.enable));
                                     OnNetworkChanged(new WSNetworkChangeEventArgs() { Id = n.Id, ChangeType = NetworkChanges.DeferredEvent, DeferInterval = 15 * 1000 });
@@ -522,17 +538,9 @@ namespace WifiSitter
 
                             // Skip interface if a re-connect was attempted reccently
                             if (n.LastActionTaken.Any(x => (x.ActionTaken == NetworkStateChangeAction.reconnect) 
-                                && x.ChangeTime > DateTime.Now.AddSeconds(-30)))
+                                && x.ChangeTime > DateTime.Now.AddSeconds(-20)))
                             {
-                                LOG.Debug($"Attempted reconnect on that interface {n.Id} < 30 seconds ago, skipping.");
-                                continue;
-                            }
-
-                            // Skip interface if a re-enable was attempted reccently
-                            if (n.LastActionTaken.Any(x => (x.ActionTaken == NetworkStateChangeAction.enable)
-                                && x.ChangeTime > DateTime.Now.AddSeconds(-10)))
-                            {
-                                LOG.Debug($"Attempted reconnect on that interface {n.Id} < 30 seconds ago, skipping.");
+                                LOG.Debug($"Attempted reconnect on that interface {n.Id} < 20 seconds ago, skipping.");
                                 continue;
                             }
 
